@@ -1,34 +1,32 @@
 package pt.tecnico.sauron.silo.client;
 
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.*;
 
-
-public class SiloIT {
+public class SiloIT extends BaseIT {
 	
 	// static members
 	// TODO	
 	
 	
 	// one-time initialization and clean-up
-	@BeforeClass
+	@BeforeAll
 	public static void oneTimeSetUp(){
 		
 	}
-	
-	@AfterClass
+
+	@AfterAll
 	public static void oneTimeTearDown() {
 		
 	}
 	
 	// initialization and clean-up for each test
 	
-	@Before
+	@BeforeEach
 	public void setUp() {
 		
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() {
 		
 	}

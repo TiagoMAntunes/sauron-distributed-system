@@ -1,10 +1,10 @@
 package pt.tecnico.sauron.silo.client;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+
 import java.io.IOException;
 import java.util.Properties;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
 
 public class BaseIT {
@@ -12,7 +12,7 @@ public class BaseIT {
 	private static final String TEST_PROP_FILE = "/test.properties";
 	protected static Properties testProps;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void oneTimeSetup () throws IOException {
 		testProps = new Properties();
 		
@@ -27,7 +27,7 @@ public class BaseIT {
 		}
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void cleanup() {
 		
 	}
