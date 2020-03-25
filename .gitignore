@@ -160,3 +160,7 @@ modules.xml
  .idea/sonarlint
 
 # End of https://www.gitignore.io/api/intellij+all
+
+
+# Visual Studio Code
+.vscode
