@@ -3,4 +3,106 @@
 //
 syntax = "proto3";
 package pt.tecnico.sauron.silo.grpc;
+import "google/protobuf/timestamp.proto";
 
+enum Status {
+    OK = 0;
+    NOK = 1;
+};
+
+message Observation {
+    string type = 1;
+    string identifier = 2;
+    google.protobuf.Timestamp time = 3;
+}
+
+message CamJoinRequest {
+    string name = 1;
+    double lon = 2;
+    double lat = 3;
+}
+
+message CamJoinResponse {
+    Status responseStatus = 1;
+}
+
+message CamInfoRequest {
+    string name = 1;
+}
+
+message CamInfoResponse {
+    double lon = 1;
+    double lat = 2;
+}
+
+message ReportRequest {
+    string name = 1;
+    repeated Observation observations = 2;
+}
+
+message ReportResponse {
+    Status responseStatus = 1;
+}
+
+message TrackRequest {
+    string type = 1;
+    string identifier = 2;
+}
+
+message TrackResponse {
+    Observation observation = 1;
+}
+
+message TrackMatchRequest {
+    string type = 1;
+    string identifier = 2;
+}
+
+message TrackMatchResponse {
+    Observation observation = 1;
+}
+
+message TraceRequest {
+    string type = 1;
+    string identifier = 2;
+}
+
+message TraceResponse {
+    repeated Observation observations = 1;
+}
+
+message ControlPingRequest {
+    //empty
+}
+
+message ControlPingResponse {
+    string status = 1;
+}
+
+message ControlClearRequest {
+    //empty
+}
+
+message ControlClearResponse {
+    Status status = 1;
+}
+
+message ControlInitRequest {
+    //TODO which are the parameters for initialization
+}
+
+message ControlInitResponse {
+    Status responseStatus = 1;
+}
+
+service Sauron {
+    rpc CamJoin(CamJoinRequest) returns (CamJoinResponse);
+    rpc CamInfo(CamInfoRequest) returns (CamInfoResponse);
+    rpc Reports(ReportRequest) returns (ReportRequest);
+    rpc Track(TrackRequest) returns (TrackRequest);
+    rpc TrackMatch(TrackMatchRequest) returns (TrackMatchResponse);
+    rpc Trace(TraceRequest) returns (TraceResponse);
+    rpc ControlClear(ControlClearRequest) returns (ControlClearResponse);
+    rpc ControlPing(ControlPingRequest) returns (ControlClearResponse);
+    rpc ControlInit(ControlInitRequest) returns (ControlInitResponse);
+}
