@@ -16,11 +16,11 @@ This change is important for code dependency management, to make sure that your 
 ### Team members
 
 
-| Number | Name              | User                                 | Email                               |
-| -------|-------------------|--------------------------------------|-------------------------------------|
-| 86591  | Lourenço Teodoro  | <https://github.com/ISTTeo>          | <mailto:alice@tecnico.ulisboa.pt>   |
-| 89448  | Gonçalo Almeida   | <https://github.com/xaleza>          | <mailto:bob@tecnico.ulisboa.pt>     |
-| 89545  | Tiago Antunes     | <https://github.com/TiagoMAntunes>   | <mailto:charlie@tecnico.ulisboa.pt> |
+| Number | Name              | User                                 | Email                                   |
+| -------|-------------------|--------------------------------------|-----------------------------------------|
+| 86591  | Lourenço Teodoro  | <https://github.com/ISTTeo>          | <lourenco.teodoro@tecnico.ulisboa.pt>   |
+| 89448  | Gonçalo Almeida   | <https://github.com/xaleza>          | <goncalo.h.almeida@tecnico.ulisboa.pt>  |
+| 89545  | Tiago Antunes     | <https://github.com/TiagoMAntunes>   | <tiago.melo.antunes@tecnico.ulisboa.pt> |
 
 ### Task leaders
 
@@ -33,7 +33,7 @@ This change is important for code dependency management, to make sure that your 
 | T3       | track, trackMatch, trace      | _Gonçalo Almeida_   |
 | T4       | test T1                       | _Gonçalo Almeida_   |
 | T5       | test T2                       | _Lourenço Teodoro_  |
-| T6       | test T3                       | _Tiago Antuness_    |
+| T6       | test T3                       | _Tiago Antunes_    |
 
 
 ## Getting Started
