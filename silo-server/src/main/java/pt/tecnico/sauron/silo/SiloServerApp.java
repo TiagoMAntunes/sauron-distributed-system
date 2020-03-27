@@ -5,7 +5,6 @@ import java.io.IOException;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import pt.tecnico.sauron.silo.domain.SiloServerImpl;
 
 public class SiloServerApp {
 	
