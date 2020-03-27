@@ -5,6 +5,8 @@ import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 
 public class SiloServerFrontend {
 
@@ -20,6 +22,10 @@ public class SiloServerFrontend {
 
     public ControlPingResponse controlPing(ControlPingRequest r) {
         return stub.controlPing(r);
+    }
+
+    public ControlClearResponse controlClear(ControlClearRequest r) {
+        return stub.controlClear(r);
     }
 
 }

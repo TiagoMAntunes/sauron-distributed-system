@@ -1,6 +1,8 @@
 package pt.tecnico.sauron.silo.client;
 
 import io.grpc.StatusRuntimeException;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 
@@ -26,6 +28,10 @@ public class SiloClientApp {
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
 		}
+
+		ControlClearRequest r = ControlClearRequest.newBuilder().build();
+		ControlClearResponse re = frontend.controlClear(r);
+		System.out.println(re.getStatus());
 
 	}
 	

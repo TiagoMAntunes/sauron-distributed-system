@@ -1,7 +1,10 @@
 package pt.tecnico.sauron.silo.domain;
 
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
@@ -18,6 +21,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty!").asRuntimeException());
 
         ControlPingResponse response = ControlPingResponse.newBuilder().setStatus("Hello " + inputText + "!").build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void controlClear(ControlClearRequest request, StreamObserver<ControlClearResponse> responseObserver) {
+        Status status = Status.OK; //change accordingly
+        
+        ControlClearResponse response = ControlClearResponse.newBuilder().setStatus(status).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
