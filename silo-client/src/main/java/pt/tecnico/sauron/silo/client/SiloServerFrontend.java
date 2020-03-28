@@ -28,4 +28,7 @@ public class SiloServerFrontend {
         return stub.controlClear(r);
     }
 
+    public final void close() {
+        channel.shutdown();
+    }
 }
