@@ -4,6 +4,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.domain.SiloServer;
 import pt.tecnico.sauron.silo.grpc.*;
@@ -33,6 +35,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         Status status = silo.clear() ? Status.OK : Status.NOK; //change accordingly
         
         ControlClearResponse response = ControlClearResponse.newBuilder().setStatus(status).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
+        String inputConfig = request.getInputText();
+
+        ControlInitResponse response = ControlInitResponse.newBuilder().setStatus(inputConfig).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
