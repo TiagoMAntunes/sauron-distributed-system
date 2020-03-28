@@ -5,6 +5,8 @@ import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 
@@ -27,8 +29,13 @@ public class SiloServerFrontend {
     public ControlClearResponse controlClear(ControlClearRequest r) {
         return stub.controlClear(r);
     }
-
+    public CamJoinResponse camJoin(CamJoinRequest r) {
+		return stub.camJoin(r);
+    }
+    
     public final void close() {
         channel.shutdown();
     }
+
+	
 }
