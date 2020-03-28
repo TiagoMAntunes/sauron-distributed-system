@@ -29,6 +29,7 @@ public class SiloServerFrontend {
     public ControlClearResponse controlClear(ControlClearRequest r) {
         return stub.controlClear(r);
     }
+    
     public CamJoinResponse camJoin(CamJoinRequest r) {
 		return stub.camJoin(r);
     }
