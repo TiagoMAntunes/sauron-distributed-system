@@ -7,10 +7,13 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
+import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.domain.SiloServer;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
+
+import java.util.List;
 
 import io.grpc.stub.StreamObserver;
 
@@ -41,9 +44,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
-        String inputConfig = request.getInputText();
+        List<Observation> observations =  request.getObservationList();
 
-        ControlInitResponse response = ControlInitResponse.newBuilder().setStatus(inputConfig).build();
+        ControlInitResponse response = ControlInitResponse.newBuilder().setResponseStatus(Status.OK).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

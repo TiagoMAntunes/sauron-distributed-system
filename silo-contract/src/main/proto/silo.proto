@@ -88,7 +88,7 @@ message ControlClearResponse {
 }
 
 message ControlInitRequest {
-    string config = 1;
+    repeated Observation observation = 1;
 }
 
 message ControlInitResponse {
