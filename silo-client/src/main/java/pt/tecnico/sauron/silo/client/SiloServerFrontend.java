@@ -16,7 +16,9 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 
-public class SiloServerFrontend {
+import java.lang.AutoCloseable;
+
+public class SiloServerFrontend implements AutoCloseable {
 
     private final String target;
     final ManagedChannel channel;
@@ -52,7 +54,7 @@ public class SiloServerFrontend {
         return null;
     }
 
-
+    @Override
     public final void close() {
         channel.shutdown();
     }
