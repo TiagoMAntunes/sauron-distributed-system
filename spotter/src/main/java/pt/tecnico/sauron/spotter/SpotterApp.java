@@ -1,8 +1,18 @@
 package pt.tecnico.sauron.spotter;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
+import pt.tecnico.sauron.silo.grpc.Silo.Observation;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+
 
 public class SpotterApp {
 	
@@ -33,6 +43,8 @@ public class SpotterApp {
 
 				switch(line[0]) {
 					case "spot":
+						spotHandler(frontend, line);
+						break;
 					case "trail":
 					case "ping":
 					case "clear":
@@ -51,7 +63,7 @@ public class SpotterApp {
 						end = true;
 						break;
 					default:
-						System.out.println("Invalid command. Write help to get the list of available commands");
+						System.out.printf("Unknown command '%s' Write help to get the list of available commands%n", line[0]);
 				}
 			}
 		} 
@@ -61,6 +73,41 @@ public class SpotterApp {
 			System.out.println("Closing...");
 		}
 
+	}
+
+	private static void spotHandler(SiloServerFrontend frontend, String[] line) {
+		if (line.length < 3) {
+			System.out.println("Invalid number of arguments!");
+			return;
+		}
+
+		//To allow different types and ids, we dont verify them here but only in the server
+
+		String type = line[1];
+		String id = line[2];
+		boolean partial = id.contains("*");
+		
+		List<Observation> observations;
+		
+
+		//TODO missing camera information
+		if (partial) {
+			//Id is partial
+			TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentifier(id).setType(type).build();
+			TrackMatchResponse response = frontend.trackMatch(request);
+			observations = response.getObservationsList();
+		} else {
+			TrackRequest request = TrackRequest.newBuilder().setIdentifier(id).setType(type).build();\
+			TrackResponse response = frontend.track(request);
+			observations = new ArrayList<Observation>();
+			observations.add((response.getObservation()));
+		}
+
+		Collections.sort(observations, Comparators.OBSERVATION_ID);
+
+		for (Observation o : observations) {
+			
+		}
 	}
 
 }
