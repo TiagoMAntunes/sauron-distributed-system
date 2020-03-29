@@ -59,7 +59,7 @@ message TrackMatchRequest {
 }
 
 message TrackMatchResponse {
-    Observation observation = 1;
+    repeated Observation observations = 1;
 }
 
 message TraceRequest {
