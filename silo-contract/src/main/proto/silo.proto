@@ -8,6 +8,10 @@ import "google/protobuf/timestamp.proto";
 enum Status {
     OK = 0;
     NOK = 1;
+    INVALID_ARG = 2;
+    INVALID_CAM = 3;
+    INVALID_OBS = 4;
+    NULL_OBS = 5;
 };
 
 message Observation {

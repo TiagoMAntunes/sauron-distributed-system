@@ -3,6 +3,7 @@ package pt.tecnico.sauron.silo.client;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
+import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
@@ -15,6 +16,11 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+
 
 import java.lang.AutoCloseable;
 
@@ -53,6 +59,10 @@ public class SiloServerFrontend implements AutoCloseable {
     public TraceResponse trace(TraceRequest r) {
         return null;
     }
+
+    public ReportResponse reports(ReportRequest r) { return null; }
+
+    public CamJoinResponse camJoin(CamJoinRequest r) { return null; }
 
     @Override
     public final void close() {
