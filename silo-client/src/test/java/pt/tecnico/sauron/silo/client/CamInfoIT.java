@@ -1,0 +1,56 @@
+package pt.tecnico.sauron.silo.client;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import pt.tecnico.sauron.silo.client.BaseIT;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Status;
+
+public class CamInfoIT extends BaseIT {
+
+    static final String NAME = "test";
+    static final String INEXISTENT_NAME = "inexistent";
+    static final double LON = 1;
+    static final double LAT = 1;
+	
+	// initialization and clean-up for each test
+	
+	@BeforeEach
+	public void setUp() {
+        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(LON).setLat(LAT).build();
+        CamJoinResponse response = frontend.camJoin(request);
+    }
+	
+	@AfterEach
+	public void tearDown() {
+        frontend.controlClear(ControlClearRequest.newBuilder().build());
+	}
+		
+	// tests 
+	
+	@Test
+	public void camInfoTest() {
+        CamInfoRequest request = CamInfoRequest.newBuilder().setName(NAME).build();
+        CamInfoResponse response = frontend.camInfo(request);
+        assertEquals(LON, response.getLon());
+        assertEquals(LAT, response.getLat());
+    }
+    
+    @Test
+    public void inexistentCameraTest() {
+        CamInfoRequest request = CamInfoRequest.newBuilder().setName(INEXISTENT_NAME).build();
+        CamInfoResponse response = frontend.camInfo(request);
+
+        assertEquals(null, response.getLon());
+        assertEquals(null, response.getLat());
+    }
+
+}

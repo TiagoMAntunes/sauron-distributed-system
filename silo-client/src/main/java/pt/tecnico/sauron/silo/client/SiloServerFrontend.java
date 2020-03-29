@@ -15,6 +15,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 
@@ -41,6 +43,11 @@ public class SiloServerFrontend {
     public CamJoinResponse camJoin(CamJoinRequest r) {
 		    return stub.camJoin(r);
     }
+
+    public CamInfoResponse camInfo(CamInfoRequest r) {
+		return stub.camInfo(r);
+	}
+
     
     public ControlInitResponse controlInit(ControlInitRequest r) {
         return stub.controlInit(r);
@@ -62,5 +69,4 @@ public class SiloServerFrontend {
         channel.shutdown();
     }
 
-	
 }
