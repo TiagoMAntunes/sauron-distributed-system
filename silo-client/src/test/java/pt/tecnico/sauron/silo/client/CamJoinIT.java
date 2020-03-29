@@ -48,7 +48,7 @@ public class CamJoinIT extends BaseIT {
         CamJoinResponse response = frontend.camJoin(request);
         CamJoinResponse response_duplicate = frontend.camJoin(request_duplicate);
 
-        assertEquals(Status.DUPLICATE_NAME, response_duplicate.getResponseStatus());
+        assertEquals(Status.INVALID_ARG, response_duplicate.getResponseStatus());
     }
 
     @Test
@@ -57,7 +57,7 @@ public class CamJoinIT extends BaseIT {
         CamJoinRequest request = CamJoinRequest.newBuilder().setName(SMALL_NAME).setLon(LON).setLat(LAT).build();
         CamJoinResponse response = frontend.camJoin(request);
 
-        assertEquals(Status.INVALID_NAME, response.getResponseStatus());
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 
     public void bigNameTest() {
@@ -65,6 +65,6 @@ public class CamJoinIT extends BaseIT {
         CamJoinRequest request = CamJoinRequest.newBuilder().setName(BIG_NAME).setLon(LON).setLat(LAT).build();
         CamJoinResponse response = frontend.camJoin(request);
 
-        assertEquals(Status.INVALID_NAME, response.getResponseStatus());
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 }
