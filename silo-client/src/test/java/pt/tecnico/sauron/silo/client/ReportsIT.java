@@ -18,8 +18,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
 
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class ReportsIT extends BaseIT {
 
@@ -107,11 +106,11 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.NOK, response.getResponseStatus());
+        assertEquals(Status.INVALID_CAM, response.getResponseStatus());
     }
 
     @Test
-    public void reportNoCameraNameTest() {
+    public void reportEmptyCameraNameTest() {
         ReportRequest request = ReportRequest.newBuilder().
                 setName("").
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
@@ -119,11 +118,22 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.NOK, response.getResponseStatus());
+        assertEquals(Status.INVALID_CAM, response.getResponseStatus());
     }
 
     @Test
-    public void reportNullSetOfObservationsTest() {
+    public void reportNoCameraNameTest() {
+        ReportRequest request = ReportRequest.newBuilder().
+                addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
+                build();
+
+        ReportResponse response = frontend.reports(request);
+
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+    }
+
+    @Test
+    public void reportNullObservationTest() {
         ReportRequest request = ReportRequest.newBuilder().
                 setName(VALID_CAM_NAME).
                 addObservations(NULL_OBSERVATION).
@@ -131,7 +141,7 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.NOK, response.getResponseStatus());
+        assertEquals(Status.NULL_OBS, response.getResponseStatus());
     }
 
     @Test
@@ -143,7 +153,7 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.NOK, response.getResponseStatus());
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 
     @Test
@@ -155,6 +165,6 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.NOK, response.getResponseStatus());
+        assertEquals(Status.INVALID_OBS, response.getResponseStatus());
     }
 }
