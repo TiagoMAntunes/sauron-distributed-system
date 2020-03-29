@@ -19,6 +19,8 @@ public class CamJoinIT extends BaseIT {
     static final String BIG_NAME = "abcdefghijlmnopq";
     static final double LON = 1;
     static final double LAT = 1;
+    static final double NULL_LON = null;
+    static final double NULL_LAT = null;
 	
 	// initialization and clean-up for each test
 	
@@ -60,11 +62,30 @@ public class CamJoinIT extends BaseIT {
         assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 
+    @Test
     public void bigNameTest() {
         //Verifies if the name is more than 15 characters long
         CamJoinRequest request = CamJoinRequest.newBuilder().setName(BIG_NAME).setLon(LON).setLat(LAT).build();
         CamJoinResponse response = frontend.camJoin(request);
 
         assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+    }
+
+    @Test
+    public void nullLonTest() {
+        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(NULL_LON).setLat(LAT).build();
+
+        CamJoinResponse response = frontend.camJoin(request);
+
+        assertEquals(Status.NULL_LON, response.getResponseStatus());
+    }
+
+    @Test
+    public void nullLatTest() {
+        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(LON).setLat(NULL_LAT).build();
+
+        CamJoinResponse response = frontend.camJoin(request);
+
+        assertEquals(Status.NULL_LAT, response.getResponseStatus());
     }
 }

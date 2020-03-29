@@ -12,6 +12,8 @@ enum Status {
     INVALID_CAM = 3;
     INVALID_OBS = 4;
     NULL_OBS = 5;
+    NULL_LON = 6;
+    NULL_LAT = 7;
 };
 
 message Observation {
