@@ -3,6 +3,7 @@ package pt.tecnico.sauron.silo.client;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
+import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
@@ -19,6 +20,11 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+
 
 public class SiloServerFrontend {
 
@@ -64,6 +70,10 @@ public class SiloServerFrontend {
     public TraceResponse trace(TraceRequest r) {
         return null;
     }
+
+    public ReportResponse reports(ReportRequest r) { return null; }
+
+    public CamJoinResponse camJoin(CamJoinRequest r) { return null; }
 
     public final void close() {
         channel.shutdown();
