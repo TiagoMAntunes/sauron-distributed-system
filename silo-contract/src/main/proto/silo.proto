@@ -45,6 +45,7 @@ message CamInfoRequest {
 
 message CamInfoResponse {
     Camera camera = 1;
+    Status responseStatus = 2;
 }
 
 message ReportRequest {
