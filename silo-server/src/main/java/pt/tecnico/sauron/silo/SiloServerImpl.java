@@ -19,6 +19,7 @@ import pt.tecnico.sauron.silo.grpc.*;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.grpc.stub.StreamObserver;
@@ -77,7 +78,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
         TrackMatchResponse response = null;
         //TODO  find the most recent observations of each object found
-        List<Observation> observations = null;
+        ArrayList<Observation> observations = null;
         int index = 0;
 
         for(Observation observation : observations){
@@ -96,7 +97,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
         TraceResponse response = null;
         //TODO  find the observations for the object sorted from most recent to oldest
-        List<Observation> observations = null;
+        ArrayList<Observation> observations = null;
         int index = 0;
 
         for(Observation observation : observations){

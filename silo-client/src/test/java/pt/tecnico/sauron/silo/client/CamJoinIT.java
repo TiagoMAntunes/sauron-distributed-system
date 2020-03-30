@@ -19,8 +19,8 @@ public class CamJoinIT extends BaseIT {
     static final String BIG_NAME = "abcdefghijlmnopq";
     static final double LON = 1;
     static final double LAT = 1;
-    static final double NULL_LON = null;
-    static final double NULL_LAT = null;
+    static final double NULL_LON = (Double) null;
+    static final double NULL_LAT = (Double) null;
 	
 	// initialization and clean-up for each test
 	
