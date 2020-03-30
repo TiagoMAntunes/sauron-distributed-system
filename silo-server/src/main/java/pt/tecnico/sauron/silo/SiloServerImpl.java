@@ -7,6 +7,12 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
+import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.domain.SiloServer;
 import pt.tecnico.sauron.silo.grpc.*;
@@ -47,6 +53,57 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         List<Observation> observations =  request.getObservationList();
 
         ControlInitResponse response = ControlInitResponse.newBuilder().setResponseStatus(Status.OK).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
+        String type =  request.getType();
+        String identifier = request.getIdentifier();
+
+        //TODO  find the most recent observation of the object
+        Observation observation = null;
+
+        TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
+        String type =  request.getType();
+        String identifier = request.getIdentifier();
+
+        TrackMatchResponse response = null;
+        //TODO  find the most recent observations of each object found
+        List<Observation> observations = null;
+        int index = 0;
+
+        for(Observation observation : observations){
+            response = TrackMatchResponse.newBuilder().setObservations(index, observation).build();
+            index++;
+        }
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
+        String type =  request.getType();
+        String identifier = request.getIdentifier();
+
+        TraceResponse response = null;
+        //TODO  find the observations for the object sorted from most recent to oldest
+        List<Observation> observations = null;
+        int index = 0;
+
+        for(Observation observation : observations){
+            response = TraceResponse.newBuilder().setObservations(index, observation).build();
+            index++;
+        }
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
