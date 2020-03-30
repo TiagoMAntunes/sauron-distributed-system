@@ -12,6 +12,7 @@ enum Status {
     INVALID_CAM = 3;
     INVALID_OBS = 4;
     NULL_OBS = 5;
+    NULL_COORDS = 6;
 };
 
 message Observation {
@@ -21,6 +22,7 @@ message Observation {
 }
 
 message CamJoinRequest {
+    //TODO change to google coordinates
     string name = 1;
     double lon = 2;
     double lat = 3;
@@ -35,6 +37,7 @@ message CamInfoRequest {
 }
 
 message CamInfoResponse {
+    //TODO change to google coordinates
     double lon = 1;
     double lat = 2;
 }
