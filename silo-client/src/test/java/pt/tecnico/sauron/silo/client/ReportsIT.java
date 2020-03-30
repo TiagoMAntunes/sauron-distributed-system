@@ -5,6 +5,8 @@ import org.junit.jupiter.api.*;
 import static java.lang.System.currentTimeMillis;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.type.LatLng;
+
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import pt.tecnico.sauron.silo.grpc.Silo;
@@ -14,8 +16,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
-
-
+import pt.tecnico.sauron.silo.grpc.Silo.Camera;
+import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
 
 
@@ -26,31 +28,52 @@ public class ReportsIT extends BaseIT {
     private final String INVALID_CAM_NAME = "InvalidCam";
     private final double CAM_LATITUDE = 37.14360;
     private final double CAM_LONGITUDE = -115.482399;
+    private final LatLng CAM_COORDS = LatLng.newBuilder().
+            setLatitude(CAM_LATITUDE).
+            setLongitude(CAM_LONGITUDE).
+            build();
 
     private final String CAR_TYPE = "CAR";
     private final String CAR_ID = "AA00AA";
-    private final Observation VALID_CAR_OBSERVATION = Observation.newBuilder().
+    private final Observable CAR_OBSERVABLE = Observable.newBuilder().
             setType(CAR_TYPE).
             setIdentifier(CAR_ID).
+            build();
+
+    private final Observation VALID_CAR_OBSERVATION = Observation.newBuilder().
+            setObservated(CAR_OBSERVABLE).
             setTime(fromMillis(currentTimeMillis())).
             build();
 
     private final String PERSON_TYPE = "PERSON";
     private final String PERSON_ID = "14388236";
-    private final Observation VALID_PERSON_OBSERVATION = Observation.newBuilder().
+    private final Observable PERSON_OBSERVABLE = Observable.newBuilder().
             setType(PERSON_TYPE).
             setIdentifier(PERSON_ID).
+            build();
+
+    private final Observation VALID_PERSON_OBSERVATION = Observation.newBuilder().
+            setObservated(PERSON_OBSERVABLE).
             setTime(fromMillis(currentTimeMillis())).
             build();
 
     private final Observation NULL_OBSERVATION = null;
 
-    private final Observation INVALID_OBSERVATION = Observation.newBuilder().
+
+    private final Observable BAD_OBSERVABLE = Observable.newBuilder().
             setType(PERSON_TYPE).
             setIdentifier(CAR_ID).
+            build();
+
+    private final Observation INVALID_OBSERVATION = Observation.newBuilder().
+            setObservated(BAD_OBSERVABLE).
             setTime(fromMillis(currentTimeMillis())).
             build();
 
+    private final Camera CAMERA = Camera.newBuilder().
+            setCameraName(VALID_CAM_NAME).
+            setCoords(CAM_COORDS).
+            build();
     // one-time initialization and clean-up
 
     @BeforeAll
@@ -69,9 +92,7 @@ public class ReportsIT extends BaseIT {
     public void setUp() {
         //Set up a valid camera for each test
         CamJoinRequest camReq = CamJoinRequest.newBuilder().
-                setName(VALID_CAM_NAME).
-                setLat(CAM_LATITUDE).
-                setLon(CAM_LONGITUDE).
+                setCamera(CAMERA).
                 build();
 
         CamJoinResponse camRes = frontend.camJoin(camReq);
@@ -88,7 +109,7 @@ public class ReportsIT extends BaseIT {
     @Test
     public void reportOkTest() {
         ReportRequest request = ReportRequest.newBuilder().
-                setName(VALID_CAM_NAME).
+                setCameraName(VALID_CAM_NAME).
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
@@ -100,7 +121,7 @@ public class ReportsIT extends BaseIT {
     @Test
     public void reportNonExistantCameraTest() {
         ReportRequest request = ReportRequest.newBuilder().
-                setName(INVALID_CAM_NAME).
+                setCameraName(INVALID_CAM_NAME).
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
@@ -112,7 +133,7 @@ public class ReportsIT extends BaseIT {
     @Test
     public void reportEmptyCameraNameTest() {
         ReportRequest request = ReportRequest.newBuilder().
-                setName("").
+                setCameraName("").
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
@@ -135,7 +156,7 @@ public class ReportsIT extends BaseIT {
     @Test
     public void reportNullObservationTest() {
         ReportRequest request = ReportRequest.newBuilder().
-                setName(VALID_CAM_NAME).
+                setCameraName(VALID_CAM_NAME).
                 addObservations(NULL_OBSERVATION).
                 build();
 
@@ -148,7 +169,7 @@ public class ReportsIT extends BaseIT {
     public void reportEmptySetOfObservationsTest() {
         //Set is empty because no observation is added
         ReportRequest request = ReportRequest.newBuilder().
-                setName(VALID_CAM_NAME).
+                setCameraName(VALID_CAM_NAME).
                 build();
 
         ReportResponse response = frontend.reports(request);
@@ -160,7 +181,7 @@ public class ReportsIT extends BaseIT {
     public void reportInvalidObservationData() {
         //Invalid observation consisting on having an ID that doesn't match type
         ReportRequest request = ReportRequest.newBuilder().
-                setName(VALID_CAM_NAME).addObservations(INVALID_OBSERVATION).
+                setCameraName(VALID_CAM_NAME).addObservations(INVALID_OBSERVATION).
                 build();
 
         ReportResponse response = frontend.reports(request);
