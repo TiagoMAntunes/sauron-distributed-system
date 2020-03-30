@@ -22,14 +22,16 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 
 public class TrackMatchIT extends BaseIT {
 	
 	private final String CAR_TYPE = "CAR";
     private final String PERSON_TYPE = "PERSON";
     private final String CAR_ID = "AA00AA";
-    private final String PERSON_ID = "14388236";
-    private final Observation CAR_OBSERVATION = Observation.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).setTime(fromMillis(currentTimeMillis())).build();
+	private final String PERSON_ID = "14388236";
+	private final Observable CAR_OBSERVABLE = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+    private final Observation CAR_OBSERVATION = Observation.newBuilder().setObservated(CAR_OBSERVABLE).setTime(fromMillis(currentTimeMillis())).build();
     private final String CAR_PARTIAL_ID = "AA0*";
 	private final String CAR_INV_PARTIAL_ID = "AA01*";
 	
@@ -47,7 +49,7 @@ public class TrackMatchIT extends BaseIT {
 
     @Test
     public void nonNullResponse() {
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
 		assertNotEquals(null, response, "Response shouldn't be null");
@@ -57,7 +59,7 @@ public class TrackMatchIT extends BaseIT {
     @Test
     public void emptyResponse() {
 		//server is empty
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
 		assertEquals(0, response.getObservationsCount());
@@ -69,7 +71,8 @@ public class TrackMatchIT extends BaseIT {
         //load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
 
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_PARTIAL_ID).build();
+		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_PARTIAL_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
 		assertEquals(1, response.getObservationsCount());
@@ -81,7 +84,7 @@ public class TrackMatchIT extends BaseIT {
         //load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
 
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
 		List<Observation> observations = response.getObservationsList();
@@ -93,11 +96,15 @@ public class TrackMatchIT extends BaseIT {
 	public void multipleObservations() {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
-        for (int i = 0; i < 10; i++)
-            values.add(Observation.newBuilder().setType(CAR_TYPE).setIdentifier("AA0" + String.valueOf(i) + "AA").setTime(fromMillis(currentTimeMillis())).build());
+        for (int i = 0; i < 10; i++) {
+			Observable o = Observable.newBuilder().setType(CAR_TYPE).setIdentifier("AA0" + String.valueOf(i) + "AA").build();
+			values.add(Observation.newBuilder().setObservated(o).setTime(fromMillis(currentTimeMillis())).build());
+		}
+            
 		frontend.controlInit(ControlInitRequest.newBuilder().addAllObservation(values).build());
 		
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_PARTIAL_ID).build();
+		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_PARTIAL_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(10, response.getObservationsCount());
@@ -107,14 +114,18 @@ public class TrackMatchIT extends BaseIT {
 	public void multipleObservationsSameId() {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
-        for (int i = 0; i < 5; i++)
-			values.add(Observation.newBuilder().setType(CAR_TYPE).setIdentifier("AA1" + String.valueOf(i) + "AA").setTime(fromMillis(currentTimeMillis())).build());
-		for (int i = 0; i < 5; i++)
-			values.add(Observation.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).setTime(fromMillis(currentTimeMillis())).build());
-			
+        for (int i = 0; i < 5; i++) {
+			Observable o = Observable.newBuilder().setType(CAR_TYPE).setIdentifier("AA1" + String.valueOf(i) + "AA").build();
+			values.add(Observation.newBuilder().setObservated(o).setTime(fromMillis(currentTimeMillis())).build());
+		}
+		for (int i = 0; i < 5; i++){
+			Observable o = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+			values.add(Observation.newBuilder().setObservated(o).setTime(fromMillis(currentTimeMillis())).build());
+		}
 		frontend.controlInit(ControlInitRequest.newBuilder().addAllObservation(values).build());
 		
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_PARTIAL_ID).build();
+		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_PARTIAL_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(1, response.getObservationsCount());
@@ -124,11 +135,14 @@ public class TrackMatchIT extends BaseIT {
 	public void noMatch() {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
-        for (int i = 0; i < 10; i++)
-            values.add(Observation.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).setTime(fromMillis(currentTimeMillis())).build());
+        for (int i = 0; i < 10; i++) {
+            Observable o = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+			values.add(Observation.newBuilder().setObservated(o).setTime(fromMillis(currentTimeMillis())).build());
+		}
 		frontend.controlInit(ControlInitRequest.newBuilder().addAllObservation(values).build());
 		
-		TrackMatchRequest request = TrackMatchRequest.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_INV_PARTIAL_ID).build();
+		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_INV_PARTIAL_ID).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(0, response.getObservationsCount());

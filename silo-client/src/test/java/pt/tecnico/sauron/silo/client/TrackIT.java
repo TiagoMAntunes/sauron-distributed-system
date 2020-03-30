@@ -18,13 +18,15 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 
 public class TrackIT extends BaseIT {
 
     private final String CAR_TYPE = "CAR";
     private final String CAR_ID = "AA00AA";
     private final String CAR_INV_ID = "AA01AA";
-    private final Observation CAR_OBSERVATION = Observation.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).setTime(fromMillis(currentTimeMillis())).build();
+    private final Observable CAR_OBSERVABLE = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_ID).build();
+    private final Observation CAR_OBSERVATION = Observation.newBuilder().setObservated(CAR_OBSERVABLE).setTime(fromMillis(currentTimeMillis())).build();
     
 
     @BeforeEach
@@ -41,7 +43,7 @@ public class TrackIT extends BaseIT {
 
     @Test
     public void nonNullResponse() {
-        TrackRequest request = TrackRequest.newBuilder().setIdentifier(CAR_ID).setType(CAR_TYPE).build();
+        TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
         assertNotEquals(null, response, "Response shouldn't be null");
     }
@@ -49,7 +51,7 @@ public class TrackIT extends BaseIT {
     @Test
     public void emptyResponse() {
         //server has no data
-        TrackRequest request = TrackRequest.newBuilder().setIdentifier(CAR_ID).setType(CAR_TYPE).build();
+        TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
         assertEquals(null, response.getObservation());
     }
@@ -59,7 +61,7 @@ public class TrackIT extends BaseIT {
         //load data first
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
 
-        TrackRequest request = TrackRequest.newBuilder().setIdentifier(CAR_ID).setType(CAR_TYPE).build();
+        TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
         Observation o = response.getObservation();
 
@@ -71,7 +73,8 @@ public class TrackIT extends BaseIT {
         //load data first
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
 
-        TrackRequest request = TrackRequest.newBuilder().setIdentifier(CAR_INV_ID).setType(CAR_TYPE).build();
+        Observable inv_obs = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_INV_ID).build();
+        TrackRequest request = TrackRequest.newBuilder().setIdentity(inv_obs).build();
         TrackResponse response = frontend.track(request);
         Observation o = response.getObservation();
 
