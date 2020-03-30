@@ -73,8 +73,6 @@ public class SiloServerFrontend {
 
     public ReportResponse reports(ReportRequest r) { return null; }
 
-    public CamJoinResponse camJoin(CamJoinRequest r) { return null; }
-
     public final void close() {
         channel.shutdown();
     }
