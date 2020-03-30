@@ -77,7 +77,7 @@ public class CamJoinIT extends BaseIT {
 
         CamJoinResponse response = frontend.camJoin(request);
 
-        assertEquals(Status.NULL_LON, response.getResponseStatus());
+        assertEquals(Status.NULL_COORDS, response.getResponseStatus());
     }
 
     @Test
@@ -86,6 +86,15 @@ public class CamJoinIT extends BaseIT {
 
         CamJoinResponse response = frontend.camJoin(request);
 
-        assertEquals(Status.NULL_LAT, response.getResponseStatus());
+        assertEquals(Status.NULL_COORDS, response.getResponseStatus());
+    }
+
+    @Test
+    public void nullCoordsTest() {
+        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(NULL_LON).setLat(NULL_LAT).build();
+
+        CamJoinResponse response = frontend.camJoin(request);
+
+        assertEquals(Status.NULL_COORDS, response.getResponseStatus());
     }
 }

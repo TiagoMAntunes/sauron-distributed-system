@@ -49,6 +49,7 @@ public class CamInfoIT extends BaseIT {
         CamInfoRequest request = CamInfoRequest.newBuilder().setName(INEXISTENT_NAME).build();
         CamInfoResponse response = frontend.camInfo(request);
 
+        //TODO maybe return Status.INVALID_CAM?
         assertEquals(null, response.getLon());
         assertEquals(null, response.getLat());
     }
