@@ -1,5 +1,7 @@
 package pt.tecnico.sauron.spotter;
 
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -8,6 +10,8 @@ import java.util.Scanner;
 
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
+import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
@@ -46,6 +50,8 @@ public class SpotterApp {
 						spotHandler(frontend, line);
 						break;
 					case "trail":
+						trailHandler(frontend, line);
+						break;
 					case "ping":
 					case "clear":
 					case "init":
@@ -89,15 +95,13 @@ public class SpotterApp {
 		
 		List<Observation> observations;
 		
-
-		//TODO missing camera information
 		if (partial) {
 			//Id is partial
 			TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentifier(id).setType(type).build();
 			TrackMatchResponse response = frontend.trackMatch(request);
 			observations = response.getObservationsList();
 		} else {
-			TrackRequest request = TrackRequest.newBuilder().setIdentifier(id).setType(type).build();\
+			TrackRequest request = TrackRequest.newBuilder().setIdentifier(id).setType(type).build();
 			TrackResponse response = frontend.track(request);
 			observations = new ArrayList<Observation>();
 			observations.add((response.getObservation()));
@@ -105,9 +109,34 @@ public class SpotterApp {
 
 		Collections.sort(observations, Comparators.OBSERVATION_ID);
 
+		printObservations(System.out, observations);
+	}
+
+	private static void trailHandler(SiloServerFrontend frontend, String[] line) {
+		if (line.length < 3) {
+			System.out.println("Invalid number of arguments!");
+			return;
+		}
+
+		String type = line[1];
+		String id = line[2];
+
+		TraceRequest request = TraceRequest.newBuilder().setIdentifier(id).setType(type).build();
+		TraceResponse response = frontend.trace(request);
+
+		List<Observation> observations = response.getObservationsList();
+
+		printObservations(System.out, observations);
+		
+	}
+
+	private static void printObservations(PrintStream out, Iterable<Observation> observations) {
+		//TODO print cameras and formatted time
 		for (Observation o : observations) {
-			
+			out.printf("%s,%s,%s%n", o.getType(), o.getIdentifier(),new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(o.getTime()));
 		}
 	}
+
+	
 
 }
