@@ -2,6 +2,8 @@ package pt.tecnico.sauron.silo.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.type.LatLng;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import pt.tecnico.sauron.silo.client.BaseIT;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
 
 public class CamJoinIT extends BaseIT {
@@ -19,8 +22,8 @@ public class CamJoinIT extends BaseIT {
     static final String BIG_NAME = "abcdefghijlmnopq";
     static final double LON = 1;
     static final double LAT = 1;
-    static final double NULL_LON = null;
-    static final double NULL_LAT = null;
+    static final LatLng COORDS = LatLng.newBuilder().setLatitude(50).setLongitude(50).build();
+    
 	
 	// initialization and clean-up for each test
 	
@@ -38,15 +41,18 @@ public class CamJoinIT extends BaseIT {
 	
 	@Test
 	public void camJoinTest() {
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(LON).setLat(LAT).build();
+        Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         CamJoinResponse response = frontend.camJoin(request);
         assertEquals(Status.OK, response.getResponseStatus());
     }
     
     @Test
     public void duplicateNameTest() {
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(LON).setLat(LAT).build();
-        CamJoinRequest request_duplicate = CamJoinRequest.newBuilder().setName(NAME).setLon(LON).setLat(LAT).build();
+        Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
+        Camera camera_duplicate = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
+        CamJoinRequest request_duplicate = CamJoinRequest.newBuilder().setCamera(camera_duplicate).build();
         CamJoinResponse response = frontend.camJoin(request);
         CamJoinResponse response_duplicate = frontend.camJoin(request_duplicate);
 
@@ -56,7 +62,8 @@ public class CamJoinIT extends BaseIT {
     @Test
     public void smallNameTest() {
         //Verifies if the name is less than 3 characters long
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(SMALL_NAME).setLon(LON).setLat(LAT).build();
+        Camera camera = Camera.newBuilder().setName(SMALL_NAME).setCoords(COORDS).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         CamJoinResponse response = frontend.camJoin(request);
 
         assertEquals(Status.INVALID_ARG, response.getResponseStatus());
@@ -65,7 +72,8 @@ public class CamJoinIT extends BaseIT {
     @Test
     public void bigNameTest() {
         //Verifies if the name is more than 15 characters long
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(BIG_NAME).setLon(LON).setLat(LAT).build();
+        Camera camera = Camera.newBuilder().setName(BIG_NAME).setCoords(COORDS).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         CamJoinResponse response = frontend.camJoin(request);
 
         assertEquals(Status.INVALID_ARG, response.getResponseStatus());
@@ -73,7 +81,9 @@ public class CamJoinIT extends BaseIT {
 
     @Test
     public void nullLonTest() {
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(NULL_LON).setLat(LAT).build();
+        LatLng bad_coords = LatLng.newBuilder().setLatitude(1).build();
+        Camera camera = Camera.newBuilder().setName(NAME).setCoords(bad_coords).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
 
         CamJoinResponse response = frontend.camJoin(request);
 
@@ -82,8 +92,10 @@ public class CamJoinIT extends BaseIT {
 
     @Test
     public void nullLatTest() {
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(LON).setLat(NULL_LAT).build();
-
+        LatLng bad_coords = LatLng.newBuilder().setLongitude(1).build();
+        Camera camera = Camera.newBuilder().setName(NAME).setCoords(bad_coords).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
+        
         CamJoinResponse response = frontend.camJoin(request);
 
         assertEquals(Status.NULL_COORDS, response.getResponseStatus());
@@ -91,7 +103,9 @@ public class CamJoinIT extends BaseIT {
 
     @Test
     public void nullCoordsTest() {
-        CamJoinRequest request = CamJoinRequest.newBuilder().setName(NAME).setLon(NULL_LON).setLat(NULL_LAT).build();
+        LatLng bad_coords = LatLng.newBuilder().build();
+        Camera camera = Camera.newBuilder().setName(NAME).setCoords(bad_coords).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
 
         CamJoinResponse response = frontend.camJoin(request);
 
