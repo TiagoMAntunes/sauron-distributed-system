@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
+import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
@@ -94,14 +95,15 @@ public class SpotterApp {
 		boolean partial = id.contains("*");
 		
 		List<Observation> observations;
-		
+		Observable identity = Observable.newBuilder().setType(type).setIdentifier(id).build();
+
 		if (partial) {
 			//Id is partial
-			TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentifier(id).setType(type).build();
+			TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(identity).build();
 			TrackMatchResponse response = frontend.trackMatch(request);
 			observations = response.getObservationsList();
 		} else {
-			TrackRequest request = TrackRequest.newBuilder().setIdentifier(id).setType(type).build();
+			TrackRequest request = TrackRequest.newBuilder().setIdentity(identity).build();
 			TrackResponse response = frontend.track(request);
 			observations = new ArrayList<Observation>();
 			observations.add((response.getObservation()));
@@ -121,7 +123,8 @@ public class SpotterApp {
 		String type = line[1];
 		String id = line[2];
 
-		TraceRequest request = TraceRequest.newBuilder().setIdentifier(id).setType(type).build();
+		Observable identity = Observable.newBuilder().setType(type).setIdentifier(id).build();
+		TraceRequest request = TraceRequest.newBuilder().setIdentity(identity).build();
 		TraceResponse response = frontend.trace(request);
 
 		List<Observation> observations = response.getObservationsList();
@@ -131,9 +134,15 @@ public class SpotterApp {
 	}
 
 	private static void printObservations(PrintStream out, Iterable<Observation> observations) {
-		//TODO print cameras and formatted time
 		for (Observation o : observations) {
-			out.printf("%s,%s,%s%n", o.getType(), o.getIdentifier(),new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(o.getTime()));
+			out.printf("%s,%s,%s,%s,%s,%s%n", 
+				o.getObservated().getType(), 
+				o.getObservated().getIdentifier(),
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(o.getTime()), 
+				o.getCamera().getName(),
+				o.getCamera().getCoords().getLatitude(),
+				o.getCamera().getCoords().getLongitude()
+			);
 		}
 	}
 
