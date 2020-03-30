@@ -71,7 +71,7 @@ public class ReportsIT extends BaseIT {
             build();
 
     private final Camera CAMERA = Camera.newBuilder().
-            setCameraName(VALID_CAM_NAME).
+            setName(VALID_CAM_NAME).
             setCoords(CAM_COORDS).
             build();
     // one-time initialization and clean-up
