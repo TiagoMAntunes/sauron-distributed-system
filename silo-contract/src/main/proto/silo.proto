@@ -28,6 +28,7 @@ message Camera {
 
 message Observation {
     Observable observated = 1;
+    Camera camera = 2;
     google.protobuf.Timestamp time = 3;
 }
 
