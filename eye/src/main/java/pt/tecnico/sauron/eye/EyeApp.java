@@ -12,7 +12,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
@@ -40,22 +39,23 @@ public class EyeApp {
 
 		SiloServerFrontend frontend = new SiloServerFrontend(host, port);
 
-		CamInfoRequest request = CamInfoRequest.newBuilder().setName(camName).build();
+		CamInfoRequest request = CamInfoRequest.newBuilder().
+				setName(camName).build();
+
 		CamInfoResponse response = frontend.camInfo(request);
 
 		if(response.getResponseStatus() == Status.INVALID_CAM) {
+
 			LatLng camCoords = LatLng.newBuilder().
-								setLatitude(lat).
-								setLongitude(lon).
-								build();
+					setLatitude(lat).
+					setLongitude(lon).build();
 
 			Camera newCam = Camera.newBuilder().
-									setName(camName).
-									setCoords(camCoords).
-									build();
+					setName(camName).
+					setCoords(camCoords).build();
 			CamJoinRequest camJoinReq = CamJoinRequest.newBuilder().
-											setCamera(newCam).
-											build();
+					setCamera(newCam).build();
+
 			frontend.camJoin(camJoinReq);
 		}
 
@@ -72,12 +72,11 @@ public class EyeApp {
 
 			Observable entity = Observable.newBuilder().
 									setType(obsType).
-									setIdentifier(obsId).
-									build();
+									setIdentifier(obsId).build();
+
 			Observation obs = Observation.newBuilder().
-								setObservated(entity).
-								setTime(fromMillis(currentTimeMillis())).
-								build();
+					setObservated(entity).
+					setTime(fromMillis(currentTimeMillis())).build();
 
 			observations.add(obs);
 
@@ -88,9 +87,8 @@ public class EyeApp {
 
 			//TODO Alternative to consider: make a single report with multiple observations
 			ReportRequest reportReq = ReportRequest.newBuilder().
-										setCameraName(camName).
-										addObservations(o).
-										build();
+					setCameraName(camName).
+					addObservations(o).build();
 
 			frontend.reports(reportReq);
 		}
