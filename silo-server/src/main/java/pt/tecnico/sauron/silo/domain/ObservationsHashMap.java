@@ -9,13 +9,17 @@ public class ObservationsHashMap {
 
     private Map<String, ArrayList<Observation>> observationsHashMap = new HashMap<String, ArrayList<Observation>>();
 
-    
-    public void inputObservations(String identifier , ArrayList<Observation> observations) {
-        observationsHashMap.put(identifier, observations);
-
-    }
-
     public ArrayList<Observation> getObservations(String identifier) {
         return observationsHashMap.get(identifier);
+    }
+
+    public void inputObservation(String identifier , Observation observation) {
+        
+        ArrayList<Observation> observations = getObservations(identifier);
+        observations.add(observation);
+
+        //Replaces current list with the old list plus the new observation
+        observationsHashMap.put(identifier, observations);
+
     }
 }
