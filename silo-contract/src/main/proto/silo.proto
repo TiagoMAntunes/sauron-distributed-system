@@ -4,6 +4,7 @@
 syntax = "proto3";
 package pt.tecnico.sauron.silo.grpc;
 import "google/protobuf/timestamp.proto";
+import "google/type/latlng.proto";
 
 enum Status {
     OK = 0;
@@ -15,17 +16,24 @@ enum Status {
     NULL_COORDS = 6;
 };
 
-message Observation {
+message Observable {
     string type = 1;
     string identifier = 2;
+}
+
+message Camera {
+    string name = 1;
+    google.type.LatLng coords = 2;
+}
+
+message Observation {
+    Observable observated = 1;
+    Camera camera = 2;
     google.protobuf.Timestamp time = 3;
 }
 
 message CamJoinRequest {
-    //TODO change to google coordinates
-    string name = 1;
-    double lon = 2;
-    double lat = 3;
+    Camera camera = 1;
 }
 
 message CamJoinResponse {
@@ -37,13 +45,11 @@ message CamInfoRequest {
 }
 
 message CamInfoResponse {
-    //TODO change to google coordinates
-    double lon = 1;
-    double lat = 2;
+    Camera camera = 1;
 }
 
 message ReportRequest {
-    string name = 1;
+    string cameraName = 1;
     repeated Observation observations = 2;
 }
 
@@ -52,8 +58,7 @@ message ReportResponse {
 }
 
 message TrackRequest {
-    string type = 1;
-    string identifier = 2;
+    Observable identity = 1;
 }
 
 message TrackResponse {
@@ -61,8 +66,7 @@ message TrackResponse {
 }
 
 message TrackMatchRequest {
-    string type = 1;
-    string identifier = 2;
+    Observable identity = 1;
 }
 
 message TrackMatchResponse {
@@ -70,8 +74,7 @@ message TrackMatchResponse {
 }
 
 message TraceRequest {
-    string type = 1;
-    string identifier = 2;
+    Observable identity = 1;
 }
 
 message TraceResponse {
