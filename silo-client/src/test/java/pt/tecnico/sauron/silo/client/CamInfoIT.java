@@ -54,7 +54,7 @@ public class CamInfoIT extends BaseIT {
         CamInfoResponse response = frontend.camInfo(request);
 
         //TODO maybe return Status.INVALID_CAM?
-        assertEquals(null, response.getCamera());
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 
 }

@@ -10,10 +10,9 @@ enum Status {
     OK = 0;
     NOK = 1;
     INVALID_ARG = 2;
-    INVALID_CAM = 3;
-    INVALID_OBS = 4;
-    NULL_OBS = 5;
-    NULL_COORDS = 6;
+    INVALID_OBS = 3;
+    NULL_OBS = 4;
+    NULL_COORDS = 5;
 };
 
 message Observable {

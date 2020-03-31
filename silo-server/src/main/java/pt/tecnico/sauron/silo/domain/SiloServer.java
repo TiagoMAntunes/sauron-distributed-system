@@ -14,6 +14,8 @@ public class SiloServer {
     private Map<String, Camera> cameras = new HashMap<>();
 
     public synchronized boolean clear() {
+        cameras.clear();
+
         return true;
     }
 

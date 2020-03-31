@@ -42,12 +42,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String camName = request.getCamera().getName();
         LatLng camCoords = request.getCamera().getCoords();
 
+
         CamJoinResponse response;
         if (camName == null) {
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
-        } else if (camName.equals("") || !silo.cameraExists(camName)) {
+        } else if (camName.equals("") || silo.cameraExists(camName)) {
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
-        } else if (camName.length() < 3 && camName.length() > 15 ) {
+        } else if (camName.length() < 3 || camName.length() > 15 ) {
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else if (camCoords.getLatitude() == 0.0 || camCoords.getLongitude() == 0.0) {
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.NULL_COORDS).build();
@@ -67,9 +68,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         if (camName == null) {
             response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else if (camName.equals("") || !silo.cameraExists(camName)) {
-            response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_CAM).build();
+            response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else {
-
+            System.out.println("In camInfo Imple");
             Camera cam = silo.getCamera(camName);
             response = CamInfoResponse.newBuilder().setCamera(cam).build();
         }
@@ -88,7 +89,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         if (camName == null) {
             response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else if (camName.equals("") || !silo.cameraExists(camName)) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_CAM).build();
+            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else if (observations == null) {
             response = ReportResponse.newBuilder().setResponseStatus(Status.NULL_OBS).build();
         } else if (observations.isEmpty()) {
