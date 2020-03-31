@@ -29,5 +29,4 @@ public class Registry {
         this.getTime().getNanos() < r.getTime().getNanos();
     }
 
-
 }
