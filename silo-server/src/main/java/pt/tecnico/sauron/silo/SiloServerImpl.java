@@ -108,7 +108,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
         
-        String type =  request.getIdentity().getIdentifier();
         String identifier = request.getIdentity().getIdentifier();
 
         Registry mostRecentRegistry = silo.getMostRecentRegistry(identifier);
