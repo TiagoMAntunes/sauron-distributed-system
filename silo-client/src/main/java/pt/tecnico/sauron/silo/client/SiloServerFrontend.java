@@ -71,7 +71,9 @@ public class SiloServerFrontend {
         return null;
     }
 
-    public ReportResponse reports(ReportRequest r) { return null; }
+    public ReportResponse reports(ReportRequest r) {
+        return stub.report(r);
+    }
 
     public final void close() {
         channel.shutdown();
