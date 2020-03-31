@@ -23,7 +23,20 @@ public class SiloServer {
 
     public synchronized List<Registry> getRegistries(String identifier) {
         return registriesMap.get(identifier);
-    }  
+    }
+    
+    public synchronized Registry getMostRecentRegistry(String identifier) {
+        //Gets list of registries for a given identifier
+        List<Registry> registries = registriesMap.get(identifier);
+        Registry mostRecentRegistry = registries.get(0);
+        
+        //Gets the most recent registry
+        for(Registry r : registries){
+            if(r.before(mostRecentRegistry))
+                mostRecentRegistry = r;
+        }
+        return mostRecentRegistry;
+    }
 
     public synchronized boolean cameraExists(String cameraName) {
         return cameras.containsKey(cameraName);
@@ -39,5 +52,7 @@ public class SiloServer {
                 registriesMap.put(r.getIdentifier(), list);
             }
     }
+
+
 
 }

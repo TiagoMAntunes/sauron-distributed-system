@@ -112,7 +112,7 @@ service Sauron {
     rpc CamJoin(CamJoinRequest) returns (CamJoinResponse);
     rpc CamInfo(CamInfoRequest) returns (CamInfoResponse);
     rpc Report(ReportRequest) returns (ReportResponse);
-    rpc Track(TrackRequest) returns (TrackRequest);
+    rpc Track(TrackRequest) returns (TrackResponse);
     rpc TrackMatch(TrackMatchRequest) returns (TrackMatchResponse);
     rpc Trace(TraceRequest) returns (TraceResponse);
     rpc ControlClear(ControlClearRequest) returns (ControlClearResponse);

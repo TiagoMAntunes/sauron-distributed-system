@@ -5,6 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
@@ -26,12 +27,12 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.protobuf.Timestamp;
-
 import io.grpc.stub.StreamObserver;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
+
+import com.google.protobuf.Timestamp;
 
 
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
@@ -106,12 +107,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
-        String type =  request.getType();
-        String identifier = request.getIdentifier();
+        
+        String type =  request.getIdentity().getIdentifier();
+        String identifier = request.getIdentity().getIdentifier();
 
-        //TODO  find the most recent observation of the object
-        Observation observation = null;
+        Registry mostRecentRegistry = silo.getMostRecentRegistry(identifier);
 
+        Observable observable = Observable.newBuilder()
+            .setType(mostRecentRegistry.getType())
+            .setIdentifier(mostRecentRegistry.getIdentifier())
+            .build();
+
+        Observation observation = Observation.newBuilder()
+            .setObservated(observable)
+            .setTime(mostRecentRegistry.getTime())
+            .setCamera(mostRecentRegistry.getCamera())
+            .build();
+
+        
         TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -119,8 +132,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
-        String type =  request.getType();
-        String identifier = request.getIdentifier();
+        String type =  request.getIdentity().getType();
+        String identifier = request.getIdentity().getIdentifier();
 
         TrackMatchResponse response = null;
         //TODO  find the most recent observations of each object found
@@ -138,8 +151,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
-        String type =  request.getType();
-        String identifier = request.getIdentifier();
+        String type =  request.getIdentity().getType();
+        String identifier = request.getIdentity().getIdentifier();
 
         TraceResponse response = null;
         //TODO  find the observations for the object sorted from most recent to oldest

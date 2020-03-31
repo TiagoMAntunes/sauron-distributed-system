@@ -22,6 +22,12 @@ public class Registry {
     public String getType() { return type; }
     public String getIdentifier() { return identifier; }
     public Timestamp getTime() { return time; }
+    
+    public boolean before(Registry r) {
+        return this.getTime().getSeconds() < r.getTime().getSeconds() || 
+        this.getTime().getSeconds() == r.getTime().getSeconds() &&
+        this.getTime().getNanos() < r.getTime().getNanos();
+    }
 
 
 }
