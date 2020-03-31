@@ -72,7 +72,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else {
             System.out.println("In camInfo Imple");
             Camera cam = silo.getCamera(camName);
-            response = CamInfoResponse.newBuilder().setCamera(cam).build();
+            response = CamInfoResponse.newBuilder().setCamera(cam).setResponseStatus(Status.OK).build();
         }
         responseObserver.onNext(response);
         responseObserver.onCompleted();
