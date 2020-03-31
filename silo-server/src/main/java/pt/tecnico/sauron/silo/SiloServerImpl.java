@@ -99,14 +99,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
-        
+        ArrayList<Registry> registries = new ArrayList<Registry>();
+
         for(Observation o : observations){
             Registry r = new Registry(o.getCamera(),
                 o.getObservated().getType(),
                 o.getObservated().getIdentifier(),
                 o.getTime());
-            silo.inputRegistry(o.getObservated().getIdentifier(), r);
+            registries.add(r);
         }
+
+        silo.addRegistries(registries);
 
         ControlInitResponse response = ControlInitResponse.newBuilder().setResponseStatus(Status.OK).build();
         responseObserver.onNext(response);
