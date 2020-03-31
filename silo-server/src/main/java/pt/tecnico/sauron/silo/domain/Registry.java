@@ -22,6 +22,4 @@ public class Registry {
     public String getType() { return type; }
     public String getIdentifier() { return identifier; }
     public Timestamp getTime() { return time; }
-
-
 }
