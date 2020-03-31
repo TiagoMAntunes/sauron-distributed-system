@@ -11,7 +11,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.Camera; //TODO remove import of grpc ent
 public class SiloServer {
 
     private Map<String, ArrayList<Registry>> registriesMap = new HashMap<>();
-    private Map<String, Camera> cameras = new HashMap<>();
+    private Map<String, CameraDomain> cameras = new HashMap<>();
 
     public synchronized boolean clear() {
         cameras.clear();
@@ -31,11 +31,11 @@ public class SiloServer {
         return cameras.containsKey(cameraName);
     }
 
-    public synchronized void addCamera(String cameraName, Camera camObj) {
+    public synchronized void addCamera(String cameraName, CameraDomain camObj) {
         cameras.put(cameraName, camObj);
     }
 
-    public synchronized Camera getCamera(String cameraName) {
+    public synchronized CameraDomain getCamera(String cameraName) {
         return cameras.get(cameraName);
     }
 

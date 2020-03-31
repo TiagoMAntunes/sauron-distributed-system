@@ -1,5 +1,6 @@
 package pt.tecnico.sauron.silo;
 
+import pt.tecnico.sauron.silo.domain.CameraDomain;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
@@ -53,8 +54,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (camCoords.getLatitude() == 0.0 || camCoords.getLongitude() == 0.0) {
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.NULL_COORDS).build();
         } else {
-
-            silo.addCamera(camName, request.getCamera());
+            CameraDomain newCam = new CameraDomain(camName, camCoords);
+            silo.addCamera(camName, newCam);
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.OK).build();
         }
         responseObserver.onNext(response);
@@ -70,7 +71,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (camName.equals("") || !silo.cameraExists(camName)) {
             response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else {
-            Camera cam = silo.getCamera(camName);
+            CameraDomain camDom = silo.getCamera(camName);
+            Camera cam = Camera.newBuilder().setCoords(camDom.getCoords()).setName(camDom.getName()).build();
             response = CamInfoResponse.newBuilder().setCamera(cam).setResponseStatus(Status.OK).build();
         }
         responseObserver.onNext(response);
