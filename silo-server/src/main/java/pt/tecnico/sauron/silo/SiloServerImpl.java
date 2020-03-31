@@ -7,6 +7,10 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
@@ -31,6 +35,41 @@ import static java.lang.System.currentTimeMillis;
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private final SiloServer silo = new SiloServer();
+
+    @Override
+    public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
+        String camName = request.getCamera().getName();
+        CamJoinResponse response;
+        if (camName == null) {
+            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (camName.equals("") || !silo.cameraExists(camName)) {
+            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_CAM).build();
+        } else {
+
+            silo.addCamera(camName, request.getCamera());
+            response = CamJoinResponse.newBuilder().setResponseStatus(Status.OK).build();
+        }
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
+        String camName = request.getName();
+        CamInfoResponse response;
+        if (camName == null) {
+            response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (camName.equals("") || !silo.cameraExists(camName)) {
+            response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_CAM).build();
+        } else {
+
+            Camera cam = silo.getCamera(camName);
+            response = CamInfoResponse.newBuilder().setCamera(cam).build();
+        }
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+
+    }
 
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {

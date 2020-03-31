@@ -29,6 +29,14 @@ public class SiloServer {
         return cameras.containsKey(cameraName);
     }
 
+    public synchronized void addCamera(String cameraName, Camera camObj) {
+        cameras.put(cameraName, camObj);
+    }
+
+    public synchronized Camera getCamera(String cameraName) {
+        return cameras.get(cameraName);
+    }
+
     public synchronized void addRegistries(List<Registry> registries) {
         for (Registry r : registries)
             if (registriesMap.containsKey(r.getIdentifier()))
