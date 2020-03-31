@@ -1,11 +1,9 @@
 package pt.tecnico.sauron.eye;
 
+import java.util.List;
 import java.util.Scanner;
 import java.util.ArrayList;
 import static java.lang.System.currentTimeMillis;
-
-import com.google.type.LatLng;
-import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
@@ -17,7 +15,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 
-
+import com.google.type.LatLng;
+import static com.google.protobuf.util.Timestamps.fromMillis;
 
 public class EyeApp {
 
@@ -35,7 +34,6 @@ public class EyeApp {
 		final String camName = args[2];
 		final double lat = Double.parseDouble(args[3]);
 		final double lon = Double.parseDouble(args[4]);
-
 
 		SiloServerFrontend frontend = new SiloServerFrontend(host, port);
 
@@ -64,25 +62,50 @@ public class EyeApp {
 		Scanner sc = new Scanner(System.in);
 		ArrayList<Observation> observations = new ArrayList<>();
 
-		while((sc.hasNextLine())) {
+		while(sc.hasNextLine()) {
 			String line = sc.nextLine();
-			String[] values = line.split(",");
-			String obsType = values[0];
-			String obsId = values[1];
 
-			Observable entity = Observable.newBuilder().
-									setType(obsType).
-									setIdentifier(obsId).build();
+			if (line.equals("")) {
+				sendObservations(observations, frontend, camName);
+				observations = new ArrayList<>();
+			} else if (line.charAt(0) == '#') {
+				// Ignores comments
+			}else {
+				String[] values = line.split(",");
+				if (values.length != 2) {
+					System.out.println("Valid input pls :("); //TODO send proper message
+				} else {
+					String obsType = values[0];
+					String obsId = values[1];
 
-			Observation obs = Observation.newBuilder().
-					setObservated(entity).
-					setTime(fromMillis(currentTimeMillis())).build();
+					if (obsType.equals("zzz") && isLong(obsId)) {
+						try {Thread.sleep(Long.parseLong(obsId)); }
+						catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					} else {
+						Observable entity = Observable.newBuilder().
+								setType(obsType).
+								setIdentifier(obsId).build();
 
-			observations.add(obs);
+						Observation obs = Observation.newBuilder().
+								setObservated(entity).
+								setTime(fromMillis(currentTimeMillis())).build();
 
+						observations.add(obs);
+					}
+				}
+			}
 		}
 		System.out.print("Closing eyelids...");
 
+		sendObservations(observations, frontend, camName);
+
+		System.out.println("Report sent. Sauron will be pleased for your aid to ending the Age of Men");
+
+	}
+
+	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
 		for (Observation o : observations ) {
 
 			//TODO Alternative to consider: make a single report with multiple observations
@@ -92,11 +115,16 @@ public class EyeApp {
 
 			frontend.reports(reportReq);
 		}
-
-		System.out.println("Report sent. Sauron will be pleased for your aid to ending the Age of Men");
-
 	}
 
-
-
+	//TODO Do this without using exceptions
+	static boolean isLong(String string) {
+		if (string == null) {
+			return false;
+		}
+		try {
+			Long.parseLong(string);
+		} catch (NumberFormatException e) {return false;}
+		return true;
+	}
 }
