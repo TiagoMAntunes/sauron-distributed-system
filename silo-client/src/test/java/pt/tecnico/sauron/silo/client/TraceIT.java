@@ -24,6 +24,7 @@ import static java.lang.System.currentTimeMillis;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
+import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
@@ -142,6 +143,32 @@ public class TraceIT extends BaseIT {
 		TraceResponse response = frontend.trace(request);
 
 		assertEquals(0, response.getObservationsCount());
+	}
+
+	@Test
+	public void nullObservation() {
+		TraceRequest request = TraceRequest.newBuilder().build();
+		TraceResponse response = frontend.trace(request);
+
+		assertEquals(Status.NULL_OBS, response.getResponseStatus());
+	}
+
+	@Test
+	public void nullType() {
+		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
+		TraceRequest request = TraceRequest.newBuilder().setIdentity(observation).build();
+		TraceResponse response = frontend.trace(request);
+
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+	}
+
+	@Test
+	public void nullId() {
+		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
+		TraceRequest request = TraceRequest.newBuilder().setIdentity(part_obs).build();
+		TraceResponse response = frontend.trace(request);
+
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
 	}
 
 
