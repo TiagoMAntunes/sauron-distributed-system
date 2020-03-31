@@ -30,6 +30,7 @@ import io.grpc.stub.StreamObserver;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
+import com.google.type.LatLng;
 
 
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
@@ -39,11 +40,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
         String camName = request.getCamera().getName();
+        LatLng camCoords = request.getCamera().getCoords();
+
         CamJoinResponse response;
         if (camName == null) {
             response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else if (camName.equals("") || !silo.cameraExists(camName)) {
-            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_CAM).build();
+            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (camName.length() < 3 && camName.length() > 15 ) {
+            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (camCoords.getLatitude() == 0.0 || camCoords.getLongitude() == 0.0) {
+            response = CamJoinResponse.newBuilder().setResponseStatus(Status.NULL_COORDS).build();
         } else {
 
             silo.addCamera(camName, request.getCamera());
