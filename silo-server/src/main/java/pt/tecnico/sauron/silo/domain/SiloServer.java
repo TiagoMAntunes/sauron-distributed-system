@@ -31,18 +31,8 @@ public class SiloServer {
     }
 
     public synchronized Registry getMostRecentRegistry(String identifier) {
-        //Gets list of registries for a given identifier
         if (registriesMap.containsKey(identifier)) {
-            List<Registry> registries = registriesMap.get(identifier);
-            Registry mostRecentRegistry = registries.get(0);
-
-            //Gets the most recent registry
-            for (Registry r : registries) {
-                if (r.before(mostRecentRegistry))
-                    mostRecentRegistry = r;
-            }
-
-            return mostRecentRegistry;
+            return registriesMap.get(identifier).get(registriesMap.get(identifier).size() -1);
         } else return null;
     }
 
@@ -88,5 +78,9 @@ public class SiloServer {
             }
         }
         return registries;
+    }
+
+    public boolean noRegistries() {
+        return registriesMap.isEmpty();
     }
 }

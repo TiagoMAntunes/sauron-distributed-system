@@ -61,6 +61,7 @@ public class TraceIT extends BaseIT {
 
 	@Test
     public void nonNullResponse() {
+		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
 		TraceResponse response = frontend.trace(request);
 		

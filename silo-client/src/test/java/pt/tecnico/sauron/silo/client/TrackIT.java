@@ -59,6 +59,7 @@ public class TrackIT extends BaseIT {
 
     @Test
     public void nonNullResponse() {
+        frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
         TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
         assertNotEquals(null, response, "Response shouldn't be null");
