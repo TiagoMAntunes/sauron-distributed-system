@@ -1,7 +1,8 @@
 package pt.tecnico.sauron.silo.domain;
 
 import java.util.*;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera; //TODO remove import of grpc entity
 
@@ -17,7 +18,7 @@ public class SiloServer {
         return true;
     }
 
-    public synchronized void inputRegistry(String identifier , Registry reg) {
+    public synchronized void inputRegistry(String identifier, Registry reg) {
         registriesMap.get(identifier).add(reg);
     }
 
@@ -25,13 +26,13 @@ public class SiloServer {
         return registriesMap.get(identifier);
     }
 
-    public synchronized  boolean registryExists(String identifier) {
+    public synchronized boolean registryExists(String identifier) {
         return registriesMap.containsKey(identifier);
     }
-    
+
     public synchronized Registry getMostRecentRegistry(String identifier) {
         //Gets list of registries for a given identifier
-        if(registriesMap.containsKey(identifier)) {
+        if (registriesMap.containsKey(identifier)) {
             List<Registry> registries = registriesMap.get(identifier);
             Registry mostRecentRegistry = registries.get(0);
 
@@ -42,8 +43,7 @@ public class SiloServer {
             }
 
             return mostRecentRegistry;
-        }
-        else return null;
+        } else return null;
     }
 
     public synchronized boolean cameraExists(String cameraName) {
@@ -73,6 +73,20 @@ public class SiloServer {
     public synchronized ArrayList<Registry> getSortedRegistries(String identifier) {
         ArrayList<Registry> registries = registriesMap.get(identifier);
         registries.sort(Registry::compareTo);
+        return registries;
+    }
+
+    public synchronized ArrayList<Registry> getAllRecentRegistries(String partialIdentifier) {
+        Pattern p = Pattern.compile(partialIdentifier.replace("*",".*"));
+        Matcher m;
+        ArrayList<Registry> registries = new ArrayList<>();
+
+        for (String identifier : registriesMap.keySet()) {
+            m = p.matcher(identifier);
+            if (m.matches()) {
+                registries.add(getMostRecentRegistry(identifier));
+            }
+        }
         return registries;
     }
 }

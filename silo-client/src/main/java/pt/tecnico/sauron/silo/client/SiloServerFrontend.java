@@ -64,7 +64,7 @@ public class SiloServerFrontend {
     }
 
     public TrackMatchResponse trackMatch(TrackMatchRequest r) {
-        return null;
+        return stub.trackMatch(r);
     }
 
     public TraceResponse trace(TraceRequest r) {

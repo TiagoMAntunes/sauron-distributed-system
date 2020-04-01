@@ -99,7 +99,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (camName.equals("") || !silo.cameraExists(camName)) {
             response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else if (observations == null) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.NULL_OBS).build();
+            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_OBS).build();
         } else if (observations.isEmpty()) {
             response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else {
@@ -199,7 +199,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             } else
                 //could not find registry
                 response = TrackResponse.newBuilder()
-                        .setResponseStatus(Status.NULL_OBS)
+                        .setResponseStatus(Status.EMPTY)
                         .build();
         }
         responseObserver.onNext(response);
@@ -208,19 +208,47 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
-        String type =  request.getIdentity().getType();
-        String identifier = request.getIdentity().getIdentifier();
+        String partialIdentifier = request.getIdentity().getIdentifier();
+        Registry mostRecentRegistry;
+        TrackMatchResponse response;
+        ArrayList<Registry> registries = new ArrayList<>();
+        ArrayList<Observation> observations = new ArrayList<>();
 
-        TrackMatchResponse response = null;
-        //TODO  find the most recent observations of each object found
-        ArrayList<Observation> observations = null;
-        int index = 0;
+        if (partialIdentifier == null) {
+            response = TrackMatchResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (partialIdentifier.equals("")) {
+            response = TrackMatchResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (request.getIdentity() == null) {
+            response = TrackMatchResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else {
+            registries = silo.getAllRecentRegistries(partialIdentifier);
 
-        for(Observation observation : observations){
-            response = TrackMatchResponse.newBuilder().setObservations(index, observation).build();
-            index++;
+            if (registries.size() > 0) {
+
+                for(Registry r : registries){
+                    Observable observable = Observable.newBuilder()
+                            .setType(r.getType())
+                            .setIdentifier(r.getIdentifier())
+                            .build();
+
+                    Observation observation = Observation.newBuilder()
+                            .setObservated(observable)
+                            .setTime(r.getTime())
+                            .setCamera(r.getCamera())
+                            .build();
+
+                    observations.add(observation);
+                }
+                response = TrackMatchResponse.newBuilder()
+                        .addAllObservations(observations)
+                        .setResponseStatus(Status.OK)
+                        .build();
+            } else
+                //could not find registry
+                response = TrackMatchResponse.newBuilder()
+                        .setResponseStatus(Status.EMPTY)
+                        .build();
         }
-
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
