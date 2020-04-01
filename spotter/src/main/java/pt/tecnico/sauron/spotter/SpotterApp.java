@@ -6,9 +6,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import com.google.type.LatLng;
+
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
+import pt.tecnico.sauron.silo.grpc.Silo.Camera;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
@@ -17,6 +25,9 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+
+import static com.google.protobuf.util.Timestamps.fromMillis;
+import static java.lang.System.currentTimeMillis;
 
 
 public class SpotterApp {
@@ -54,15 +65,21 @@ public class SpotterApp {
 						trailHandler(frontend, line);
 						break;
 					case "ping":
+						pingHandler(frontend, line);
+						break;
 					case "clear":
+						clearHandler(frontend, line);
+						break;
 					case "init":
+						initHandler(frontend, line);
+						break;
 					case "help":
 						System.out.println("Available commands: ");
 						System.out.println("spot <type> <identifier> - Find the last observation of an object or person with the specified ID");
 						System.out.println("trail <type> <identifier> - Find the path followed by an object or person with the specified ID");
-						System.out.println("ping <name> - Checks if the server is responding by saying hi");
+						System.out.println("ping [name] - Checks if the server is responding by saying hi");
 						System.out.println("clear - Resets the server to default status");
-						System.out.println("init - to be done"); //TODO
+						System.out.println("init <amount> [<type> <identifier> <camera name> <latitude> <longitude>]- to be done"); //TODO
 						System.out.println("help - Displays this menu");
 						System.out.println("exit - Exits the program");
 						break;
@@ -74,8 +91,13 @@ public class SpotterApp {
 				}
 			}
 		} 
+		catch (NoSuchElementException e) {
+			System.out.println("Standard input has been closed.");
+		}
 		catch (Exception e) {
+			System.out.println("Uncatched exception. Throwing...");
 			e.printStackTrace();
+			throw e;
 		} finally {
 			System.out.println("Closing...");
 		}
@@ -146,6 +168,52 @@ public class SpotterApp {
 		}
 	}
 
+	private static void pingHandler(SiloServerFrontend frontend, String[] line) {
+		String name;
+		if (line.length < 2) {
+			System.out.println("Assuming default name value");
+			name = "friend";
+		} else
+			name = line[1];
+
+		ControlPingRequest request = ControlPingRequest.newBuilder().setInputText(name).build();
+		ControlPingResponse response = frontend.controlPing(request);
+
+		System.out.println(response.getStatus());
+	}
+
+	private static void clearHandler(SiloServerFrontend frontend, String[] line) {
+		ControlClearRequest request = ControlClearRequest.getDefaultInstance();
+		frontend.controlClear(request);
+		System.out.println("System has been cleared");
+	}
+
+	private static void initHandler(SiloServerFrontend frontend, String[] line) {
+		if (line.length < 2 || Integer.parseInt(line[1]) * 5 + 2 > line.length) {
+			System.out.println("Invalid number of arguments!");
+			return;
+		}
+
+		int amount = Integer.parseInt(line[1]);
+		ArrayList<Observation> observations = new ArrayList<>();
+		for (int i = 2; i < amount * 5 + 2; i+=5) {
+			Observation observation = Observation.newBuilder().
+					setCamera(Camera.newBuilder().
+									setCoords(LatLng.newBuilder().setLatitude(Integer.parseInt(line[i+3])).setLongitude(Integer.parseInt(line[i+4])).build()).
+									setName(line[i+2]).
+									build()).
+					setObservated(Observable.newBuilder().
+											setIdentifier(line[i+1]).
+											setType(line[i]).
+											build()).
+					setTime(fromMillis(currentTimeMillis()))
+					.build();
+			observations.add(observation);
+		}
+
+		ControlInitRequest request = ControlInitRequest.newBuilder().addAllObservation(observations).build();
+		frontend.controlInit(request);
+	}
 	
 
 }
