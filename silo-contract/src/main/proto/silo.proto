@@ -10,10 +10,9 @@ enum Status {
     OK = 0;
     NOK = 1;
     INVALID_ARG = 2;
-    INVALID_CAM = 3;
-    INVALID_OBS = 4;
-    NULL_OBS = 5;
-    NULL_COORDS = 6;
+    INVALID_OBS = 3;
+    NULL_OBS = 4;
+    NULL_COORDS = 5;
 };
 
 message Observable {
@@ -28,6 +27,7 @@ message Camera {
 
 message Observation {
     Observable observated = 1;
+    Camera camera = 2;
     google.protobuf.Timestamp time = 3;
 }
 
@@ -44,8 +44,8 @@ message CamInfoRequest {
 }
 
 message CamInfoResponse {
-    Camera camera = 1;
-    Status responseStatus = 2;
+    Status responseStatus = 1;
+    Camera camera = 2;
 }
 
 message ReportRequest {
@@ -62,7 +62,8 @@ message TrackRequest {
 }
 
 message TrackResponse {
-    Observation observation = 1;
+    Status responseStatus = 1;
+    Observation observation = 2;
 }
 
 message TrackMatchRequest {
@@ -70,7 +71,8 @@ message TrackMatchRequest {
 }
 
 message TrackMatchResponse {
-    repeated Observation observations = 1;
+    Status responseStatus = 1;
+    repeated Observation observations = 2;
 }
 
 message TraceRequest {
@@ -78,7 +80,8 @@ message TraceRequest {
 }
 
 message TraceResponse {
-    repeated Observation observations = 1;
+    Status responseStatus = 1;
+    repeated Observation observations = 2;
 }
 
 message ControlPingRequest {
@@ -108,7 +111,7 @@ message ControlInitResponse {
 service Sauron {
     rpc CamJoin(CamJoinRequest) returns (CamJoinResponse);
     rpc CamInfo(CamInfoRequest) returns (CamInfoResponse);
-    rpc Reports(ReportRequest) returns (ReportResponse);
+    rpc Report(ReportRequest) returns (ReportResponse);
     rpc Track(TrackRequest) returns (TrackRequest);
     rpc TrackMatch(TrackMatchRequest) returns (TrackMatchResponse);
     rpc Trace(TraceRequest) returns (TraceResponse);
