@@ -22,12 +22,16 @@ public class EyeApp {
 
 	public static void main(String[] args) {
 		System.out.println(EyeApp.class.getSimpleName());
-		
+		if(args.length > 5) {
+			System.out.println("Too many arguments;");
+			System.out.println("Please use:\n	'host port cameraName latitude longitude'");
+			System.exit(0);
+		}
 		// receive and print arguments
 		System.out.printf("Received %d arguments%n", args.length);
 		for (int i = 0; i < args.length; i++) {
 			System.out.printf("arg[%d] = %s%n", i, args[i]);
-		}
+		} 
 
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
@@ -86,6 +90,7 @@ public class EyeApp {
 							e.printStackTrace();
 						}
 					} else {
+						
 						Observable entity = Observable.newBuilder().
 								setType(obsType).
 								setIdentifier(obsId).build();
@@ -99,6 +104,7 @@ public class EyeApp {
 				}
 				
 			}
+			System.out.println();
 			System.out.print("$ ");
 		}
 		System.out.print("Closing eyelids...");
@@ -113,7 +119,6 @@ public class EyeApp {
 
 	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
 		for (Observation o : observations ) {
-
 			//TODO Alternative to consider: make a single report with multiple observations
 			ReportRequest reportReq = ReportRequest.newBuilder().
 					setCameraName(camName).
