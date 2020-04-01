@@ -62,6 +62,7 @@ public class TrackIT extends BaseIT {
     }
 
     @Test
+    //TODO getObservation cant return null. Fix assertion
     public void emptyResponse() {
         //server has no data
         TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
