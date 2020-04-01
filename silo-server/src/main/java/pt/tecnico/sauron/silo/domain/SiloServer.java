@@ -15,7 +15,7 @@ public class SiloServer {
 
     public synchronized boolean clear() {
         cameras.clear();
-
+        registriesMap.clear();
         return true;
     }
 

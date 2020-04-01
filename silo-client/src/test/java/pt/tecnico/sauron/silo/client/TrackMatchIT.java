@@ -164,7 +164,7 @@ public class TrackMatchIT extends BaseIT {
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(0, response.getObservationsCount());
-		assertEquals(Status.OK, response.getResponseStatus());
+		assertEquals(Status.EMPTY, response.getResponseStatus());
 	}
 
 	@Test
@@ -172,7 +172,7 @@ public class TrackMatchIT extends BaseIT {
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 
-		assertEquals(Status.NULL_OBS, response.getResponseStatus());
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
 	}
 
 	@Test
