@@ -66,8 +66,7 @@ public class TrackIT extends BaseIT {
         //server has no data
         TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
-        assertEquals(null, response.getObservation());
-        assertEquals(Status.OK, response.getResponseStatus());
+        assertEquals(Status.EMPTY, response.getResponseStatus());
     }
 
     @Test
@@ -102,11 +101,11 @@ public class TrackIT extends BaseIT {
 		TrackRequest request = TrackRequest.newBuilder().build();
 		TrackResponse response = frontend.track(request);
 
-		assertEquals(Status.NULL_OBS, response.getResponseStatus());
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
 	}
 
 	@Test
-	public void nullType() {
+	public void emptyType() {
 		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
 		TrackRequest request = TrackRequest.newBuilder().setIdentity(observation).build();
 		TrackResponse response = frontend.track(request);
@@ -115,7 +114,7 @@ public class TrackIT extends BaseIT {
 	}
 
 	@Test
-	public void nullId() {
+	public void emptyId() {
 		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
 		TrackRequest request = TrackRequest.newBuilder().setIdentity(part_obs).build();
 		TrackResponse response = frontend.track(request);

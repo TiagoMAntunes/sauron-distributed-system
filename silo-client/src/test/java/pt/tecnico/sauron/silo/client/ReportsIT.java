@@ -127,7 +127,7 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.INVALID_CAM, response.getResponseStatus());
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 
     @Test
@@ -139,7 +139,7 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.INVALID_CAM, response.getResponseStatus());
+        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
     }
 
     @Test
