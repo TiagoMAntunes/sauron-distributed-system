@@ -87,6 +87,7 @@ public class EyeApp {
 					if (obsType.equals("zzz") && isLong(obsId)) {
 						try {Thread.sleep(Long.parseLong(obsId)); }
 						catch (InterruptedException e) {
+							//TODO Alternative: Throw exception
 							e.printStackTrace();
 						}
 					} else {
@@ -108,11 +109,12 @@ public class EyeApp {
 			System.out.print("$ ");
 		}
 		System.out.print("Closing eyelids...");
+		sc.close();
 
 		if(observations.size()>0) {
 			sendObservations(observations, frontend, camName);
 		}
-
+		
 		System.out.println("Report sent. Sauron will be pleased for your aid in ending the Age of Men");
 		System.exit(0);
 	}
