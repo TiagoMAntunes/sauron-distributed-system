@@ -57,6 +57,7 @@ public class EyeApp {
 			frontend.camJoin(camJoinReq);
 		}
 
+		helpInputMessage();
 		System.out.print("$ ");
 
 		Scanner sc = new Scanner(System.in);
@@ -64,16 +65,17 @@ public class EyeApp {
 
 		while(sc.hasNextLine()) {
 			String line = sc.nextLine();
-
 			if (line.equals("")) {
-				sendObservations(observations, frontend, camName);
-				observations = new ArrayList<>();
+				if(observations.size()>0) {
+					sendObservations(observations, frontend, camName);
+					observations = new ArrayList<>();
+				}
 			} else if (line.charAt(0) == '#') {
 				// Ignores comments
 			}else {
 				String[] values = line.split(",");
 				if (values.length != 2) {
-					System.out.println("Valid input pls :("); //TODO send proper message
+					helpInputMessage();
 				} else {
 					String obsType = values[0];
 					String obsId = values[1];
@@ -95,14 +97,18 @@ public class EyeApp {
 						observations.add(obs);
 					}
 				}
+				
 			}
+			System.out.print("$ ");
 		}
 		System.out.print("Closing eyelids...");
 
-		sendObservations(observations, frontend, camName);
+		if(observations.size()>0) {
+			sendObservations(observations, frontend, camName);
+		}
 
-		System.out.println("Report sent. Sauron will be pleased for your aid to ending the Age of Men");
-
+		System.out.println("Report sent. Sauron will be pleased for your aid in ending the Age of Men");
+		System.exit(0);
 	}
 
 	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
@@ -126,5 +132,16 @@ public class EyeApp {
 			Long.parseLong(string);
 		} catch (NumberFormatException e) {return false;}
 		return true;
+	}
+
+	static void helpInputMessage() {
+		System.out.println();
+		System.out.println("How to use the Eye of Sauron:");
+		System.out.println("	> To make a comment start the message with '#' (it won't transmit anything to the server);");
+		System.out.println("	> To add an observation: 'objTYPE,objID' that is the object type followed by a comma ',' and the object id;");
+		System.out.println("	> To make the Eye sleep use 'zzz,timeMilliseconds' that is three characters 'z' followed by a comma and the the time you desire in milliseconds");
+		System.out.println("	> To send the observations submit an empty line;");
+		System.out.println("	> To close the Eye use Ctrl-D, it will automatically send the observations you added and haven't submited.");
+		System.out.println();
 	}
 }
