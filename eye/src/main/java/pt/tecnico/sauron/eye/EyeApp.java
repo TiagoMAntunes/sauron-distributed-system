@@ -42,7 +42,7 @@ public class EyeApp {
 
 		CamInfoResponse response = frontend.camInfo(request);
 
-		if(response.getResponseStatus() == Status.INVALID_CAM) {
+		if(response.getResponseStatus() == Status.INVALID_ARG) {
 
 			LatLng camCoords = LatLng.newBuilder().
 					setLatitude(lat).
