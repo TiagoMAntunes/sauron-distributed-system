@@ -143,6 +143,7 @@ public class TraceIT extends BaseIT {
 		TraceResponse response = frontend.trace(request);
 
 		assertEquals(0, response.getObservationsCount());
+		assertEquals(Status.EMPTY, response.getResponseStatus());
 	}
 
 	@Test
@@ -150,11 +151,11 @@ public class TraceIT extends BaseIT {
 		TraceRequest request = TraceRequest.newBuilder().build();
 		TraceResponse response = frontend.trace(request);
 
-		assertEquals(Status.NULL_OBS, response.getResponseStatus());
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
 	}
 
 	@Test
-	public void nullType() {
+	public void emptyType() {
 		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(observation).build();
 		TraceResponse response = frontend.trace(request);
@@ -163,7 +164,7 @@ public class TraceIT extends BaseIT {
 	}
 
 	@Test
-	public void nullId() {
+	public void emptyId() {
 		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(part_obs).build();
 		TraceResponse response = frontend.trace(request);
