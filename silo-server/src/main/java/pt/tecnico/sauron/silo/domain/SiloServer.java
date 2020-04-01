@@ -1,10 +1,8 @@
 package pt.tecnico.sauron.silo.domain;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera; //TODO remove import of grpc entity
 
 
@@ -14,6 +12,7 @@ public class SiloServer {
     private Map<String, Camera> cameras = new HashMap<>();
 
     public synchronized boolean clear() {
+        registriesMap.clear();
         return true;
     }
 
@@ -24,18 +23,26 @@ public class SiloServer {
     public synchronized List<Registry> getRegistries(String identifier) {
         return registriesMap.get(identifier);
     }
+
+    public synchronized  boolean registryExists(String identifier) {
+        return registriesMap.containsKey(identifier);
+    }
     
     public synchronized Registry getMostRecentRegistry(String identifier) {
         //Gets list of registries for a given identifier
-        List<Registry> registries = registriesMap.get(identifier);
-        Registry mostRecentRegistry = registries.get(0);
-        
-        //Gets the most recent registry
-        for(Registry r : registries){
-            if(r.before(mostRecentRegistry))
-                mostRecentRegistry = r;
+        if(registriesMap.containsKey(identifier)) {
+            List<Registry> registries = registriesMap.get(identifier);
+            Registry mostRecentRegistry = registries.get(0);
+
+            //Gets the most recent registry
+            for (Registry r : registries) {
+                if (r.before(mostRecentRegistry))
+                    mostRecentRegistry = r;
+            }
+
+            return mostRecentRegistry;
         }
-        return mostRecentRegistry;
+        else return null;
     }
 
     public synchronized boolean cameraExists(String cameraName) {
@@ -53,6 +60,10 @@ public class SiloServer {
             }
     }
 
-
-
+    //Returns list of registries from the most recent to the oldest
+    public synchronized ArrayList<Registry> getSortedRegistries(String identifier) {
+        ArrayList<Registry> registries = registriesMap.get(identifier);
+        registries.sort(Registry::compareTo);
+        return registries;
+    }
 }

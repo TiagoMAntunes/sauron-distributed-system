@@ -120,22 +120,40 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
         
         String identifier = request.getIdentity().getIdentifier();
+        Registry mostRecentRegistry;
+        Observation observation = null;
+        TrackResponse response;
 
-        Registry mostRecentRegistry = silo.getMostRecentRegistry(identifier);
+        if (identifier == null) {
+            response = TrackResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (identifier.equals("") || !silo.registryExists(identifier)) {
+            response = TrackResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else if (request.getIdentity() == null) {
+            response = TrackResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        } else {
+            mostRecentRegistry = silo.getMostRecentRegistry(identifier);
 
-        Observable observable = Observable.newBuilder()
-            .setType(mostRecentRegistry.getType())
-            .setIdentifier(mostRecentRegistry.getIdentifier())
-            .build();
+            if (mostRecentRegistry != null) {
+                Observable observable = Observable.newBuilder()
+                        .setType(mostRecentRegistry.getType())
+                        .setIdentifier(mostRecentRegistry.getIdentifier())
+                        .build();
 
-        Observation observation = Observation.newBuilder()
-            .setObservated(observable)
-            .setTime(mostRecentRegistry.getTime())
-            .setCamera(mostRecentRegistry.getCamera())
-            .build();
-
-        
-        TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
+                observation = Observation.newBuilder()
+                        .setObservated(observable)
+                        .setTime(mostRecentRegistry.getTime())
+                        .setCamera(mostRecentRegistry.getCamera())
+                        .build();
+                response = TrackResponse.newBuilder()
+                        .setObservation(observation)
+                        .setResponseStatus(Status.OK)
+                        .build();
+            } else
+                //could not find registry
+                response = TrackResponse.newBuilder()
+                        .setResponseStatus(Status.NULL_OBS)
+                        .build();
+        }
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -165,14 +183,28 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String identifier = request.getIdentity().getIdentifier();
 
         TraceResponse response = null;
-        //TODO  find the observations for the object sorted from most recent to oldest
-        ArrayList<Observation> observations = null;
-        int index = 0;
+        ArrayList<Registry> registries = silo.getSortedRegistries(identifier);
+        ArrayList<Observation> observations = new ArrayList<>();
 
-        for(Observation observation : observations){
-            response = TraceResponse.newBuilder().setObservations(index, observation).build();
-            index++;
+        for(Registry r : registries){
+            Observable observable = Observable.newBuilder()
+                    .setType(r.getType())
+                    .setIdentifier(r.getIdentifier())
+                    .build();
+
+            Observation observation = Observation.newBuilder()
+                    .setObservated(observable)
+                    .setTime(r.getTime())
+                    .setCamera(r.getCamera())
+                    .build();
+
+            observations.add(observation);
         }
+
+        response = TraceResponse.newBuilder()
+                .setResponseStatus(Status.OK)
+                .addAllObservations(observations)
+                .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

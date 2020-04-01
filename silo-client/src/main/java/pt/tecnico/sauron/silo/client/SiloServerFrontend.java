@@ -68,7 +68,7 @@ public class SiloServerFrontend {
     }
 
     public TraceResponse trace(TraceRequest r) {
-        return null;
+        return stub.trace(r);
     }
 
     public ReportResponse reports(ReportRequest r) {

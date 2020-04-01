@@ -56,8 +56,8 @@ public class TraceIT extends BaseIT {
 	
 	@AfterEach
 	public void tearDown() {
-        
-		
+		//Clean the server state after each test
+		frontend.controlClear(ControlClearRequest.newBuilder().build());
 	}
 
 	@Test
