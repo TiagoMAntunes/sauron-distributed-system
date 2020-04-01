@@ -94,7 +94,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (observations == null) {
             response = ReportResponse.newBuilder().setResponseStatus(Status.NULL_OBS).build();
         } else if (observations.isEmpty()) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_OBS).build();
+            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
         } else {
             //Transform into registries
             
@@ -104,7 +104,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 String type = o.getObservated().getType();
                 String id = o.getObservated().getIdentifier();
                 Timestamp time = fromMillis(currentTimeMillis());
-                Registry r = new Registry(cam, type, id, time);
+                Registry r = new Registry(cam, type, id, time); //TODO validate created entity
                 list.add(r);
             }
             silo.addRegistries(list);
@@ -140,14 +140,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
-        
+        ArrayList<Registry> registries = new ArrayList<Registry>();
+
         for(Observation o : observations){
             Registry r = new Registry(o.getCamera(),
                 o.getObservated().getType(),
                 o.getObservated().getIdentifier(),
                 o.getTime());
-            silo.inputRegistry(o.getObservated().getIdentifier(), r);
+            registries.add(r);
         }
+
+        silo.addRegistries(registries);
 
         ControlInitResponse response = ControlInitResponse.newBuilder().setResponseStatus(Status.OK).build();
         responseObserver.onNext(response);
