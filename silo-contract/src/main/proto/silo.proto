@@ -13,6 +13,7 @@ enum Status {
     INVALID_OBS = 3;
     NULL_COORDS = 4;
     EMPTY = 5;
+    DUPLICATE_CAM = 6;
 };
 
 message Observable {
