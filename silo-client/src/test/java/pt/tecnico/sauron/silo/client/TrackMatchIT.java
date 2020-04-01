@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static io.grpc.Status.Code.INVALID_ARGUMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,10 +18,11 @@ import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
 
+import io.grpc.StatusRuntimeException;
+
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
-import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
@@ -77,7 +79,6 @@ public class TrackMatchIT extends BaseIT {
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
 		assertEquals(0, response.getObservationsCount());
-        assertEquals(Status.OK, response.getResponseStatus());
     }
 
     @Test
@@ -91,7 +92,6 @@ public class TrackMatchIT extends BaseIT {
 		
 		assertEquals(1, response.getObservationsCount());
 		assertEquals(CAR_OBSERVATION, response.getObservationsList().get(0));
-		assertEquals(Status.OK, response.getResponseStatus());
 	}
 
 	@Test
@@ -105,7 +105,6 @@ public class TrackMatchIT extends BaseIT {
 		List<Observation> observations = response.getObservationsList();
 		assertEquals(1, observations.size());
 		assertEquals(CAR_OBSERVATION, observations.get(0));
-		assertEquals(Status.OK, response.getResponseStatus());
 	}
 	
 	@Test
@@ -124,7 +123,6 @@ public class TrackMatchIT extends BaseIT {
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(10, response.getObservationsCount());
-		assertEquals(Status.OK, response.getResponseStatus());
 	}
 
 	@Test
@@ -146,7 +144,6 @@ public class TrackMatchIT extends BaseIT {
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(1, response.getObservationsCount());
-		assertEquals(Status.OK, response.getResponseStatus());
 	}
 
 	@Test
@@ -164,32 +161,40 @@ public class TrackMatchIT extends BaseIT {
 		TrackMatchResponse response = frontend.trackMatch(request);
 
 		assertEquals(0, response.getObservationsCount());
-		assertEquals(Status.EMPTY, response.getResponseStatus());
 	}
 
 	@Test
 	public void nullObservation() {
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().build();
-		TrackMatchResponse response = frontend.trackMatch(request);
 
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		//assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(StatusRuntimeException.class, () -> frontend.trackMatch(request)).getStatus().getCode()
+            );
 	}
 
 	@Test
 	public void nullType() {
 		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(observation).build();
-		TrackMatchResponse response = frontend.trackMatch(request);
 
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		//assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(StatusRuntimeException.class, () -> frontend.trackMatch(request)).getStatus().getCode()
+            );
 	}
 
 	@Test
 	public void nullId() {
 		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
-		TrackMatchResponse response = frontend.trackMatch(request);
 
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		//assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(StatusRuntimeException.class, () -> frontend.trackMatch(request)).getStatus().getCode()
+            );
 	}
 }

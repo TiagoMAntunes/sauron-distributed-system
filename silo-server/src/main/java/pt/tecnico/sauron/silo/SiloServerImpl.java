@@ -89,22 +89,22 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
-        
+
         String camName = request.getCameraName();
         List<Observation> observations = request.getObservationsList();
-        
+
         ReportResponse response;
-        if (camName == null) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
-        } else if (camName.equals("") || !silo.cameraExists(camName)) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        if (camName == null || camName.equals("") ) {
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null!").asRuntimeException());
+        } else if ( !silo.cameraExists(camName)) {
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera must already exist!").asRuntimeException());
         } else if (observations == null) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_OBS).build();
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Observations List must not be null!").asRuntimeException());
         } else if (observations.isEmpty()) {
-            response = ReportResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Observations List must not be empty!").asRuntimeException());
         } else {
             //Transform into registries
-            
+
             ArrayList<Registry> list = new ArrayList<>();
             for (Observation o : observations) {
                 Camera cam = o.getCamera();
@@ -115,10 +115,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
             silo.addRegistries(list);
-            
-            response = ReportResponse.newBuilder().setResponseStatus(Status.OK).build();
+
         }
 
+        response = ReportResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -138,7 +138,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void controlClear(ControlClearRequest request, StreamObserver<ControlClearResponse> responseObserver) {
         Status status = silo.clear() ? Status.OK : Status.NOK; //change accordingly
-        
+
         ControlClearResponse response = ControlClearResponse.newBuilder().setStatus(status).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();

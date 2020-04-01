@@ -8,6 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.google.type.LatLng;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
+import static io.grpc.Status.Code.INVALID_ARGUMENT;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.Status;
@@ -115,7 +118,6 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.OK, response.getResponseStatus());
     }
 
     @Test
@@ -125,9 +127,10 @@ public class ReportsIT extends BaseIT {
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
-        ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+        assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
     }
 
     @Test
@@ -137,9 +140,9 @@ public class ReportsIT extends BaseIT {
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
-        ReportResponse response = frontend.reports(request);
-
-        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+        assertEquals(
+                INVALID_ARGUMENT,
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
     }
 
     @Test
@@ -148,21 +151,9 @@ public class ReportsIT extends BaseIT {
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
-        ReportResponse response = frontend.reports(request);
-
-        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
-    }
-
-    @Test
-    public void reportNullObservationTest() {
-        ReportRequest request = ReportRequest.newBuilder().
-                setCameraName(VALID_CAM_NAME).
-                addObservations(NULL_OBSERVATION).
-                build();
-
-        ReportResponse response = frontend.reports(request);
-
-        assertEquals(Status.EMPTY, response.getResponseStatus());
+        assertEquals(
+                INVALID_ARGUMENT,
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
     }
 
     @Test
@@ -172,20 +163,20 @@ public class ReportsIT extends BaseIT {
                 setCameraName(VALID_CAM_NAME).
                 build();
 
-        ReportResponse response = frontend.reports(request);
-
-        assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+        assertEquals(
+                INVALID_ARGUMENT,
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
     }
 
-    @Test
+    /* @Test
     public void reportInvalidObservationData() {
         //Invalid observation consisting on having an ID that doesn't match type
         ReportRequest request = ReportRequest.newBuilder().
                 setCameraName(VALID_CAM_NAME).addObservations(INVALID_OBSERVATION).
                 build();
 
-        ReportResponse response = frontend.reports(request);
-
-        assertEquals(Status.INVALID_OBS, response.getResponseStatus());
-    }
+        assertEquals(
+                INVALID_ARGUMENT,
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
+    } */
 }
