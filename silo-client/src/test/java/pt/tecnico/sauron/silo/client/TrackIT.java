@@ -4,6 +4,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static io.grpc.Status.Code.INVALID_ARGUMENT;
+import static io.grpc.Status.Code.FAILED_PRECONDITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,6 +16,7 @@ import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
 
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
@@ -65,8 +68,11 @@ public class TrackIT extends BaseIT {
     public void emptyResponse() {
         //server has no data
         TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
-        TrackResponse response = frontend.track(request);
-        assertEquals(Status.EMPTY, response.getResponseStatus());
+        
+        assertEquals(
+            FAILED_PRECONDITION,
+            assertThrows(StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
+            );
     }
 
     @Test
@@ -79,7 +85,6 @@ public class TrackIT extends BaseIT {
         Observation o = response.getObservation();
 
         assertEquals(CAR_OBSERVATION, o);
-        assertEquals(Status.OK, response.getResponseStatus());
     }
 
     @Test
@@ -89,37 +94,47 @@ public class TrackIT extends BaseIT {
 
         Observable inv_obs = Observable.newBuilder().setType(CAR_TYPE).setIdentifier(CAR_INV_ID).build();
         TrackRequest request = TrackRequest.newBuilder().setIdentity(inv_obs).build();
-        TrackResponse response = frontend.track(request);
-        Observation o = response.getObservation();
 
-        assertNotEquals(CAR_OBSERVATION, o);
-        assertEquals(Status.OK, response.getResponseStatus());
+        assertEquals(
+            FAILED_PRECONDITION,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
+            );
     }
     
     @Test
 	public void nullObservation() {
 		TrackRequest request = TrackRequest.newBuilder().build();
-		TrackResponse response = frontend.track(request);
-
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		
+        assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
+            );
 	}
 
 	@Test
 	public void emptyType() {
 		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
 		TrackRequest request = TrackRequest.newBuilder().setIdentity(observation).build();
-		TrackResponse response = frontend.track(request);
 
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+        assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
+            );
 	}
 
 	@Test
 	public void emptyId() {
 		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
 		TrackRequest request = TrackRequest.newBuilder().setIdentity(part_obs).build();
-		TrackResponse response = frontend.track(request);
-
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		
+        assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
+            );
 	}
 
 }

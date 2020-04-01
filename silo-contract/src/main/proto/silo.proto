@@ -62,8 +62,7 @@ message TrackRequest {
 }
 
 message TrackResponse {
-    Status responseStatus = 1;
-    Observation observation = 2;
+    Observation observation = 1;
 }
 
 message TrackMatchRequest {
@@ -71,8 +70,7 @@ message TrackMatchRequest {
 }
 
 message TrackMatchResponse {
-    Status responseStatus = 1;
-    repeated Observation observations = 2;
+    repeated Observation observations = 1;
 }
 
 message TraceRequest {
@@ -80,8 +78,7 @@ message TraceRequest {
 }
 
 message TraceResponse {
-    Status responseStatus = 1;
-    repeated Observation observations = 2;
+    repeated Observation observations = 1;
 }
 
 message ControlPingRequest {
