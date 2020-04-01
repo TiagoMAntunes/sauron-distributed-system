@@ -111,7 +111,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
         }
 
-        response = ReportResponse.newBuilder().setResponseStatus(Status.OK).build();
+        response = ReportResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

@@ -118,7 +118,6 @@ public class ReportsIT extends BaseIT {
 
         ReportResponse response = frontend.reports(request);
 
-        assertEquals(Status.OK, response.getResponseStatus());
     }
 
     @Test
