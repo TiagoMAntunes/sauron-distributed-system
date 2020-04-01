@@ -17,6 +17,7 @@ import static java.lang.System.currentTimeMillis;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
+import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
@@ -65,7 +66,7 @@ public class TrackIT extends BaseIT {
         //server has no data
         TrackRequest request = TrackRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
-        assertEquals(null, response.getObservation());
+        assertEquals(Status.EMPTY, response.getResponseStatus());
     }
 
     @Test
@@ -78,6 +79,7 @@ public class TrackIT extends BaseIT {
         Observation o = response.getObservation();
 
         assertEquals(CAR_OBSERVATION, o);
+        assertEquals(Status.OK, response.getResponseStatus());
     }
 
     @Test
@@ -91,6 +93,33 @@ public class TrackIT extends BaseIT {
         Observation o = response.getObservation();
 
         assertNotEquals(CAR_OBSERVATION, o);
+        assertEquals(Status.OK, response.getResponseStatus());
     }
+    
+    @Test
+	public void nullObservation() {
+		TrackRequest request = TrackRequest.newBuilder().build();
+		TrackResponse response = frontend.track(request);
+
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+	}
+
+	@Test
+	public void emptyType() {
+		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
+		TrackRequest request = TrackRequest.newBuilder().setIdentity(observation).build();
+		TrackResponse response = frontend.track(request);
+
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+	}
+
+	@Test
+	public void emptyId() {
+		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
+		TrackRequest request = TrackRequest.newBuilder().setIdentity(part_obs).build();
+		TrackResponse response = frontend.track(request);
+
+		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+	}
 
 }

@@ -73,7 +73,9 @@ public class SiloServerFrontend implements AutoCloseable {
         return null;
     }
 
-    public ReportResponse reports(ReportRequest r) { return null; }
+    public ReportResponse reports(ReportRequest r) {
+        return stub.report(r);
+    }
 
     @Override
     public final void close() {
