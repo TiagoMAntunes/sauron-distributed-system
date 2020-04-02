@@ -53,7 +53,7 @@ public class SpotterApp {
 
 		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port); Scanner sc = new Scanner(System.in)) {
 			boolean end = false;
-			while(!end) {
+			while(!end && sc.hasNextLine()) {
 
 				System.out.print("$ ");
 
@@ -97,7 +97,7 @@ public class SpotterApp {
 			}
 		} 
 		catch (NoSuchElementException e) {
-			System.out.println("Standard input has been closed.");
+			System.out.println("Input has been closed.");
 		}
 		catch (Exception e) {
 			System.out.println("Uncatched exception. Throwing...");
