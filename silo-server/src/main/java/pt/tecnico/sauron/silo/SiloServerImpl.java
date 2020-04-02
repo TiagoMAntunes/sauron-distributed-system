@@ -200,10 +200,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Observation must not be null").asRuntimeException());
         } else if(silo.noRegistries()){
             responseObserver.onError(FAILED_PRECONDITION.withDescription("Server has no data").asRuntimeException());
-        } else if (!silo.registryExists(identifier)) {
+        } else if (!silo.registryExists(type, identifier)) {
             responseObserver.onError(FAILED_PRECONDITION.withDescription("Identifier must already exist").asRuntimeException());
         } else {
-            mostRecentRegistry = silo.getMostRecentRegistry(identifier);
+            mostRecentRegistry = silo.getMostRecentRegistry(type, identifier);
             Observable observable = Observable.newBuilder()
                     .setType(mostRecentRegistry.getType())
                     .setIdentifier(mostRecentRegistry.getIdentifier())
@@ -236,7 +236,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (request.getIdentity() == null) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Observation must not be null").asRuntimeException());
         } else {
-            registries = silo.getAllRecentRegistries(partialIdentifier);
+            registries = silo.getAllRecentRegistries(type, partialIdentifier);
 
             if (registries.size() > 0) {
 
@@ -279,14 +279,14 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
         } else if (request.getIdentity() == null) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Observable must not be null").asRuntimeException());
-        } else if(silo.noRegistries() || !silo.registryExists(identifier)){
+        } else if(silo.noRegistries() || !silo.registryExists(type, identifier)){
             response = TraceResponse.newBuilder()
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
         else {
-            registries = silo.getSortedRegistries(identifier);
+            registries = silo.getSortedRegistries(type, identifier);
             if (registries.size() > 0) {
                 for (Registry r : registries) {
                     Observable observable = Observable.newBuilder()
