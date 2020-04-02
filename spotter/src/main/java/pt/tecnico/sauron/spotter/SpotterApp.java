@@ -53,7 +53,7 @@ public class SpotterApp {
 
 		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port); Scanner sc = new Scanner(System.in)) {
 			boolean end = false;
-			while(!end && sc.hasNextLine()) {
+			while(!end) {
 
 				System.out.print("$ ");
 
@@ -204,7 +204,7 @@ public class SpotterApp {
 		for (int i = 2; i < amount * 5 + 2; i+=5) {
 			Observation observation = Observation.newBuilder().
 					setCamera(Camera.newBuilder().
-									setCoords(LatLng.newBuilder().setLatitude(Integer.parseInt(line[i+3])).setLongitude(Integer.parseInt(line[i+4])).build()).
+									setCoords(LatLng.newBuilder().setLatitude(Double.parseDouble(line[i+3])).setLongitude(Double.parseDouble(line[i+4])).build()).
 									setName(line[i+2]).
 									build()).
 					setObservated(Observable.newBuilder().
