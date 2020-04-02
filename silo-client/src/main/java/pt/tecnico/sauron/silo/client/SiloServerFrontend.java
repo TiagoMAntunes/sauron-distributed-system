@@ -26,7 +26,9 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 
 
-public class SiloServerFrontend {
+import java.lang.AutoCloseable;
+
+public class SiloServerFrontend implements AutoCloseable {
 
     private final String target;
     final ManagedChannel channel;
@@ -75,6 +77,7 @@ public class SiloServerFrontend {
         return stub.report(r);
     }
 
+    @Override
     public final void close() {
         channel.shutdown();
     }
