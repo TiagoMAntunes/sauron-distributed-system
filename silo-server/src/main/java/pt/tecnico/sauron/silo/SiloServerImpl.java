@@ -40,10 +40,7 @@ import java.util.List;
 import io.grpc.stub.StreamObserver;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
-import static java.lang.System.currentTimeMillis;
 import com.google.type.LatLng;
-
-import com.google.protobuf.Timestamp;
 
 
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
@@ -201,10 +198,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Observation must not be null").asRuntimeException());
         } else if(silo.noRegistries()){
             responseObserver.onError(FAILED_PRECONDITION.withDescription("Server has no data").asRuntimeException());
-        } else if (!silo.registryExists(type, identifier)) {
-            responseObserver.onError(FAILED_PRECONDITION.withDescription("Identifier must already exist").asRuntimeException());
         } else {
             mostRecentRegistry = silo.getMostRecentRegistry(type, identifier);
+            if (mostRecentRegistry == null) {
+                responseObserver.onError(FAILED_PRECONDITION.withDescription("The object has no reports").asRuntimeException());
+                return;
+            }
+
             Observable observable = Observable.newBuilder()
                     .setType(mostRecentRegistry.getType())
                     .setIdentifier(mostRecentRegistry.getIdentifier())
@@ -238,30 +238,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else {
             registries = silo.getAllRecentRegistries(type, partialIdentifier);
 
-            if (registries.size() > 0) {
-
-                for(Registry r : registries){
-                    Observable observable = Observable.newBuilder()
-                            .setType(r.getType())
-                            .setIdentifier(r.getIdentifier())
-                            .build();
-
-                    Observation observation = Observation.newBuilder()
-                            .setObservated(observable)
-                            .setTime(fromMillis(r.getTime().getTime()))
-                            .setCamera(Camera.newBuilder().setCoords(r.getCamera().getCoords()).setName(r.getCamera().getName()).build())
-                            .build();
-
-                    observations.add(observation);
-                }
-                response = TrackMatchResponse.newBuilder()
-                        .addAllObservations(observations)
+            for(Registry r : registries){
+                Observable observable = Observable.newBuilder()
+                        .setType(r.getType())
+                        .setIdentifier(r.getIdentifier())
                         .build();
-            } else
-                //could not find registry
-                response = TrackMatchResponse.newBuilder() //TODO send exception
+
+                Observation observation = Observation.newBuilder()
+                        .setObservated(observable)
+                        .setTime(fromMillis(r.getTime().getTime()))
+                        .setCamera(Camera.newBuilder().setCoords(r.getCamera().getCoords()).setName(r.getCamera().getName()).build())
                         .build();
-                responseObserver.onNext(response);
+
+                observations.add(observation);
+            }
+            response = TrackMatchResponse.newBuilder()
+                    .addAllObservations(observations)
+                    .build();
+            responseObserver.onNext(response);
                 responseObserver.onCompleted();
         }
     }

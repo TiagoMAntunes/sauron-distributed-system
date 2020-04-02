@@ -12,12 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pt.tecnico.sauron.silo.client.BaseIT;
-import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
-import pt.tecnico.sauron.silo.grpc.Silo.Status;
 
 public class CamJoinIT extends BaseIT {
 
@@ -56,7 +54,7 @@ public class CamJoinIT extends BaseIT {
 	public void okResponse() {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
-        CamJoinResponse response = frontend.camJoin(request);
+        frontend.camJoin(request);
     }
     
     @Test

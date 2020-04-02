@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.protobuf.Timestamp;
 import com.google.type.LatLng;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
@@ -26,7 +25,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 
 public class TrackMatchIT extends BaseIT {

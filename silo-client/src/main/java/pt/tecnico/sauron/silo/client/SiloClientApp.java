@@ -2,7 +2,6 @@ package pt.tecnico.sauron.silo.client;
 
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 
@@ -30,8 +29,9 @@ public class SiloClientApp {
 		}
 
 		ControlClearRequest r = ControlClearRequest.newBuilder().build();
-		ControlClearResponse re = frontend.controlClear(r);
+		frontend.controlClear(r);
 
+		frontend.close();
 	}
 	
 }

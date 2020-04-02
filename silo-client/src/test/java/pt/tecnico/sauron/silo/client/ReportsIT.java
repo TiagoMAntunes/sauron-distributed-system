@@ -13,15 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.sauron.silo.grpc.Silo;
-import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
-import pt.tecnico.sauron.silo.grpc.Silo.Status;
 
 
 
@@ -60,8 +56,6 @@ public class ReportsIT extends BaseIT {
             setTime(fromMillis(currentTimeMillis())).
             build();
 
-    private final Observation NULL_OBSERVATION = null;
-
 
     private final Observable BAD_OBSERVABLE = Observable.newBuilder().
             setType(PERSON_TYPE).
@@ -98,7 +92,7 @@ public class ReportsIT extends BaseIT {
                 setCamera(CAMERA).
                 build();
 
-        CamJoinResponse camRes = frontend.camJoin(camReq);
+        frontend.camJoin(camReq);
     }
 
     @AfterEach
@@ -116,7 +110,7 @@ public class ReportsIT extends BaseIT {
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
-        ReportResponse response = frontend.reports(request);
+        frontend.reports(request);
 
     }
 
