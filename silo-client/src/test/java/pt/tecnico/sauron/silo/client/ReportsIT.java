@@ -168,7 +168,7 @@ public class ReportsIT extends BaseIT {
                 assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
     }
 
-    /* @Test
+     @Test
     public void reportInvalidObservationData() {
         //Invalid observation consisting on having an ID that doesn't match type
         ReportRequest request = ReportRequest.newBuilder().
@@ -178,5 +178,5 @@ public class ReportsIT extends BaseIT {
         assertEquals(
                 INVALID_ARGUMENT,
                 assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
-    } */
+    } 
 }
