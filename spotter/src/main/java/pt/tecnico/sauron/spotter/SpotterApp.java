@@ -11,6 +11,7 @@ import java.util.Scanner;
 
 import com.google.type.LatLng;
 
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
@@ -92,6 +93,10 @@ public class SpotterApp {
 					}
 				} catch(StatusRuntimeException e) {
 					System.out.println(e.getStatus().getDescription());
+					if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+							System.out.println("The hostname is unavailable. Exiting...");
+							System.exit(0);
+					}
 				}
 			}
 		} 
