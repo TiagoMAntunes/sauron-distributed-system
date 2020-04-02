@@ -113,7 +113,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
             ArrayList<Registry> list = new ArrayList<>();
             for (Observation o : observations) {
-                Camera cam = o.getCamera();
+                CameraDomain cam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords());
                 String type = o.getObservated().getType().toLowerCase();
                 String id = o.getObservated().getIdentifier().toLowerCase();
                 Date time = new Date();
@@ -171,7 +171,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 silo.addCamera(newCam);
             }
             
-            Registry r = new Registry(o.getCamera(),
+            Registry r = new Registry(new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords()),
                 o.getObservated().getType(),
                 o.getObservated().getIdentifier(),
                 new Date(o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000));
@@ -213,7 +213,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             observation = Observation.newBuilder()
                     .setObservated(observable)
                     .setTime(fromMillis(mostRecentRegistry.getTime().getTime()))
-                    .setCamera(mostRecentRegistry.getCamera())
+                    .setCamera(Camera.newBuilder().setCoords(mostRecentRegistry.getCamera().getCoords()).setName(mostRecentRegistry.getCamera().getName()).build())
                     .build();
             response = TrackResponse.newBuilder()
                     .setObservation(observation)
@@ -249,7 +249,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     Observation observation = Observation.newBuilder()
                             .setObservated(observable)
                             .setTime(fromMillis(r.getTime().getTime()))
-                            .setCamera(r.getCamera())
+                            .setCamera(Camera.newBuilder().setCoords(r.getCamera().getCoords()).setName(r.getCamera().getName()).build())
                             .build();
 
                     observations.add(observation);
@@ -298,7 +298,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 Observation observation = Observation.newBuilder()
                         .setObservated(observable)
                         .setTime(fromMillis(r.getTime().getTime()))
-                        .setCamera(r.getCamera())
+                        .setCamera(Camera.newBuilder().setCoords(r.getCamera().getCoords()).setName(r.getCamera().getName()).build())
                         .build();
 
                 observations.add(observation);
