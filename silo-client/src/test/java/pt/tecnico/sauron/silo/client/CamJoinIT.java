@@ -91,7 +91,6 @@ public class CamJoinIT extends BaseIT {
         //Verifies if the name is less than 3 characters long
         Camera camera = Camera.newBuilder().setName(SMALL_NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
-        CamJoinResponse response = frontend.camJoin(request);
 
         assertEquals(
                 INVALID_ARGUMENT,
@@ -105,7 +104,6 @@ public class CamJoinIT extends BaseIT {
         //Verifies if the name is more than 15 characters long
         Camera camera = Camera.newBuilder().setName(BIG_NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
-        frontend.camJoin(request);
 
         assertEquals(
                 INVALID_ARGUMENT,

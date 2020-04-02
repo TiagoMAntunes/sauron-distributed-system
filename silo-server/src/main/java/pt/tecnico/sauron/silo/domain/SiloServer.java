@@ -40,8 +40,8 @@ public class SiloServer {
         return cameras.containsKey(cameraName);
     }
 
-    public synchronized void addCamera(String cameraName, CameraDomain camObj) {
-        cameras.put(cameraName, camObj);
+    public synchronized void addCamera(CameraDomain camObj) {
+        cameras.put(camObj.getName(), camObj);
     }
 
     public synchronized CameraDomain getCamera(String cameraName) {

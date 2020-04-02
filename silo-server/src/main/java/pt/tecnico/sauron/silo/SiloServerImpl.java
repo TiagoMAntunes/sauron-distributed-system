@@ -29,6 +29,8 @@ import pt.tecnico.sauron.silo.domain.Registry;
 
 import static io.grpc.Status.FAILED_PRECONDITION;
 import static io.grpc.Status.INVALID_ARGUMENT;
+import static io.grpc.Status.ALREADY_EXISTS;
+import static io.grpc.Status.FAILED_PRECONDITION;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,19 +55,20 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
 
         CamJoinResponse response;
-        if (camName == null) {
-            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
-        } else if (camName.equals("") || silo.cameraExists(camName)) {
-            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+        if (camName == null || camName.equals("")) {
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera must not be null or empty").asRuntimeException());
+        } else if (  silo.cameraExists(camName)) {
+            responseObserver.onError(ALREADY_EXISTS.withDescription("Camera already exists").asRuntimeException());
         } else if (camName.length() < 3 || camName.length() > 15 ) {
-            response = CamJoinResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera name must be between 3 and 15 characters in length").asRuntimeException());
         } else if (camCoords.getLatitude() == 0.0 || camCoords.getLongitude() == 0.0) {
-            response = CamJoinResponse.newBuilder().setResponseStatus(Status.NULL_COORDS).build();
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Coordinates of camera must both be above '0.0'").asRuntimeException());
         } else {
             CameraDomain newCam = new CameraDomain(camName, camCoords);
-            silo.addCamera(camName, newCam);
-            response = CamJoinResponse.newBuilder().setResponseStatus(Status.OK).build();
+            silo.addCamera(newCam);
+            
         }
+        response = CamJoinResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -73,15 +76,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
         String camName = request.getName();
-        CamInfoResponse response;
-        if (camName == null) {
-            response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
-        } else if (camName.equals("") || !silo.cameraExists(camName)) {
-            response = CamInfoResponse.newBuilder().setResponseStatus(Status.INVALID_ARG).build();
-        } else {
+        CamInfoResponse response = CamInfoResponse.newBuilder().build();
+        if (camName == null || camName.equals("")) {
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera must not be null or empty").asRuntimeException());
+        } else if (!silo.cameraExists(camName)) {
+            responseObserver.onError(FAILED_PRECONDITION.withDescription("Camera must already exist").asRuntimeException());
+        }  else {
             CameraDomain camDom = silo.getCamera(camName);
             Camera cam = Camera.newBuilder().setCoords(camDom.getCoords()).setName(camDom.getName()).build();
-            response = CamInfoResponse.newBuilder().setCamera(cam).setResponseStatus(Status.OK).build();
+            response = CamInfoResponse.newBuilder().setCamera(cam).build();
         }
         responseObserver.onNext(response);
         responseObserver.onCompleted();

@@ -52,17 +52,6 @@ public class CamInfoIT extends BaseIT {
         assertNotEquals(null, response, "Response shouldn't be null");
     }
 
-    @Test
-    public void emptyResponse() {
-        //server has no data
-        CamInfoRequest request = CamInfoRequest.newBuilder().setName(NAME).build();
-        CamInfoResponse response = frontend.camInfo(request);
-        assertEquals(
-                FAILED_PRECONDITION,
-                assertThrows(StatusRuntimeException.class, () -> frontend.camInfo(request)).getStatus().getCode()
-        );
-    }
-	
 	@Test
 	public void okResponse() {
         CamInfoRequest request = CamInfoRequest.newBuilder().setName(NAME).build();
