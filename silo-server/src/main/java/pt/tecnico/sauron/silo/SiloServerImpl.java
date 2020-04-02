@@ -15,7 +15,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
@@ -146,16 +145,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         if (inputText == null || inputText.isBlank()) 
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty").asRuntimeException());
 
-        ControlPingResponse response = ControlPingResponse.newBuilder().setStatus("Hello " + inputText + "").build();
+        ControlPingResponse response = ControlPingResponse.newBuilder().setStatus("Hello " + inputText + "!").build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 
     @Override
     public void controlClear(ControlClearRequest request, StreamObserver<ControlClearResponse> responseObserver) {
-        Status status = silo.clear() ? Status.OK : Status.NOK; //change accordingly
-
-        ControlClearResponse response = ControlClearResponse.newBuilder().setStatus(status).build();
+        silo.clear();
+        ControlClearResponse response = ControlClearResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -182,7 +180,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
         silo.addRegistries(registries);
 
-        ControlInitResponse response = ControlInitResponse.newBuilder().setResponseStatus(Status.OK).build();
+        ControlInitResponse response = ControlInitResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

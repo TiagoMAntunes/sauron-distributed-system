@@ -6,16 +6,6 @@ package pt.tecnico.sauron.silo.grpc;
 import "google/protobuf/timestamp.proto";
 import "google/type/latlng.proto";
 
-enum Status {
-    OK = 0;
-    NOK = 1;
-    INVALID_ARG = 2;
-    INVALID_OBS = 3;
-    NULL_COORDS = 4;
-    EMPTY = 5;
-    DUPLICATE_CAM = 6;
-};
-
 message Observable {
     string type = 1;
     string identifier = 2;
@@ -37,7 +27,7 @@ message CamJoinRequest {
 }
 
 message CamJoinResponse {
-    Status responseStatus = 1;
+    
 }
 
 message CamInfoRequest {
@@ -45,7 +35,6 @@ message CamInfoRequest {
 }
 
 message CamInfoResponse {
-    Status responseStatus = 1;
     Camera camera = 2;
 }
 
@@ -55,7 +44,6 @@ message ReportRequest {
 }
 
 message ReportResponse {
-    Status responseStatus = 1;
 }
 
 message TrackRequest {
@@ -95,7 +83,6 @@ message ControlClearRequest {
 }
 
 message ControlClearResponse {
-    Status status = 1;
 }
 
 message ControlInitRequest {
@@ -103,7 +90,7 @@ message ControlInitRequest {
 }
 
 message ControlInitResponse {
-    Status responseStatus = 1;
+    
 }
 
 service Sauron {

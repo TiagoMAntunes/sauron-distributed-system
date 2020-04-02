@@ -34,8 +34,7 @@ public class ClearIT extends BaseIT {
 	@Test
 	public void clearOkTest() {
         ControlClearRequest request = ControlClearRequest.newBuilder().build();
-        ControlClearResponse response = frontend.controlClear(request);
-        assertEquals(Status.OK, response.getStatus());
+        frontend.controlClear(request);
     }
 
 }
