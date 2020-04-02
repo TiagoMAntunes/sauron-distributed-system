@@ -272,7 +272,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String identifier = request.getIdentity().getIdentifier();
 
         TraceResponse response;
-        ArrayList<Registry> registries;
+        List<Registry> registries;
         ArrayList<Observation> observations = new ArrayList<>();
 
         if (identifier == null || identifier.equals("") || type == null || type.equals("")) {
@@ -286,33 +286,29 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onCompleted();
         }
         else {
-            registries = silo.getSortedRegistries(type, identifier);
-            if (registries.size() > 0) {
-                for (Registry r : registries) {
-                    Observable observable = Observable.newBuilder()
-                            .setType(r.getType())
-                            .setIdentifier(r.getIdentifier())
-                            .build();
-
-                    Observation observation = Observation.newBuilder()
-                            .setObservated(observable)
-                            .setTime(r.getTime())
-                            .setCamera(r.getCamera())
-                            .build();
-
-                    observations.add(observation);
-                }
-
-                response = TraceResponse.newBuilder()
-                        .addAllObservations(observations)
+            registries = silo.getRegistries(type, identifier);
+           
+            for (int i = registries.size() - 1; i >= 0; i--) {
+                Registry r = registries.get(i);
+                Observable observable = Observable.newBuilder()
+                        .setType(r.getType())
+                        .setIdentifier(r.getIdentifier())
                         .build();
 
-            }
-            else {
-                //could not find registry
-                response = TraceResponse.newBuilder()
+                Observation observation = Observation.newBuilder()
+                        .setObservated(observable)
+                        .setTime(r.getTime())
+                        .setCamera(r.getCamera())
                         .build();
+
+                observations.add(observation);
             }
+
+            response = TraceResponse.newBuilder()
+                    .addAllObservations(observations)
+                    .build();
+
+            
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
