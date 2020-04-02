@@ -5,7 +5,6 @@ import java.util.Scanner;
 import java.util.ArrayList;
 import static java.lang.System.currentTimeMillis;
 
-import pt.tecnico.sauron.silo.grpc.Silo.Status;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
@@ -17,6 +16,8 @@ import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 
 import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
+
+import io.grpc.StatusRuntimeException;
 
 public class EyeApp {
 
@@ -44,10 +45,8 @@ public class EyeApp {
 		CamInfoRequest request = CamInfoRequest.newBuilder().
 				setName(camName).build();
 
-		CamInfoResponse response = frontend.camInfo(request);
-
-		if(response.getResponseStatus() == Status.INVALID_ARG) {
-
+		try{frontend.camInfo(request);}
+		catch(StatusRuntimeException e) {
 			LatLng camCoords = LatLng.newBuilder().
 					setLatitude(lat).
 					setLongitude(lon).build();
