@@ -31,7 +31,6 @@ public class SiloClientApp {
 
 		ControlClearRequest r = ControlClearRequest.newBuilder().build();
 		ControlClearResponse re = frontend.controlClear(r);
-		System.out.println(re.getStatus());
 
 	}
 	
