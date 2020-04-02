@@ -13,6 +13,7 @@ enum Status {
     INVALID_OBS = 3;
     NULL_COORDS = 4;
     EMPTY = 5;
+    DUPLICATE_CAM = 6;
 };
 
 message Observable {
@@ -62,8 +63,7 @@ message TrackRequest {
 }
 
 message TrackResponse {
-    Status responseStatus = 1;
-    Observation observation = 2;
+    Observation observation = 1;
 }
 
 message TrackMatchRequest {
@@ -71,8 +71,7 @@ message TrackMatchRequest {
 }
 
 message TrackMatchResponse {
-    Status responseStatus = 1;
-    repeated Observation observations = 2;
+    repeated Observation observations = 1;
 }
 
 message TraceRequest {
@@ -80,8 +79,7 @@ message TraceRequest {
 }
 
 message TraceResponse {
-    Status responseStatus = 1;
-    repeated Observation observations = 2;
+    repeated Observation observations = 1;
 }
 
 message ControlPingRequest {
@@ -112,7 +110,7 @@ service Sauron {
     rpc CamJoin(CamJoinRequest) returns (CamJoinResponse);
     rpc CamInfo(CamInfoRequest) returns (CamInfoResponse);
     rpc Report(ReportRequest) returns (ReportResponse);
-    rpc Track(TrackRequest) returns (TrackRequest);
+    rpc Track(TrackRequest) returns (TrackResponse);
     rpc TrackMatch(TrackMatchRequest) returns (TrackMatchResponse);
     rpc Trace(TraceRequest) returns (TraceResponse);
     rpc ControlClear(ControlClearRequest) returns (ControlClearResponse);

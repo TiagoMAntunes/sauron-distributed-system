@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static io.grpc.Status.Code.INVALID_ARGUMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,15 +13,13 @@ import java.util.List;
 
 import java.util.ArrayList;
 
-import java.util.List;
-import java.util.ArrayList;
-
-import com.google.protobuf.Timestamp;
 import com.google.type.LatLng;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
 
+
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
@@ -56,12 +55,13 @@ public class TraceIT extends BaseIT {
 	
 	@AfterEach
 	public void tearDown() {
-        
-		
+		//Clean the server state after each test
+		frontend.controlClear(ControlClearRequest.newBuilder().build());
 	}
 
 	@Test
     public void nonNullResponse() {
+		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(CAR_OBSERVATION).build());
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(CAR_OBSERVABLE).build();
 		TraceResponse response = frontend.trace(request);
 		
@@ -143,33 +143,42 @@ public class TraceIT extends BaseIT {
 		TraceResponse response = frontend.trace(request);
 
 		assertEquals(0, response.getObservationsCount());
-		assertEquals(Status.EMPTY, response.getResponseStatus());
 	}
 
 	@Test
 	public void nullObservation() {
 		TraceRequest request = TraceRequest.newBuilder().build();
-		TraceResponse response = frontend.trace(request);
-
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		
+		assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.trace(request)).getStatus().getCode()
+            );
 	}
 
 	@Test
 	public void emptyType() {
 		Observable observation = Observable.newBuilder().setIdentifier(CAR_ID).build();
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(observation).build();
-		TraceResponse response = frontend.trace(request);
+		
+		assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.trace(request)).getStatus().getCode()
+            );
 
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
 	}
 
 	@Test
 	public void emptyId() {
 		Observable part_obs = Observable.newBuilder().setType(CAR_TYPE).build();
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(part_obs).build();
-		TraceResponse response = frontend.trace(request);
-
-		assertEquals(Status.INVALID_ARG, response.getResponseStatus());
+		
+		assertEquals(
+            INVALID_ARGUMENT,
+            assertThrows(
+                StatusRuntimeException.class, () -> frontend.trace(request)).getStatus().getCode()
+            );
 	}
 
 
