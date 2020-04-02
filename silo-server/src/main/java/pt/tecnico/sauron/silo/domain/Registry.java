@@ -4,7 +4,7 @@ import com.google.protobuf.Timestamp;
 
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 
-public class Registry {
+public class Registry implements Comparable<Registry> {
 
     private Camera camera;
     private String type;
@@ -22,4 +22,18 @@ public class Registry {
     public String getType() { return type; }
     public String getIdentifier() { return identifier; }
     public Timestamp getTime() { return time; }
+    
+    public boolean before(Registry r) {
+        return this.getTime().getSeconds() < r.getTime().getSeconds() || 
+        this.getTime().getSeconds() == r.getTime().getSeconds() &&
+        this.getTime().getNanos() < r.getTime().getNanos();
+    }
+
+    @Override
+    public int compareTo(Registry r) {
+        if (this.time.getSeconds() != r.time.getSeconds()) {
+            return (int) (this.time.getSeconds() - r.time.getSeconds());
+        }
+        return this.time.getNanos() - r.time.getNanos();
+    }
 }
