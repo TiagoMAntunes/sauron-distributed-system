@@ -69,11 +69,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else {
             CameraDomain newCam = new CameraDomain(camName, camCoords);
             silo.addCamera(newCam);
-            
+            response = CamJoinResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();   
         }
-        response = CamJoinResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
     }
 
     @Override
@@ -88,9 +87,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             CameraDomain camDom = silo.getCamera(camName);
             Camera cam = Camera.newBuilder().setCoords(camDom.getCoords()).setName(camDom.getName()).build();
             response = CamInfoResponse.newBuilder().setCamera(cam).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
         }
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
 
     }
 
@@ -134,12 +133,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
             silo.addRegistries(list);
-
+            response = ReportResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
         }
-
-        response = ReportResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
     }
 
     @Override
@@ -264,7 +261,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                         .build();
             } else
                 //could not find registry
-                response = TrackMatchResponse.newBuilder()
+                response = TrackMatchResponse.newBuilder() //TODO send exception
                         .build();
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
