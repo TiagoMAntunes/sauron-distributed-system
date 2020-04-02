@@ -34,6 +34,7 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.ALREADY_EXISTS;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import io.grpc.stub.StreamObserver;
@@ -115,7 +116,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 Camera cam = o.getCamera();
                 String type = o.getObservated().getType().toLowerCase();
                 String id = o.getObservated().getIdentifier().toLowerCase();
-                Timestamp time = fromMillis(currentTimeMillis());
+                Date time = new Date();
                 Registry r = null;
                 try {
                     r = registryFactory.build(cam, type, id, time); 
@@ -173,7 +174,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             Registry r = new Registry(o.getCamera(),
                 o.getObservated().getType(),
                 o.getObservated().getIdentifier(),
-                o.getTime());
+                new Date(o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000));
             
             registries.add(r);
         }
@@ -211,7 +212,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
             observation = Observation.newBuilder()
                     .setObservated(observable)
-                    .setTime(mostRecentRegistry.getTime())
+                    .setTime(fromMillis(mostRecentRegistry.getTime().getTime()))
                     .setCamera(mostRecentRegistry.getCamera())
                     .build();
             response = TrackResponse.newBuilder()
@@ -226,7 +227,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
         String partialIdentifier = request.getIdentity().getIdentifier();
         String type = request.getIdentity().getType();
-        Registry mostRecentRegistry;
         TrackMatchResponse response;
         ArrayList<Registry> registries;
         ArrayList<Observation> observations = new ArrayList<>();
@@ -248,7 +248,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
                     Observation observation = Observation.newBuilder()
                             .setObservated(observable)
-                            .setTime(r.getTime())
+                            .setTime(fromMillis(r.getTime().getTime()))
                             .setCamera(r.getCamera())
                             .build();
 
@@ -297,7 +297,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
                 Observation observation = Observation.newBuilder()
                         .setObservated(observable)
-                        .setTime(r.getTime())
+                        .setTime(fromMillis(r.getTime().getTime()))
                         .setCamera(r.getCamera())
                         .build();
 

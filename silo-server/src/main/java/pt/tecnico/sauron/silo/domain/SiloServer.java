@@ -54,10 +54,6 @@ public class SiloServer {
         return true;
     }
 
-    public synchronized void inputRegistry(String identifier, Registry reg) {
-        registriesMap.get(RegistryKey.getKey(reg)).add(reg);
-    }
-
     public synchronized List<Registry> getRegistries(String type, String identifier) {
         return registriesMap.get(RegistryKey.getKey(type, identifier));
     }
@@ -95,13 +91,6 @@ public class SiloServer {
             }
     }
 
-    //Returns list of registries from the most recent to the oldest
-    public synchronized ArrayList<Registry> getSortedRegistries(String type, String identifier) {
-        ArrayList<Registry> registries = registriesMap.get(RegistryKey.getKey(type, identifier));
-        registries.sort(Registry::compareTo);
-        return registries;
-    }
-
     public synchronized ArrayList<Registry> getAllRecentRegistries(String type, String partialIdentifier) {
         Pattern p = Pattern.compile(partialIdentifier.replace("*",".*"));
         Matcher m;
@@ -118,7 +107,7 @@ public class SiloServer {
         return registries;
     }
 
-    public boolean noRegistries() {
+    public synchronized boolean noRegistries() {
         return registriesMap.isEmpty();
     }
 }
