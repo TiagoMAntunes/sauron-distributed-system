@@ -119,8 +119,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     r = registryFactory.build(cam, type, id, time); 
                 } catch (InvalidTypeException e) {
                     responseObserver.onError(INVALID_ARGUMENT.withDescription("The type " + e.getType() + " is not available in the current system").asRuntimeException());
+                    return;
                 } catch (IncorrectDataException e) {
                     responseObserver.onError(INVALID_ARGUMENT.withDescription("The identifier " + e.getId() + " does not match type's " + e.getType() + " specification").asRuntimeException());
+                    return;
                 } catch (Exception e) {
                     System.out.println("Unhandled exception caught.");
                     e.printStackTrace();
@@ -140,12 +142,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void controlPing(ControlPingRequest request, StreamObserver<ControlPingResponse> responseObserver) {
         String inputText = request.getInputText();
 
-        if (inputText == null || inputText.isBlank()) 
+        if (inputText == null || inputText.isBlank()) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty").asRuntimeException());
-
-        ControlPingResponse response = ControlPingResponse.newBuilder().setStatus("Hello " + inputText + "!").build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        } else {
+            ControlPingResponse response = ControlPingResponse.newBuilder().setStatus("Hello " + inputText + "!").build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
     }
 
     @Override
