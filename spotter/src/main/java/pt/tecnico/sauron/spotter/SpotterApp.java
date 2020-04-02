@@ -5,12 +5,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import com.google.type.LatLng;
 
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
@@ -56,38 +58,41 @@ public class SpotterApp {
 				System.out.print("$ ");
 
 				String line[] = sc.nextLine().split(" ");
-
-				switch(line[0]) {
-					case "spot":
-						spotHandler(frontend, line);
-						break;
-					case "trail":
-						trailHandler(frontend, line);
-						break;
-					case "ping":
-						pingHandler(frontend, line);
-						break;
-					case "clear":
-						clearHandler(frontend, line);
-						break;
-					case "init":
-						initHandler(frontend, line);
-						break;
-					case "help":
-						System.out.println("Available commands: ");
-						System.out.println("spot <type> <identifier> - Find the last observation of an object or person with the specified ID");
-						System.out.println("trail <type> <identifier> - Find the path followed by an object or person with the specified ID");
-						System.out.println("ping [name] - Checks if the server is responding by saying hi");
-						System.out.println("clear - Resets the server to default status");
-						System.out.println("init <amount> [<type> <identifier> <camera name> <latitude> <longitude>]- to be done"); //TODO
-						System.out.println("help - Displays this menu");
-						System.out.println("exit - Exits the program");
-						break;
-					case "exit":
-						end = true;
-						break;
-					default:
-						System.out.printf("Unknown command '%s' Write help to get the list of available commands%n", line[0]);
+				try {
+					switch(line[0]) {
+						case "spot":
+							spotHandler(frontend, line);
+							break;
+						case "trail":
+							trailHandler(frontend, line);
+							break;
+						case "ping":
+							pingHandler(frontend, line);
+							break;
+						case "clear":
+							clearHandler(frontend, line);
+							break;
+						case "init":
+							initHandler(frontend, line);
+							break;
+						case "help":
+							System.out.println("Available commands: ");
+							System.out.println("spot <type> <identifier> - Find the last observation of an object or person with the specified ID");
+							System.out.println("trail <type> <identifier> - Find the path followed by an object or person with the specified ID");
+							System.out.println("ping [name] - Checks if the server is responding by saying hi");
+							System.out.println("clear - Resets the server to default status");
+							System.out.println("init <amount> [<type> <identifier> <camera name> <latitude> <longitude>]- to be done");
+							System.out.println("help - Displays this menu");
+							System.out.println("exit - Exits the program");
+							break;
+						case "exit":
+							end = true;
+							break;
+						default:
+							System.out.printf("Unknown command '%s' Write help to get the list of available commands%n", line[0]);
+					}
+				} catch(StatusRuntimeException e) {
+					System.out.println(e.getStatus().getDescription());
 				}
 			}
 		} 
@@ -123,7 +128,7 @@ public class SpotterApp {
 			//Id is partial
 			TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(identity).build();
 			TrackMatchResponse response = frontend.trackMatch(request);
-			observations = response.getObservationsList();
+			observations = new ArrayList<>(response.getObservationsList());
 		} else {
 			TrackRequest request = TrackRequest.newBuilder().setIdentity(identity).build();
 			TrackResponse response = frontend.track(request);
@@ -160,7 +165,7 @@ public class SpotterApp {
 			out.printf("%s,%s,%s,%s,%s,%s%n", 
 				o.getObservated().getType(), 
 				o.getObservated().getIdentifier(),
-				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(o.getTime()), 
+				new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date(o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000)), 
 				o.getCamera().getName(),
 				o.getCamera().getCoords().getLatitude(),
 				o.getCamera().getCoords().getLongitude()
