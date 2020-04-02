@@ -110,39 +110,4 @@ public class CamJoinIT extends BaseIT {
         );
     }
 
-    @Test
-    public void emptyLat() {
-        Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS_NO_LAT).build();
-        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
-
-        assertEquals(
-                INVALID_ARGUMENT,
-                assertThrows(
-                        StatusRuntimeException.class, () -> frontend.camJoin(request)).getStatus().getCode()
-        );
-    }
-
-    @Test
-    public void emptyLon() {
-        Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS_NO_LON).build();
-        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
-
-        assertEquals(
-                INVALID_ARGUMENT,
-                assertThrows(
-                        StatusRuntimeException.class, () -> frontend.camJoin(request)).getStatus().getCode()
-        );
-    }
-
-    @Test
-    public void emptyCoords() {
-        Camera camera = Camera.newBuilder().setName(NAME).build();
-        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
-
-        assertEquals(
-                INVALID_ARGUMENT,
-                assertThrows(
-                        StatusRuntimeException.class, () -> frontend.camJoin(request)).getStatus().getCode()
-        );
-    }
 }

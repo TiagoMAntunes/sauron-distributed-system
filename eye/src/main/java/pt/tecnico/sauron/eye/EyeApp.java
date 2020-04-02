@@ -85,7 +85,6 @@ public class EyeApp {
 					if (obsType.equals("zzz") && isLong(obsId)) {
 						try {Thread.sleep(Long.parseLong(obsId)); }
 						catch (InterruptedException e) {
-							//TODO Alternative: Throw exception
 							e.printStackTrace();
 						}
 					} else {
@@ -119,7 +118,6 @@ public class EyeApp {
 
 	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
 		for (Observation o : observations ) {
-			//TODO Alternative to consider: make a single report with multiple observations
 			ReportRequest reportReq = ReportRequest.newBuilder().
 					setCameraName(camName).
 					addObservations(o).build();
@@ -128,7 +126,6 @@ public class EyeApp {
 		}
 	}
 
-	//TODO Do this without using exceptions
 	static boolean isLong(String string) {
 		if (string == null) {
 			return false;

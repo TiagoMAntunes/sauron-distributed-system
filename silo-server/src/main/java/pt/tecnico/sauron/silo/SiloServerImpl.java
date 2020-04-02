@@ -61,8 +61,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(ALREADY_EXISTS.withDescription("Camera already exists").asRuntimeException());
         } else if (camName.length() < 3 || camName.length() > 15 ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera name must be between 3 and 15 characters in length").asRuntimeException());
-        } else if (camCoords.getLatitude() == 0.0 || camCoords.getLongitude() == 0.0) { //TODO this is valid
-            responseObserver.onError(INVALID_ARGUMENT.withDescription("Coordinates of camera must both be above '0.0'").asRuntimeException());
         } else {
             CameraDomain newCam = new CameraDomain(camName, camCoords);
             silo.addCamera(newCam);
