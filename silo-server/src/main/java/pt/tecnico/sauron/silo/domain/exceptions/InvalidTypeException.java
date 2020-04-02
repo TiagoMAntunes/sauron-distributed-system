@@ -1,4 +1,4 @@
-package pt.tecnico.sauron.silo.domain;
+package pt.tecnico.sauron.silo.domain.exceptions;
 
 public class InvalidTypeException extends Exception {
 
