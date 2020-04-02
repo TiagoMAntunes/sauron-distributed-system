@@ -169,10 +169,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         ArrayList<Registry> registries = new ArrayList<Registry>();
 
         for(Observation o : observations){
+            
+            if(!silo.cameraExists(o.getCamera().getName())) {
+                CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords());
+                silo.addCamera(newCam);
+            }
+            
             Registry r = new Registry(o.getCamera(),
                 o.getObservated().getType(),
                 o.getObservated().getIdentifier(),
                 o.getTime());
+            
             registries.add(r);
         }
 
