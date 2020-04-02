@@ -1,6 +1,8 @@
 package pt.tecnico.sauron.silo;
 
 import pt.tecnico.sauron.silo.domain.CameraDomain;
+import pt.tecnico.sauron.silo.domain.exceptions.IncorrectDataException;
+import pt.tecnico.sauron.silo.domain.exceptions.InvalidTypeException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
@@ -26,11 +28,11 @@ import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.domain.SiloServer;
 import pt.tecnico.sauron.silo.grpc.*;
 import pt.tecnico.sauron.silo.domain.Registry;
+import pt.tecnico.sauron.silo.domain.RegistryFactory;
 
 import static io.grpc.Status.FAILED_PRECONDITION;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.ALREADY_EXISTS;
-import static io.grpc.Status.FAILED_PRECONDITION;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,7 @@ import com.google.protobuf.Timestamp;
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private final SiloServer silo = new SiloServer();
+    private static final RegistryFactory registryFactory = new RegistryFactory();
 
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
@@ -112,10 +115,22 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             ArrayList<Registry> list = new ArrayList<>();
             for (Observation o : observations) {
                 Camera cam = o.getCamera();
-                String type = o.getObservated().getType();
-                String id = o.getObservated().getIdentifier();
+                String type = o.getObservated().getType().toLowerCase();
+                String id = o.getObservated().getIdentifier().toLowerCase();
                 Timestamp time = fromMillis(currentTimeMillis());
-                Registry r = new Registry(cam, type, id, time); //TODO validate created entity
+                Registry r = null;
+                try {
+                    r = registryFactory.build(cam, type, id, time); 
+                } catch (InvalidTypeException e) {
+                    responseObserver.onError(INVALID_ARGUMENT.withDescription("The type " + e.getType() + " is not available in the current system.").asRuntimeException());
+                } catch (IncorrectDataException e) {
+                    responseObserver.onError(INVALID_ARGUMENT.withDescription("The identifier " + e.getId() + " does not match type's " + e.getType() + " specification").asRuntimeException());
+                } catch (Exception e) {
+                    System.out.println("Unhandled exception caught.");
+                    e.printStackTrace();
+                    System.out.println("Rethrowing...");
+                    throw e;
+                }
                 list.add(r);
             }
             silo.addRegistries(list);
