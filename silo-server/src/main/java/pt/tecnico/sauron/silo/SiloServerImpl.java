@@ -161,24 +161,31 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
-        ArrayList<Registry> registries = new ArrayList<Registry>();
-
-        for(Observation o : observations){
-            
-            if(!silo.cameraExists(o.getCamera().getName())) {
-                CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude());
-                silo.addCamera(newCam);
+        ArrayList<Registry> list = new ArrayList<>();
+            for (Observation o : observations) {
+                
+                if(!silo.cameraExists(o.getCamera().getName())) {
+                    CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude());
+                    silo.addCamera(newCam);
+                }
+                CameraDomain cam = silo.getCamera(o.getCamera().getName());
+                String type = o.getObservated().getType();
+                String id = o.getObservated().getIdentifier();
+                Date time = new Date(o.getTime().getSeconds() * 1000 + o.getTime().getNanos() / 1000000);
+                Registry r = null;
+                try {
+                    r = registryFactory.build(cam, type, id, time); 
+                } catch (InvalidTypeException e) {
+                    responseObserver.onError(INVALID_ARGUMENT.withDescription("The type " + e.getType() + " is not available in the current system").asRuntimeException());
+                    return;
+                } catch (IncorrectDataException e) {
+                    responseObserver.onError(INVALID_ARGUMENT.withDescription("The identifier " + e.getId() + " does not match type's " + e.getType() + " specification").asRuntimeException());
+                    return;
+                } 
+                list.add(r);
             }
-            
-            Registry r = new Registry(silo.getCamera(o.getCamera().getName()),
-                o.getObservated().getType(),
-                o.getObservated().getIdentifier(),
-                new Date(o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000));
-            
-            registries.add(r);
-        }
 
-        silo.addRegistries(registries);
+        silo.addRegistries(list);
 
         ControlInitResponse response = ControlInitResponse.newBuilder().build();
         responseObserver.onNext(response);
