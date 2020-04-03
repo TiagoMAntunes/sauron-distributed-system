@@ -1,0 +1,31 @@
+# lote 1
+person,5638246
+car,20SD23
+
+zzz,1000
+
+#lote 2
+car,20SD24
+
+# lote 3
+person,192837
+person,123675
+car,AL00AL
+
+zzz,500
+
+# lote 4
+person,123675
+car,AL00AL
+
+# erro 1
+person,AA1234
+
+# erro 2
+car,9218347
+
+# erro grupo
+car,AL00AL
+person,129837
+car,111111
+person,1293132739

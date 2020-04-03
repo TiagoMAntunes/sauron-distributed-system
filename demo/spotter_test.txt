@@ -1,0 +1,8 @@
+help
+spot person 5638246
+spot car 20SD23
+spot person 1*
+spot person 111111111111111
+trail person 123675
+trail car AL00AL
+trail car 20SD23
