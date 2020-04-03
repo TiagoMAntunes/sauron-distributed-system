@@ -23,9 +23,9 @@ public class EyeApp {
 
 	public static void main(String[] args) {
 		System.out.println(EyeApp.class.getSimpleName());
-		if(args.length > 5) {
-			System.out.println("Too many arguments;");
-			System.out.println("Please use:\n	'host port cameraName latitude longitude'");
+		if(args.length != 5) {
+			System.out.println("Invalid usage.");
+			System.out.println("Please run as: 'eye host port cameraName latitude longitude'");
 			System.exit(0);
 		}
 		// receive and print arguments
