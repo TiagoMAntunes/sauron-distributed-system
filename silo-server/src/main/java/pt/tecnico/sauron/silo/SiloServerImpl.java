@@ -62,7 +62,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (camName.length() < 3 || camName.length() > 15 ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera name must be between 3 and 15 characters in length").asRuntimeException());
         } else {
-            CameraDomain newCam = new CameraDomain(camName, camCoords);
+            CameraDomain newCam = new CameraDomain(camName, camCoords.getLatitude(), camCoords.getLongitude());
             silo.addCamera(newCam);
             response = CamJoinResponse.newBuilder().build();
             responseObserver.onNext(response);
@@ -80,7 +80,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(FAILED_PRECONDITION.withDescription("Camera must already exist").asRuntimeException());
         }  else {
             CameraDomain camDom = silo.getCamera(camName);
-            Camera cam = Camera.newBuilder().setCoords(camDom.getCoords()).setName(camDom.getName()).build();
+            LatLng coords = LatLng.newBuilder().setLatitude(camDom.getLatitude()).setLongitude(camDom.getLongitude()).build();
+            Camera cam = Camera.newBuilder().setCoords(coords).setName(camDom.getName()).build();
             response = CamInfoResponse.newBuilder().setCamera(cam).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -165,11 +166,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         for(Observation o : observations){
             
             if(!silo.cameraExists(o.getCamera().getName())) {
-                CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords());
+                CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude());
                 silo.addCamera(newCam);
             }
             
-            Registry r = new Registry(new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords()),
+            Registry r = new Registry(silo.getCamera(o.getCamera().getName()),
                 o.getObservated().getType(),
                 o.getObservated().getIdentifier(),
                 new Date(o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000));
@@ -211,10 +212,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     .setIdentifier(mostRecentRegistry.getIdentifier())
                     .build();
 
+            LatLng coords = LatLng.newBuilder().setLatitude(mostRecentRegistry.getCamera().getLatitude()).setLongitude(mostRecentRegistry.getCamera().getLongitude()).build();
+
             observation = Observation.newBuilder()
                     .setObservated(observable)
                     .setTime(fromMillis(mostRecentRegistry.getTime().getTime()))
-                    .setCamera(Camera.newBuilder().setCoords(mostRecentRegistry.getCamera().getCoords()).setName(mostRecentRegistry.getCamera().getName()).build())
+                    .setCamera(Camera.newBuilder().setCoords(coords).setName(mostRecentRegistry.getCamera().getName()).build())
                     .build();
             response = TrackResponse.newBuilder()
                     .setObservation(observation)
@@ -245,10 +248,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                         .setIdentifier(r.getIdentifier())
                         .build();
 
+                LatLng coords = LatLng.newBuilder().setLatitude(r.getCamera().getLatitude()).setLongitude(r.getCamera().getLongitude()).build();
+
                 Observation observation = Observation.newBuilder()
                         .setObservated(observable)
                         .setTime(fromMillis(r.getTime().getTime()))
-                        .setCamera(Camera.newBuilder().setCoords(r.getCamera().getCoords()).setName(r.getCamera().getName()).build())
+                        .setCamera(Camera.newBuilder().setCoords(coords).setName(r.getCamera().getName()).build())
                         .build();
 
                 observations.add(observation);
@@ -290,10 +295,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                         .setIdentifier(r.getIdentifier())
                         .build();
 
+                LatLng coords = LatLng.newBuilder().setLatitude(r.getCamera().getLatitude()).setLongitude(r.getCamera().getLongitude()).build();
+
                 Observation observation = Observation.newBuilder()
                         .setObservated(observable)
                         .setTime(fromMillis(r.getTime().getTime()))
-                        .setCamera(Camera.newBuilder().setCoords(r.getCamera().getCoords()).setName(r.getCamera().getName()).build())
+                        .setCamera(Camera.newBuilder().setCoords(coords).setName(r.getCamera().getName()).build())
                         .build();
 
                 observations.add(observation);

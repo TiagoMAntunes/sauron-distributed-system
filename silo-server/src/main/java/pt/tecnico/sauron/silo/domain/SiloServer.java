@@ -92,12 +92,12 @@ public class SiloServer {
     }
 
     public synchronized ArrayList<Registry> getAllRecentRegistries(String type, String partialIdentifier) {
-        Pattern p = Pattern.compile(partialIdentifier.replace("*",".*"));
+        Pattern p = Pattern.compile(partialIdentifier.toUpperCase().replace("*",".*"));
         Matcher m;
         ArrayList<Registry> registries = new ArrayList<>();
 
         for (RegistryKey key : registriesMap.keySet()) {
-            if (!key.type.equals(type)) continue; //different types
+            if (!key.type.equals(type.toUpperCase())) continue; //different types
             String identifier = key.id;
             m = p.matcher(identifier);
             if (m.matches()) {
