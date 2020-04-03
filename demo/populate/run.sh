@@ -1,4 +1,4 @@
-FILE_PATH=~/Documents/SD/proj1/eye/target/appassembler/bin/eye
+FILE_PATH=../../eye/target/appassembler/bin/eye
 
 
 for file in $(ls cam*.txt);
