@@ -3,7 +3,6 @@ package pt.tecnico.sauron.silo.client;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
-import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
@@ -22,9 +21,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
-
 
 import java.lang.AutoCloseable;
 

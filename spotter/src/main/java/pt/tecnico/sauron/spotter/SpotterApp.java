@@ -3,7 +3,6 @@ package pt.tecnico.sauron.spotter;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.Scanner;
 
 import com.google.type.LatLng;
 
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
@@ -81,7 +81,7 @@ public class SpotterApp {
 							System.out.println("trail <type> <identifier> - Find the path followed by an object or person with the specified ID");
 							System.out.println("ping [name] - Checks if the server is responding by saying hi");
 							System.out.println("clear - Resets the server to default status");
-							System.out.println("init <amount> [<type> <identifier> <camera name> <latitude> <longitude>]- to be done");
+							System.out.println("init <amount> [<type> <identifier> <camera name> <latitude> <longitude>]");
 							System.out.println("help - Displays this menu");
 							System.out.println("exit - Exits the program");
 							break;
@@ -93,6 +93,10 @@ public class SpotterApp {
 					}
 				} catch(StatusRuntimeException e) {
 					System.out.println(e.getStatus().getDescription());
+					if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+							System.out.println("The hostname is unavailable. Exiting...");
+							System.exit(0);
+					}
 				}
 			}
 		} 

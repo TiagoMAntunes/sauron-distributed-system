@@ -1,19 +1,19 @@
 package pt.tecnico.sauron.silo.domain;
 
-import com.google.type.LatLng;
-
 public class CameraDomain {
 
     private String name;
-    private LatLng coords;
+    private double lat, lon;
 
-    public CameraDomain(String name, LatLng coords) {
+    public CameraDomain(String name, double lat, double lon) {
         this.name = name;
-        this.coords = coords;
+        this.lat = lat;
+        this.lon = lon;
 
     }
 
     public String getName() { return name; }
-    public LatLng getCoords() { return coords; }
+    public double getLatitude() { return lat; }
+    public double getLongitude() { return lon; }
 
 }

@@ -11,21 +11,21 @@ import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
 
 import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import io.grpc.StatusRuntimeException;
+import io.grpc.Status.Code;
 
 public class EyeApp {
 
 	public static void main(String[] args) {
 		System.out.println(EyeApp.class.getSimpleName());
-		if(args.length > 5) {
-			System.out.println("Too many arguments;");
-			System.out.println("Please use:\n	'host port cameraName latitude longitude'");
+		if(args.length != 5) {
+			System.out.println("Invalid usage.");
+			System.out.println("Please run as: 'eye host port cameraName latitude longitude'");
 			System.exit(0);
 		}
 		// receive and print arguments
@@ -70,7 +70,15 @@ public class EyeApp {
 			String line = sc.nextLine();
 			if (line.equals("")) {
 				if(observations.size()>0) {
-					sendObservations(observations, frontend, camName);
+					try {
+						sendObservations(observations, frontend, camName);
+					} catch (StatusRuntimeException e) {
+						System.out.println(e.getStatus().getDescription());
+						if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+								System.out.println("The hostname is unavailable. Exiting...");
+								System.exit(0);
+						}
+					}
 					observations = new ArrayList<>();
 				}
 			} else if (line.charAt(0) == '#') {
@@ -111,7 +119,15 @@ public class EyeApp {
 		sc.close();
 
 		if(observations.size()>0) {
-			sendObservations(observations, frontend, camName);
+			try {
+				sendObservations(observations, frontend, camName);
+			} catch (StatusRuntimeException e) {
+				System.out.println(e.getStatus().getDescription());
+				if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+						System.out.println("The hostname is unavailable. Exiting...");
+						System.exit(0);
+				}
+			}
 		}
 		
 		System.out.println("Report sent. Sauron will be pleased for your aid in ending the Age of Men");
@@ -119,14 +135,7 @@ public class EyeApp {
 	}
 
 	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
-		for (Observation o : observations ) {
-			//TODO Alternative to consider: make a single report with multiple observations
-			ReportRequest reportReq = ReportRequest.newBuilder().
-					setCameraName(camName).
-					addObservations(o).build();
-
-			frontend.reports(reportReq);
-		}
+		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build());
 	}
 
 	//TODO Do this without using exceptions

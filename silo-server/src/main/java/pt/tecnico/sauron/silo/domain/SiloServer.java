@@ -3,13 +3,49 @@ package pt.tecnico.sauron.silo.domain;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import pt.tecnico.sauron.silo.grpc.Silo;
-import pt.tecnico.sauron.silo.grpc.Silo.Camera; //TODO remove import of grpc entity
-
 
 public class SiloServer {
 
-    private Map<String, ArrayList<Registry>> registriesMap = new HashMap<>();
+    private static class RegistryKey {
+        /*
+            This class removes the limitation of different types of objects having the same id
+            Which would cause collisions 
+        */
+
+        private String type, id;
+        
+        private RegistryKey(String type, String id) {
+            this.type = type.toUpperCase();
+            this.id = id.toUpperCase();
+        }
+
+        public static RegistryKey getKey(Registry r) {
+            return new RegistryKey(r.getType(), r.getIdentifier());
+        }
+
+        public static RegistryKey getKey(String type, String id) {
+            return new RegistryKey(type, id);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null ||  ! (o instanceof RegistryKey)) 
+                return false;
+            RegistryKey k = (RegistryKey) o;
+            return type.equals(k.type) && id.equals(k.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return (type + id).hashCode();
+        }
+
+        @Override
+        public String toString() {return type + " " + id; }
+
+    }
+
+    private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
 
     public synchronized boolean clear() {
@@ -18,21 +54,17 @@ public class SiloServer {
         return true;
     }
 
-    public synchronized void inputRegistry(String identifier, Registry reg) {
-        registriesMap.get(identifier).add(reg);
+    public synchronized List<Registry> getRegistries(String type, String identifier) {
+        return registriesMap.get(RegistryKey.getKey(type, identifier));
     }
 
-    public synchronized List<Registry> getRegistries(String identifier) {
-        return registriesMap.get(identifier);
+    public synchronized boolean registryExists(String type, String identifier) {
+        return registriesMap.containsKey(RegistryKey.getKey(type, identifier));
     }
 
-    public synchronized boolean registryExists(String identifier) {
-        return registriesMap.containsKey(identifier);
-    }
-
-    public synchronized Registry getMostRecentRegistry(String identifier) {
-        if (registriesMap.containsKey(identifier)) {
-            return registriesMap.get(identifier).get(registriesMap.get(identifier).size() -1);
+    public synchronized Registry getMostRecentRegistry(String type, String identifier) {
+        if (registriesMap.containsKey(RegistryKey.getKey(type, identifier))) {
+            return registriesMap.get(RegistryKey.getKey(type, identifier)).get(registriesMap.get(RegistryKey.getKey(type, identifier)).size() -1);
         } else return null;
     }
 
@@ -50,37 +82,32 @@ public class SiloServer {
 
     public synchronized void addRegistries(List<Registry> registries) {
         for (Registry r : registries)
-            if (registriesMap.containsKey(r.getIdentifier()))
-                registriesMap.get(r.getIdentifier()).add(r);
+            if (registriesMap.containsKey(RegistryKey.getKey(r)))
+                registriesMap.get(RegistryKey.getKey(r)).add(r);
             else {
                 ArrayList<Registry> list = new ArrayList<>();
                 list.add(r);
-                registriesMap.put(r.getIdentifier(), list);
+                registriesMap.put(RegistryKey.getKey(r), list);
             }
     }
 
-    //Returns list of registries from the most recent to the oldest
-    public synchronized ArrayList<Registry> getSortedRegistries(String identifier) {
-        ArrayList<Registry> registries = registriesMap.get(identifier);
-        registries.sort(Registry::compareTo);
-        return registries;
-    }
-
-    public synchronized ArrayList<Registry> getAllRecentRegistries(String partialIdentifier) {
-        Pattern p = Pattern.compile(partialIdentifier.replace("*",".*"));
+    public synchronized ArrayList<Registry> getAllRecentRegistries(String type, String partialIdentifier) {
+        Pattern p = Pattern.compile(partialIdentifier.toUpperCase().replace("*",".*"));
         Matcher m;
         ArrayList<Registry> registries = new ArrayList<>();
 
-        for (String identifier : registriesMap.keySet()) {
+        for (RegistryKey key : registriesMap.keySet()) {
+            if (!key.type.equals(type.toUpperCase())) continue; //different types
+            String identifier = key.id;
             m = p.matcher(identifier);
             if (m.matches()) {
-                registries.add(getMostRecentRegistry(identifier));
+                registries.add(getMostRecentRegistry(type, identifier));
             }
         }
         return registries;
     }
 
-    public boolean noRegistries() {
+    public synchronized boolean noRegistries() {
         return registriesMap.isEmpty();
     }
 }
