@@ -119,7 +119,15 @@ public class EyeApp {
 		sc.close();
 
 		if(observations.size()>0) {
-			sendObservations(observations, frontend, camName);
+			try {
+				sendObservations(observations, frontend, camName);
+			} catch (StatusRuntimeException e) {
+				System.out.println(e.getStatus().getDescription());
+				if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+						System.out.println("The hostname is unavailable. Exiting...");
+						System.exit(0);
+				}
+			}
 		}
 		
 		System.out.println("Report sent. Sauron will be pleased for your aid in ending the Age of Men");
