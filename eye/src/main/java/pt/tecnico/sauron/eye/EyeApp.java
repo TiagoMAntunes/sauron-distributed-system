@@ -17,6 +17,7 @@ import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import io.grpc.StatusRuntimeException;
+import io.grpc.Status.Code;
 
 public class EyeApp {
 
@@ -69,7 +70,15 @@ public class EyeApp {
 			String line = sc.nextLine();
 			if (line.equals("")) {
 				if(observations.size()>0) {
-					sendObservations(observations, frontend, camName);
+					try {
+						sendObservations(observations, frontend, camName);
+					} catch (StatusRuntimeException e) {
+						System.out.println(e.getStatus().getDescription());
+						if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+								System.out.println("The hostname is unavailable. Exiting...");
+								System.exit(0);
+						}
+					}
 					observations = new ArrayList<>();
 				}
 			} else if (line.charAt(0) == '#') {
@@ -85,6 +94,7 @@ public class EyeApp {
 					if (obsType.equals("zzz") && isLong(obsId)) {
 						try {Thread.sleep(Long.parseLong(obsId)); }
 						catch (InterruptedException e) {
+							//TODO Alternative: Throw exception
 							e.printStackTrace();
 						}
 					} else {
@@ -117,15 +127,10 @@ public class EyeApp {
 	}
 
 	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
-		for (Observation o : observations ) {
-			ReportRequest reportReq = ReportRequest.newBuilder().
-					setCameraName(camName).
-					addObservations(o).build();
-
-			frontend.reports(reportReq);
-		}
+		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build());
 	}
 
+	//TODO Do this without using exceptions
 	static boolean isLong(String string) {
 		if (string == null) {
 			return false;
