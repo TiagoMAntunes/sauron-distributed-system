@@ -72,7 +72,15 @@ car,111111
 person,1293132739
 ```
 
-O último bloco será enviado ao terminar a execução do eye, para isto basta fazer `CTRL+D`.
+Temos ainda o comando :
+
+```
+zzz,[milliSeconds]
+```
+
+Que nos permite pausar o processamento durante os milissegundos passados.
+
+Para enviar blocos enviamos uma linha em branco, ou podemos fazer isto ao terminar a execução do eye (para isso bastou fazer `CTRL+D`).
 
 ## Demonstração Spotter
 O cliente Spotter permite realizar pesquisas de informação através dos comandos `spot` e `trail`. Possui ainda comandos extras para o uso de testes: `ping`, `clear` e `init`. Em caso de dúvidas da sintaxe dos comandos pode-se correr o comando `help`.
