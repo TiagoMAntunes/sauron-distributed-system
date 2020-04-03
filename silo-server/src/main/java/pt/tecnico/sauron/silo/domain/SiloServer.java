@@ -15,8 +15,8 @@ public class SiloServer {
         private String type, id;
         
         private RegistryKey(String type, String id) {
-            this.type = type;
-            this.id = id;
+            this.type = type.toUpperCase();
+            this.id = id.toUpperCase();
         }
 
         public static RegistryKey getKey(Registry r) {

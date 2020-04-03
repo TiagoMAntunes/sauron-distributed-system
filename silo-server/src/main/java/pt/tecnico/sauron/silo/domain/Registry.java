@@ -11,8 +11,8 @@ public class Registry {
 
     public Registry(CameraDomain cam, String type, String id, Date time) {
         this.camera = cam;
-        this.type = type;
-        this.identifier = id;
+        this.type = type.toUpperCase();
+        this.identifier = id.toUpperCase();
         this.time = time;
     }
 

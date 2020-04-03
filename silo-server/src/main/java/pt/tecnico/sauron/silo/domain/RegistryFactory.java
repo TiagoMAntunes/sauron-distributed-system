@@ -15,8 +15,10 @@ public class RegistryFactory {
     public Registry build(CameraDomain cam, String type, String id, Date time) throws InvalidTypeException, IncorrectDataException {
         switch(type) {
             case "car":
+            case "CAR":
                 return buildCar(cam,type,id,time);
             case "person":
+            case "PERSON":
                 return buildPerson(cam,type,id,time);   
             default:
                 throw new InvalidTypeException(type);

@@ -109,8 +109,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             ArrayList<Registry> list = new ArrayList<>();
             for (Observation o : observations) {
                 CameraDomain cam = silo.getCamera(camName);
-                String type = o.getObservated().getType().toLowerCase();
-                String id = o.getObservated().getIdentifier().toLowerCase();
+                String type = o.getObservated().getType();
+                String id = o.getObservated().getIdentifier();
                 Date time = new Date();
                 Registry r = null;
                 try {
