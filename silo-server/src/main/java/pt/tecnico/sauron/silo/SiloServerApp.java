@@ -5,10 +5,12 @@ import java.io.IOException;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class SiloServerApp {
 	
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(SiloServerApp.class.getSimpleName());
 
 		// receive and print arguments
@@ -17,21 +19,35 @@ public class SiloServerApp {
 			System.out.printf("arg[%d] = %s%n", i, args[i]);
 		}
 
-		final int port = Integer.parseInt(args[0]);
+		final String zooHost = args[0];
+		final String zooPort = args[1];
+		final String host = args[2];
+		final int port = Integer.parseInt(args[3]);
+		final String path = args[4];
 		final BindableService impl = new SiloServerImpl();
 		
 		//Create a new server
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
 
-		//Start the server
-		server.start();
+		ZKNaming zkNaming = null;
+		try {
+			zkNaming = new ZKNaming(zooHost, zooPort);
+			zkNaming.rebind(path, host, String.valueOf(port));
+			//Start the server
+			server.start();
 
-		// Server threads are running in the background.
-		System.out.println("Server started");
+			// Server threads are running in the background.
+			System.out.println("Server started");
 
 
-		//Do not exit until termination
-		server.awaitTermination();
+			//Do not exit until termination
+			server.awaitTermination();	
+		} finally {
+			if (zkNaming != null) {
+				//remove
+				zkNaming.unbind(path, host, String.valueOf(port));
+			}
+		}
 
 	}
 	

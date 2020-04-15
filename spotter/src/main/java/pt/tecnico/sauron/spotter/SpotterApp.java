@@ -27,6 +27,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
@@ -34,7 +35,7 @@ import static java.lang.System.currentTimeMillis;
 
 public class SpotterApp {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException {
 		System.out.println(SpotterApp.class.getSimpleName());
 		
 		// receive and print arguments
@@ -49,7 +50,7 @@ public class SpotterApp {
 		}
 
 		final String host = args[0];
-		final int port = Integer.valueOf(args[1]);
+		final String port = args[1];
 
 		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port); Scanner sc = new Scanner(System.in)) {
 			boolean end = false;

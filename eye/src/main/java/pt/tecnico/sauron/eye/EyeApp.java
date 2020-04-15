@@ -9,6 +9,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
@@ -21,7 +22,7 @@ import io.grpc.Status.Code;
 
 public class EyeApp {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException {
 		System.out.println(EyeApp.class.getSimpleName());
 		if(args.length != 5) {
 			System.out.println("Invalid usage.");
@@ -35,7 +36,7 @@ public class EyeApp {
 		} 
 
 		final String host = args[0];
-		final int port = Integer.parseInt(args[1]);
+		final String port = args[1];
 		final String camName = args[2];
 		final double lat = Double.parseDouble(args[3]);
 		final double lon = Double.parseDouble(args[4]);
