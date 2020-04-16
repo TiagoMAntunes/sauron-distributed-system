@@ -4,10 +4,11 @@ import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class SiloClientApp {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException {
 		System.out.println(SiloClientApp.class.getSimpleName());
 		
 		// receive and print arguments
@@ -17,7 +18,7 @@ public class SiloClientApp {
 		}
 
 		final String host = args[0];
-		final int port = Integer.parseInt(args[1]);
+		final String port = args[1];
 
 		SiloServerFrontend frontend = new SiloServerFrontend(host, port);
 		try {
