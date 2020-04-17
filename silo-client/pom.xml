@@ -19,7 +19,6 @@
 		<!-- see parent POM for more properties -->
 
 		<mainclass>pt.tecnico.sauron.silo.client.SiloClientApp</mainclass>
-		<server.host>localhost</server.host>
 		<zoo.host>localhost</zoo.host>
 		<zoo.port>2181</zoo.port>
 	</properties>
