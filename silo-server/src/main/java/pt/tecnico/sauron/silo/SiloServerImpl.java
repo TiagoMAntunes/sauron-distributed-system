@@ -48,12 +48,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private final SiloServer silo = new SiloServer();
     private static final RegistryFactory registryFactory = new RegistryFactory();
 
+    //Add camera to server
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
         String camName = request.getCamera().getName();
         LatLng camCoords = request.getCamera().getCoords();
 
-
+        //Verify that request has been properly constructed
         CamJoinResponse response;
         if (camName == null || camName.equals("")) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera must not be null or empty").asRuntimeException());
@@ -62,6 +63,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (camName.length() < 3 || camName.length() > 15 ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera name must be between 3 and 15 characters in length").asRuntimeException());
         } else {
+            //Create server side representation of camera and add it
             CameraDomain newCam = new CameraDomain(camName, camCoords.getLatitude(), camCoords.getLongitude());
             silo.addCamera(newCam);
             response = CamJoinResponse.newBuilder().build();
@@ -70,15 +72,19 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+    //Return camera coords based on name
     @Override
     public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
         String camName = request.getName();
         CamInfoResponse response = CamInfoResponse.newBuilder().build();
+
+        //Verify that request has been properly constructed
         if (camName == null || camName.equals("")) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera must not be null or empty").asRuntimeException());
         } else if (!silo.cameraExists(camName)) {
             responseObserver.onError(FAILED_PRECONDITION.withDescription("Camera must already exist").asRuntimeException());
         }  else {
+            //Build coordinates from the camera server side representation
             CameraDomain camDom = silo.getCamera(camName);
             LatLng coords = LatLng.newBuilder().setLatitude(camDom.getLatitude()).setLongitude(camDom.getLongitude()).build();
             Camera cam = Camera.newBuilder().setCoords(coords).setName(camDom.getName()).build();
@@ -89,13 +95,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     }
 
+    //Send observations
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
 
         String camName = request.getCameraName();
         List<Observation> observations = request.getObservationsList();
-
         ReportResponse response;
+
+        //Verify that request has been properly constructed
         if (camName == null || camName.equals("") ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
         } else if ( !silo.cameraExists(camName)) {
@@ -106,7 +114,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Observations List must not be empty").asRuntimeException());
         } else {
             //Transform into registries
-
             ArrayList<Registry> list = new ArrayList<>();
             for (Observation o : observations) {
                 CameraDomain cam = silo.getCamera(camName);
@@ -130,6 +137,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 }
                 list.add(r);
             }
+            //Save the registries
             silo.addRegistries(list);
             response = ReportResponse.newBuilder().build();
             responseObserver.onNext(response);
@@ -137,10 +145,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+    //Verify if server is OK
     @Override
     public void controlPing(ControlPingRequest request, StreamObserver<ControlPingResponse> responseObserver) {
         String inputText = request.getInputText();
 
+        //Verify that request has been properly constructed        
         if (inputText == null || inputText.isBlank()) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty").asRuntimeException());
         } else {
@@ -150,6 +160,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+    //Clears testing
     @Override
     public void controlClear(ControlClearRequest request, StreamObserver<ControlClearResponse> responseObserver) {
         silo.clear();
@@ -158,16 +169,20 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onCompleted();
     }
 
+    //Initializes conditions for testing
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
         ArrayList<Registry> list = new ArrayList<>();
+            //For every observation that is provided        
             for (Observation o : observations) {
-                
+
+                //Create camera if there's none
                 if(!silo.cameraExists(o.getCamera().getName())) {
                     CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude());
                     silo.addCamera(newCam);
                 }
+                //Create registries
                 CameraDomain cam = silo.getCamera(o.getCamera().getName());
                 String type = o.getObservated().getType();
                 String id = o.getObservated().getIdentifier();
@@ -192,6 +207,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onCompleted();
     }
 
+    //Returns latest observation of an entity
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
 
@@ -201,6 +217,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         Observation observation = null;
         TrackResponse response;
 
+        //Verify that request has been properly constructed
         if (identifier == null || identifier.equals("") || type == null || type.equals("")) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
         } else if (request.getIdentity() == null) {
@@ -208,12 +225,14 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if(silo.noRegistries()){
             responseObserver.onError(FAILED_PRECONDITION.withDescription("Server has no data").asRuntimeException());
         } else {
+            //Gets most recent entrance in registry
             mostRecentRegistry = silo.getMostRecentRegistry(type, identifier);
             if (mostRecentRegistry == null) {
                 responseObserver.onError(FAILED_PRECONDITION.withDescription("The object has no reports").asRuntimeException());
                 return;
             }
 
+            //Creates observable entity from registry
             Observable observable = Observable.newBuilder()
                     .setType(mostRecentRegistry.getType())
                     .setIdentifier(mostRecentRegistry.getIdentifier())
@@ -221,6 +240,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
             LatLng coords = LatLng.newBuilder().setLatitude(mostRecentRegistry.getCamera().getLatitude()).setLongitude(mostRecentRegistry.getCamera().getLongitude()).build();
 
+            //Build observation from Registry and Observable
             observation = Observation.newBuilder()
                     .setObservated(observable)
                     .setTime(fromMillis(mostRecentRegistry.getTime().getTime()))
@@ -234,6 +254,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+    //Returns list of observations that match the partial identifier provided
     @Override
     public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
         String partialIdentifier = request.getIdentity().getIdentifier();
@@ -242,6 +263,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         ArrayList<Registry> registries;
         ArrayList<Observation> observations = new ArrayList<>();
 
+        //Verify that request has been properly constructed
         if (partialIdentifier == null || partialIdentifier.equals("") || type == null || type.equals("")) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
         } else if (request.getIdentity() == null) {
@@ -249,6 +271,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else {
             registries = silo.getAllRecentRegistries(type, partialIdentifier);
 
+            //Builds observations from the registries
             for(Registry r : registries){
                 Observable observable = Observable.newBuilder()
                         .setType(r.getType())
@@ -273,6 +296,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+
+    //Returns a list of observations refering to the identity
     @Override
     public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
         String type =  request.getIdentity().getType();
@@ -282,6 +307,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         List<Registry> registries;
         ArrayList<Observation> observations = new ArrayList<>();
 
+        //Verify that request has been properly constructed
         if (identifier == null || identifier.equals("") || type == null || type.equals("")) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
         } else if (request.getIdentity() == null) {
@@ -292,9 +318,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
+        
         else {
             registries = silo.getRegistries(type, identifier);
-           
+            
+            // Builds observations to return from the registries
             for (int i = registries.size() - 1; i >= 0; i--) {
                 Registry r = registries.get(i);
                 Observable observable = Observable.newBuilder()
@@ -317,7 +345,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     .addAllObservations(observations)
                     .build();
 
-            
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
