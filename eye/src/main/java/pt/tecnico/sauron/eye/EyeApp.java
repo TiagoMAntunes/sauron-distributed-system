@@ -46,6 +46,8 @@ public class EyeApp {
 		CamInfoRequest request = CamInfoRequest.newBuilder().
 				setName(camName).build();
 
+		//Tries to get Cam
+		//if it doesn't exist creates it
 		try{frontend.camInfo(request);}
 		catch(StatusRuntimeException e) {
 			LatLng camCoords = LatLng.newBuilder().
@@ -69,6 +71,8 @@ public class EyeApp {
 
 		while(sc.hasNextLine()) {
 			String line = sc.nextLine();
+
+			//in case line is empty observations
 			if (line.equals("")) {
 				if(observations.size()>0) {
 					try {
@@ -84,7 +88,7 @@ public class EyeApp {
 				}
 			} else if (line.charAt(0) == '#') {
 				// Ignores comments
-			}else {
+			} else {
 				String[] values = line.split(",");
 				if (values.length != 2) {
 					helpInputMessage();
@@ -92,6 +96,7 @@ public class EyeApp {
 					String obsType = values[0];
 					String obsId = values[1];
 
+					//makes it sleep
 					if (obsType.equals("zzz") && isLong(obsId)) {
 						try {Thread.sleep(Long.parseLong(obsId)); }
 						catch (InterruptedException e) {
@@ -100,6 +105,7 @@ public class EyeApp {
 						}
 					} else {
 						
+						//Add observation to list
 						Observable entity = Observable.newBuilder().
 								setType(obsType).
 								setIdentifier(obsId).build();
@@ -119,6 +125,7 @@ public class EyeApp {
 		System.out.print("Closing eyelids...");
 		sc.close();
 
+		//send observations
 		if(observations.size()>0) {
 			try {
 				sendObservations(observations, frontend, camName);
