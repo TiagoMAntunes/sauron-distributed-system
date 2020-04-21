@@ -6,6 +6,10 @@ package pt.tecnico.sauron.silo.grpc;
 import "google/protobuf/timestamp.proto";
 import "google/type/latlng.proto";
 
+message VectorClock {
+    repeated int updates = 1;
+}
+
 message Observable {
     string type = 1;
     string identifier = 2;

@@ -29,18 +29,19 @@ import java.lang.AutoCloseable;
 import java.util.Collection;
 
 public class SiloServerFrontend implements AutoCloseable {
-    private static final String path = "/grpc/sauron/silo"; //This is hard-coded, should it be?
+    private static final String path = "/grpc/sauron/silo"; //TODO This is hard-coded, should it be?
     private final String target;
     final ManagedChannel channel;
     SauronGrpc.SauronBlockingStub stub;
 
+    //TODO In case it fails to connect try again
     public SiloServerFrontend(String host, String port) throws ZKNamingException {
         ZKNaming zkNaming = new ZKNaming(host, port);
         Collection<ZKRecord> available = zkNaming.listRecords(path);
-        
+
         ZKRecord record = available.stream().skip((int) (available.size() * Math.random())).findFirst().get(); //this code selects a random option
         target = record.getURI();
-        
+
         channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
         stub = SauronGrpc.newBlockingStub(channel);
     }
