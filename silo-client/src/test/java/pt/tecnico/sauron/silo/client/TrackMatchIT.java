@@ -229,7 +229,7 @@ public class TrackMatchIT extends BaseIT {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
-		Observable part_obs = Observable.newBuilder().setType(TYPE).setIdentifier(PARTIAL_ID_).build();
+		Observable part_obs = Observable.newBuilder().setType(TYPE).setIdentifier(PARTIAL_ID_RIGHT).build();
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 
