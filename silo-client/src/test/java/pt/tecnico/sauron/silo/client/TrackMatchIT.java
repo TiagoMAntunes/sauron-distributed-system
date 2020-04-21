@@ -46,6 +46,10 @@ public class TrackMatchIT extends BaseIT {
 	
 	private final String PARTIAL_ID = "AA0*";
 	private final String INV_PARTIAL_ID = "AA01*";
+
+	private final String PARTIAL_ID_LEFT = "*AA";
+	private final String PARTIAL_ID_MIDDLE = "AA*AA";
+	private final String PARTIAL_ID_RIGHT = "AA*";
 	
     @BeforeEach
 	public void setUp() {
@@ -192,5 +196,44 @@ public class TrackMatchIT extends BaseIT {
             INVALID_ARGUMENT,
             assertThrows(StatusRuntimeException.class, () -> frontend.trackMatch(request)).getStatus().getCode()
             );
+	}
+
+	@Test
+	public void matchLeft() {
+		//load data first
+		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
+
+		Observable part_obs = Observable.newBuilder().setType(TYPE).setIdentifier(PARTIAL_ID_LEFT).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
+		TrackMatchResponse response = frontend.trackMatch(request);
+
+		assertEquals(1, response.getObservationsCount());
+		assertEquals(OBSERVATION, response.getObservationsList().get(0));
+	}
+
+	@Test
+	public void matchMiddle() {
+		//load data first
+		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
+
+		Observable part_obs = Observable.newBuilder().setType(TYPE).setIdentifier(PARTIAL_ID_MIDDLE).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
+		TrackMatchResponse response = frontend.trackMatch(request);
+
+		assertEquals(1, response.getObservationsCount());
+		assertEquals(OBSERVATION, response.getObservationsList().get(0));
+	}
+
+	@Test
+	public void matchRight() {
+		//load data first
+		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
+
+		Observable part_obs = Observable.newBuilder().setType(TYPE).setIdentifier(PARTIAL_ID_).build();
+		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(part_obs).build();
+		TrackMatchResponse response = frontend.trackMatch(request);
+
+		assertEquals(1, response.getObservationsCount());
+		assertEquals(OBSERVATION, response.getObservationsList().get(0));
 	}
 }
