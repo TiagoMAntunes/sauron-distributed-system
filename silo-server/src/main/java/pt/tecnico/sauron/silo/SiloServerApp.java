@@ -8,8 +8,19 @@ import io.grpc.ServerBuilder;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
+/**
+ * The type Silo server app.
+ */
 public class SiloServerApp {
-	
+
+	/**
+	 * The entry point of application.
+	 *
+	 * @param args the input arguments
+	 * @throws IOException          the io exception
+	 * @throws InterruptedException the interrupted exception
+	 * @throws ZKNamingException    the zk naming exception
+	 */
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(SiloServerApp.class.getSimpleName());
 
