@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "google/type/latlng.proto";
 
 message VectorClock {
-    repeated int updates = 1;
+    repeated int32 updates = 1;
 }
 
 message Observable {
