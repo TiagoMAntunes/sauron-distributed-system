@@ -27,6 +27,8 @@
 		<server.host>localhost</server.host>
 		<server.port>808${instance}</server.port>
 		<server.path>/grpc/sauron/silo/${instance}</server.path>
+		
+		<numberOfReplicas>1</numberOfReplicas>
 	</properties>
 
 	<dependencies>
@@ -87,6 +89,7 @@
 						<argument>${server.host}</argument>
 						<argument>${server.port}</argument>
 						<argument>${server.path}</argument>
+						<argument>${numberOfReplicas}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
