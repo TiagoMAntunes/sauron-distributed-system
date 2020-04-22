@@ -48,11 +48,12 @@ public class SiloServer {
     private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
     private VectorClock ts;
-
-    public SiloServer(int nRep) {
+    private int replicaIndex;
+    public SiloServer(int nRep, int whichReplica) {
         this.ts = new VectorClock(nRep);
+        this.replicaIndex = whichReplica-1;
     }
-    
+
     public synchronized boolean clear() {
         cameras.clear();
         registriesMap.clear();
@@ -86,6 +87,10 @@ public class SiloServer {
     }
 
     public synchronized void addRegistries(List<Registry> registries) {
+        //When Adding Registries update the vector clock regarding this replica
+        //TODO has to be changed to wait for being stable
+        this.ts.incUpdate(this.replicaIndex);
+
         for (Registry r : registries)
             if (registriesMap.containsKey(RegistryKey.getKey(r)))
                 registriesMap.get(RegistryKey.getKey(r)).add(r);

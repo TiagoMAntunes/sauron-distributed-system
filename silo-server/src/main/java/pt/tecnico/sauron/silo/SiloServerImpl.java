@@ -48,8 +48,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private final SiloServer silo;
     private static final RegistryFactory registryFactory = new RegistryFactory();
 
-    public SiloServerImpl (int nReplicas) {
-        this.silo =  new SiloServer(nReplicas);
+    public SiloServerImpl (int nReplicas, int whichReplica) {
+        this.silo =  new SiloServer(nReplicas,whichReplica);
     }
     //Add camera to server
     @Override
