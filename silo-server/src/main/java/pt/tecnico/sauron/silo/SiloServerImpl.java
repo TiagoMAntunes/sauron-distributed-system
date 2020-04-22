@@ -45,9 +45,12 @@ import com.google.type.LatLng;
 
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
-    private final SiloServer silo = new SiloServer();
+    private final SiloServer silo;
     private static final RegistryFactory registryFactory = new RegistryFactory();
 
+    public SiloServerImpl (int nReplicas) {
+        this.silo =  new SiloServer(nReplicas);
+    }
     //Add camera to server
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {

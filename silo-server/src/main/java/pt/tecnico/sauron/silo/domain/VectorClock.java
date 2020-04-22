@@ -1,6 +1,7 @@
 package pt.tecnico.sauron.silo.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class VectorClock {
@@ -9,6 +10,10 @@ public class VectorClock {
     //Initialize ArrayList from List (can create VectorClock directly from what grpc message returns)
     public VectorClock(List<Integer> list) {
         this.updates = new ArrayList<>(list);
+    }
+
+    public VectorClock(int nReplicas) {
+        this.updates = new ArrayList<>(Collections.nCopies(nReplicas, 0));
     }
 
     public void incUpdate(int index) {
@@ -36,5 +41,15 @@ public class VectorClock {
             if (this.updates.get(i) < v.getUpdate(i))
                 this.updates.set(i, v.getUpdate(i));
         }
+    }
+
+    @Override
+    public String toString() {
+        String vectorStr = "[";
+        for( int i = 0; i < updates.size(); i++) {
+            vectorStr += getUpdate(i) + ",";
+        }
+        vectorStr = vectorStr.substring(0,vectorStr.length() - 1) + ']';
+        return vectorStr;
     }
 }

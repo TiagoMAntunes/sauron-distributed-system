@@ -47,7 +47,12 @@ public class SiloServer {
 
     private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
+    private VectorClock ts;
 
+    public SiloServer(int nRep) {
+        this.ts = new VectorClock(nRep);
+    }
+    
     public synchronized boolean clear() {
         cameras.clear();
         registriesMap.clear();

@@ -24,7 +24,8 @@ public class SiloServerApp {
 		final String host = args[2];
 		final int port = Integer.parseInt(args[3]);
 		final String path = args[4];
-		final BindableService impl = new SiloServerImpl();
+		final int nReplicas = Integer.parseInt(args[5]);
+		final BindableService impl = new SiloServerImpl(nReplicas);
 		
 		//Create a new server
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
