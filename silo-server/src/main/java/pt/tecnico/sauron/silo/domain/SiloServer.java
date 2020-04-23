@@ -47,10 +47,10 @@ public class SiloServer {
 
     private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
-    private VectorClock ts;
+    private VectorClockDomain ts;
     private int replicaIndex;
     public SiloServer(int nRep, int whichReplica) {
-        this.ts = new VectorClock(nRep);
+        this.ts = new VectorClockDomain(nRep);
         this.replicaIndex = whichReplica-1;
     }
 
