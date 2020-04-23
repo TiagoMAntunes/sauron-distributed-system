@@ -89,10 +89,11 @@ public class SiloServer {
     public synchronized VectorClockDomain addRegistries(List<Registry> registries, VectorClockDomain vec) {
         //When Adding Registries update the vector clock regarding this replica
         //TODO has to be changed to wait for being stable
+        this.ts.incUpdate(this.replicaIndex);
+        System.out.println("Current ts:" + this.ts + "; Incoming: " + vec);
+        
         if(this.ts.isMoreRecent(vec)) {
-            this.ts.incUpdate(this.replicaIndex);
-
-            for (Registry r : registries)
+            for (Registry r : registries) {
                 if (registriesMap.containsKey(RegistryKey.getKey(r)))
                     registriesMap.get(RegistryKey.getKey(r)).add(r);
                 else {
@@ -100,8 +101,11 @@ public class SiloServer {
                     list.add(r);
                     registriesMap.put(RegistryKey.getKey(r), list);
                 }
+            }
+            System.out.println("Should update");    
             return this.ts;
         } else {
+            System.out.println("Doesn't update");
             return vec;
         }
     }

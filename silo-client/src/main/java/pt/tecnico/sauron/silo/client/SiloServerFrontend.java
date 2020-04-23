@@ -36,7 +36,7 @@ public class SiloServerFrontend implements AutoCloseable {
     private final String target;
     final ManagedChannel channel;
     SauronGrpc.SauronBlockingStub stub;
-    ArrayList<Integer> ts = new ArrayList<>(Collections.nCopies(2, 0)); // TODO get the number from args
+    ArrayList<Integer> ts = new ArrayList<>();
 
     //TODO In case it fails to connect try again
     public SiloServerFrontend(String host, String port) throws ZKNamingException {
@@ -77,7 +77,19 @@ public class SiloServerFrontend implements AutoCloseable {
 
     
     public ControlInitResponse controlInit(ControlInitRequest r) {
-        return stub.controlInit(r);
+
+        //Creates VectorClock from the timestamp
+        //Create new request and sent it with the VectorClock
+        VectorClock vector  = VectorClock.newBuilder().addAllUpdates(this.ts).build();
+        ControlInitRequest req = ControlInitRequest.newBuilder().addAllObservation(r.getObservationList()).setPrev(vector).build();
+        ControlInitResponse res = stub.controlInit(req);
+        //Update timestamp
+        System.out.println("B4:" + this.ts);
+        this.ts = new ArrayList<>(res.getNew().getUpdatesList());
+        System.out.println("After:" + this.ts);
+
+        return res;
+
     }
 
     public TrackResponse track(TrackRequest r) {
@@ -92,11 +104,17 @@ public class SiloServerFrontend implements AutoCloseable {
         return stub.trace(r);
     }
 
+    
     public ReportResponse reports(ReportRequest r) {
+        //Creates VectorClock from the timestamp
+        //Create new request and sent it with the VectorClock
         VectorClock vector  = VectorClock.newBuilder().addAllUpdates(this.ts).build();
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName()).addAllObservations(r.getObservationsList()).build();
         ReportResponse res = stub.report(req);
+        //Update timestamp
+        System.out.println("B4:" + this.ts);
         this.ts = new ArrayList<>(res.getNew().getUpdatesList());
+        System.out.println("After:" + this.ts);
         return res;
     }
 

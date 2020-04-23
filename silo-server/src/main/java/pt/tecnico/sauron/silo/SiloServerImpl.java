@@ -109,7 +109,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String camName = request.getCameraName();
         List<Observation> observations = request.getObservationsList();
         ReportResponse response;
-        VectorClock prevVec = request.getPrev();
+        VectorClock prevVec = request.getPrev(); //Get timestamp from request
         //Verify that request has been properly constructed
         if (camName == null || camName.equals("") ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
@@ -145,6 +145,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
             //Save the registries
+            //Gets vector from SiloServer and sends it in the response
             VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList()));
             VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(newVec.getList()).build();
             response = ReportResponse.newBuilder().setNew(newVectorClock).build();
@@ -181,6 +182,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
+        VectorClock prevVec = request.getPrev(); //Get timestamp from request
         ArrayList<Registry> list = new ArrayList<>();
             //For every observation that is provided        
             for (Observation o : observations) {
@@ -207,10 +209,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 } 
                 list.add(r);
             }
-
-        VectorClockDomain vec = silo.addRegistries(list, new VectorClockDomain(2)); // TODO change this to be dependent on number of replicas and not hard coded
         
-        ControlInitResponse response = ControlInitResponse.newBuilder().build();
+        //Gets vector from SiloServer and sends it in the response
+        VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList())); // TODO change this to be dependent on number of replicas and not hard coded
+        VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(newVec.getList()).build();
+        ControlInitResponse response = ControlInitResponse.newBuilder().setNew(newVectorClock).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

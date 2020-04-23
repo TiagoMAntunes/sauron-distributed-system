@@ -93,10 +93,11 @@ message ControlClearResponse {
 
 message ControlInitRequest {
     repeated Observation observation = 1;
+    VectorClock prev = 3;
 }
 
 message ControlInitResponse {
-    
+    VectorClock new = 3;
 }
 
 service Sauron {

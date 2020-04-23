@@ -28,7 +28,13 @@ public class VectorClockDomain {
     //Compares to another VectorClockDomain and checks if more recent
     public boolean isMoreRecent(VectorClockDomain v) {
         for( int i = 0; i < updates.size(); i++) {
-            if (this.updates.get(i) < v.getUpdate(i)) /* TODO change to <= */ /* TODO change this to return true when receives a vectorclock at zero  */
+            if(v.getList().size() ==0) {
+                //TODO check if correct
+                //For an initial message from client which has no history
+                return true;
+            }
+            /* TODO what if they are the same */
+            if (this.updates.get(i) < v.getUpdate(i))  
                 return false;
         }
         return true;
