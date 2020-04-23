@@ -15,6 +15,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
@@ -26,13 +27,16 @@ import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
 import java.lang.AutoCloseable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public class SiloServerFrontend implements AutoCloseable {
     private static final String path = "/grpc/sauron/silo"; //TODO This is hard-coded, should it be?
     private final String target;
     final ManagedChannel channel;
     SauronGrpc.SauronBlockingStub stub;
+    ArrayList<Integer> ts = new ArrayList<>(Collections.nCopies(2, 0)); // TODO get the number from args
 
     //TODO In case it fails to connect try again
     public SiloServerFrontend(String host, String port) throws ZKNamingException {
@@ -89,7 +93,9 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public ReportResponse reports(ReportRequest r) {
-        return stub.report(r);
+        VectorClock vector  = VectorClock.newBuilder().addAllUpdates(this.ts).build();
+        ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName()).addAllObservations(r.getObservationsList()).build();
+        return stub.report(req);
     }
 
     @Override

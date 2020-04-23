@@ -21,10 +21,12 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.domain.SiloServer;
+import pt.tecnico.sauron.silo.domain.VectorClockDomain;
 import pt.tecnico.sauron.silo.grpc.*;
 import pt.tecnico.sauron.silo.domain.Registry;
 import pt.tecnico.sauron.silo.domain.RegistryFactory;
@@ -107,7 +109,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String camName = request.getCameraName();
         List<Observation> observations = request.getObservationsList();
         ReportResponse response;
-
+        VectorClock prevVec = request.getPrev();
         //Verify that request has been properly constructed
         if (camName == null || camName.equals("") ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
@@ -143,7 +145,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
             //Save the registries
-            silo.addRegistries(list);
+            silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList()));
             response = ReportResponse.newBuilder().build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -205,7 +207,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
 
-        silo.addRegistries(list);
+        silo.addRegistries(list, new VectorClockDomain(2));
 
         ControlInitResponse response = ControlInitResponse.newBuilder().build();
         responseObserver.onNext(response);

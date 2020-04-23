@@ -86,11 +86,11 @@ public class SiloServer {
         return cameras.get(cameraName);
     }
 
-    public synchronized void addRegistries(List<Registry> registries) {
+    public synchronized void addRegistries(List<Registry> registries, VectorClockDomain vec) {
         //When Adding Registries update the vector clock regarding this replica
         //TODO has to be changed to wait for being stable
         this.ts.incUpdate(this.replicaIndex);
-
+        System.out.println("Prev: " + vec + " novo: " + this.ts);
         for (Registry r : registries)
             if (registriesMap.containsKey(RegistryKey.getKey(r)))
                 registriesMap.get(RegistryKey.getKey(r)).add(r);
@@ -100,6 +100,8 @@ public class SiloServer {
                 registriesMap.put(RegistryKey.getKey(r), list);
             }
     }
+
+   
 
     public synchronized ArrayList<Registry> getAllRecentRegistries(String type, String partialIdentifier) {
         Pattern p = Pattern.compile(partialIdentifier.toUpperCase().replace("*",".*"));
