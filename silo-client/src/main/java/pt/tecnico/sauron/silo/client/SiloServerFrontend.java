@@ -95,7 +95,9 @@ public class SiloServerFrontend implements AutoCloseable {
     public ReportResponse reports(ReportRequest r) {
         VectorClock vector  = VectorClock.newBuilder().addAllUpdates(this.ts).build();
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName()).addAllObservations(r.getObservationsList()).build();
-        return stub.report(req);
+        ReportResponse res = stub.report(req);
+        this.ts = new ArrayList<>(res.getNew().getUpdatesList());
+        return res;
     }
 
     @Override

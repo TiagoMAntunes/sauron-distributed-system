@@ -28,7 +28,7 @@ public class VectorClockDomain {
     //Compares to another VectorClockDomain and checks if more recent
     public boolean isMoreRecent(VectorClockDomain v) {
         for( int i = 0; i < updates.size(); i++) {
-            if (this.updates.get(i) <= v.getUpdate(i))
+            if (this.updates.get(i) < v.getUpdate(i)) /* TODO change to <= */ /* TODO change this to return true when receives a vectorclock at zero  */
                 return false;
         }
         return true;
@@ -51,5 +51,9 @@ public class VectorClockDomain {
         }
         vectorStr = vectorStr.substring(0,vectorStr.length() - 1) + ']';
         return vectorStr;
+    }
+
+    public ArrayList<Integer> getList() {
+        return this.updates;
     }
 }

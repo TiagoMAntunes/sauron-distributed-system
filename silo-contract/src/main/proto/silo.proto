@@ -49,6 +49,7 @@ message ReportRequest {
 }
 
 message ReportResponse {
+    VectorClock new = 1;
 }
 
 message TrackRequest {
