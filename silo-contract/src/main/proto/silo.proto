@@ -45,6 +45,7 @@ message CamInfoResponse {
 message ReportRequest {
     string cameraName = 1;
     repeated Observation observations = 2;
+    VectorClock prev = 3;
 }
 
 message ReportResponse {
