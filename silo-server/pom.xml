@@ -29,6 +29,7 @@
 		<server.path>/grpc/sauron/silo/${instance}</server.path>
 		
 		<numberOfReplicas>9</numberOfReplicas>
+		<interval>30</interval>
 	</properties>
 
 	<dependencies>
@@ -90,6 +91,7 @@
 						<argument>${server.port}</argument>
 						<argument>${server.path}</argument>
 						<argument>${numberOfReplicas}</argument>
+						<argument>${interval}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

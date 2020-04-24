@@ -368,4 +368,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+    public void gossip() {
+        System.out.println("I should gossip now, but I won't"); //TODO implement gossip
+    }
+
 }

@@ -1,6 +1,8 @@
 package pt.tecnico.sauron.silo;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.grpc.BindableService;
 import io.grpc.Server;
@@ -25,7 +27,14 @@ public class SiloServerApp {
 		final int port = Integer.parseInt(args[3]);
 		final String path = args[4];
 		final int nReplicas = Integer.parseInt(args[5]);
-		final BindableService impl = new SiloServerImpl(nReplicas,Integer.parseInt(path.substring(path.length()-1, path.length()))); //Passes number of replicas and which replica it is
+		int interval;
+		if (args.length >= 7)
+			interval = Integer.parseInt(args[6]) * 1000; //ms
+		else 
+			interval = 30000;
+		
+		SiloServerImpl silo = new SiloServerImpl(nReplicas,Integer.parseInt(path.substring(path.length()-1, path.length()))); //Passes number of replicas and which replica it is
+		final BindableService impl = silo;
 		
 		//Create a new server
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
@@ -40,7 +49,10 @@ public class SiloServerApp {
 			// Server threads are running in the background.
 			System.out.println("Server started");
 
-
+			//Start gossip at every interval ms
+			Timer timer = new Timer();
+			timer.schedule(new GossipRun(silo), 0, interval);
+			
 			//Do not exit until termination
 			server.awaitTermination();	
 		} finally {
@@ -51,5 +63,17 @@ public class SiloServerApp {
 		}
 
 	}
-	
+
+	static class GossipRun extends TimerTask {
+		private final SiloServerImpl silo;
+
+		public GossipRun(SiloServerImpl s) {
+			silo = s;
+		}
+
+		public void run() {
+			silo.gossip();
+		}
+	}
+
 }
