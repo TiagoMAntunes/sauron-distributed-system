@@ -142,7 +142,6 @@ public class SiloServerFrontend implements AutoCloseable {
 
     public TrackResponse track(TrackRequest r) throws ZKNamingException {
         stub = getStub();
-        TrackResponse response;
         try {
             return stub.track(r);
         } finally {
@@ -168,7 +167,7 @@ public class SiloServerFrontend implements AutoCloseable {
         }
     }
 
-    public ReportResponse reports(ReportRequest r) throws ZKNamingException {
+    public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException {
         // Creates VectorClock from the timestamp
         // Create new request and sent it with the VectorClock
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
@@ -178,6 +177,7 @@ public class SiloServerFrontend implements AutoCloseable {
         stub = getStub();
         ReportResponse res;
         try {
+            stub.camJoin(jr);
             res = stub.report(req);
         } finally {
             channel.shutdown();

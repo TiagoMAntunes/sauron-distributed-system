@@ -31,7 +31,8 @@ public class BaseIT {
 
 		final String host = testProps.getProperty("server.host");
 		final String port = testProps.getProperty("server.port");
-		frontend = new SiloServerFrontend(host, port);
+		final String instance = testProps.getProperty("instance");
+		frontend = new SiloServerFrontend(host, port, instance);
 	}
 	
 	@AfterAll

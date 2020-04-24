@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import pt.tecnico.sauron.silo.client.BaseIT;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class ClearIT extends BaseIT {
 	
@@ -24,7 +25,7 @@ public class ClearIT extends BaseIT {
 	// tests 
 	
 	@Test
-	public void clearOkTest() {
+	public void clearOkTest() throws ZKNamingException {
         ControlClearRequest request = ControlClearRequest.newBuilder().build();
         frontend.controlClear(request);
     }

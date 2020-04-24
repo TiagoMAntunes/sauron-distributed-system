@@ -15,6 +15,7 @@ import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
@@ -71,6 +72,10 @@ public class ReportsIT extends BaseIT {
             setName(VALID_CAM_NAME).
             setCoords(CAM_COORDS).
             build();
+
+    private final CamJoinRequest CAM_REQUEST = CamJoinRequest.newBuilder().
+                setCamera(CAMERA)
+                .build();
     // one-time initialization and clean-up
 
     @BeforeAll
@@ -86,7 +91,7 @@ public class ReportsIT extends BaseIT {
     // initialization and clean-up for each test
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws ZKNamingException {
         //Set up a valid camera for each test
         CamJoinRequest camReq = CamJoinRequest.newBuilder().
                 setCamera(CAMERA).
@@ -96,7 +101,7 @@ public class ReportsIT extends BaseIT {
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws ZKNamingException {
         //Clean server state after each test
         frontend.controlClear(Silo.ControlClearRequest.newBuilder().build());
     }
@@ -104,13 +109,13 @@ public class ReportsIT extends BaseIT {
     // tests
 
     @Test
-    public void reportOkTest() {
+    public void reportOkTest() throws ZKNamingException {
         ReportRequest request = ReportRequest.newBuilder().
                 setCameraName(VALID_CAM_NAME).
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).
                 build();
 
-        frontend.reports(request);
+        frontend.reports(request, CAM_REQUEST);
 
     }
 
@@ -124,7 +129,7 @@ public class ReportsIT extends BaseIT {
 
         assertEquals(
             INVALID_ARGUMENT,
-            assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
+            assertThrows(StatusRuntimeException.class, () -> frontend.reports(request, CAM_REQUEST)).getStatus().getCode());
     }
 
     @Test
@@ -136,7 +141,7 @@ public class ReportsIT extends BaseIT {
 
         assertEquals(
                 INVALID_ARGUMENT,
-                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request, CAM_REQUEST)).getStatus().getCode());
     }
 
     @Test
@@ -147,7 +152,7 @@ public class ReportsIT extends BaseIT {
 
         assertEquals(
                 INVALID_ARGUMENT,
-                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request, CAM_REQUEST)).getStatus().getCode());
     }
 
     @Test
@@ -159,7 +164,7 @@ public class ReportsIT extends BaseIT {
 
         assertEquals(
                 INVALID_ARGUMENT,
-                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request, CAM_REQUEST)).getStatus().getCode());
     }
 
      @Test
@@ -171,6 +176,6 @@ public class ReportsIT extends BaseIT {
 
         assertEquals(
                 INVALID_ARGUMENT,
-                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request)).getStatus().getCode());
+                assertThrows(StatusRuntimeException.class, () -> frontend.reports(request, CAM_REQUEST)).getStatus().getCode());
     } 
 }

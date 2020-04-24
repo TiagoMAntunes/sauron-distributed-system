@@ -18,13 +18,13 @@ import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
 
-
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 
@@ -52,13 +52,13 @@ public class TraceIT extends BaseIT {
     }
 	
 	@AfterEach
-	public void tearDown() {
+	public void tearDown() throws ZKNamingException {
 		//Clean the server state after each test
 		frontend.controlClear(ControlClearRequest.newBuilder().build());
 	}
 
 	@Test
-    public void nonNullResponse() {
+    public void nonNullResponse() throws ZKNamingException {
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(OBSERVABLE).build();
 		TraceResponse response = frontend.trace(request);
@@ -67,7 +67,7 @@ public class TraceIT extends BaseIT {
     }
 
     @Test
-    public void emptyResponse() {
+    public void emptyResponse() throws ZKNamingException {
 		//server is empty
 
 		TraceRequest request = TraceRequest.newBuilder().setIdentity(OBSERVABLE).build();
@@ -77,7 +77,7 @@ public class TraceIT extends BaseIT {
     }
 
     @Test
-    public void oneObservation() {
+    public void oneObservation() throws ZKNamingException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 		
@@ -89,7 +89,7 @@ public class TraceIT extends BaseIT {
 	}
 	
 	@Test
-	public void multipleObservationsDifferentIds() {
+	public void multipleObservationsDifferentIds() throws ZKNamingException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -105,7 +105,7 @@ public class TraceIT extends BaseIT {
 	}
 
 	@Test
-	public void multipleObservationsSameId() {
+	public void multipleObservationsSameId() throws ZKNamingException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 5; i++){
@@ -128,7 +128,7 @@ public class TraceIT extends BaseIT {
 
 
 	@Test
-	public void noMatch() {
+	public void noMatch() throws ZKNamingException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 10; i++) {

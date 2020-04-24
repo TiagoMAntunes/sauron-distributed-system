@@ -21,6 +21,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 
@@ -48,14 +49,14 @@ public class TrackIT extends BaseIT {
     }
 	
 	@AfterEach
-	public void tearDown() {
+	public void tearDown() throws ZKNamingException {
         //Clean the server state after each test
         frontend.controlClear(ControlClearRequest.newBuilder().build());
 
 	}
 
     @Test
-    public void nonNullResponse() {
+    public void nonNullResponse() throws ZKNamingException {
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
         TrackRequest request = TrackRequest.newBuilder().setIdentity(OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
@@ -74,7 +75,7 @@ public class TrackIT extends BaseIT {
     }
 
     @Test
-    public void okResponse() {
+    public void okResponse() throws ZKNamingException {
         //load data first
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -86,7 +87,7 @@ public class TrackIT extends BaseIT {
     }
 
     @Test
-    public void noMatch() {
+    public void noMatch() throws ZKNamingException {
         //load data first
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 

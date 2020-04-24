@@ -24,6 +24,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 
@@ -57,14 +58,14 @@ public class TrackMatchIT extends BaseIT {
     }
 	
 	@AfterEach
-	public void tearDown() {
+	public void tearDown() throws ZKNamingException {
         //Clean the server state after each test
         frontend.controlClear(ControlClearRequest.newBuilder().build());
 
 	}
 
     @Test
-    public void nonNullResponse() {
+    public void nonNullResponse() throws ZKNamingException {
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
@@ -73,7 +74,7 @@ public class TrackMatchIT extends BaseIT {
     }
 
     @Test
-    public void emptyResponse() {
+    public void emptyResponse() throws ZKNamingException {
 		//server is empty
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
@@ -82,7 +83,7 @@ public class TrackMatchIT extends BaseIT {
     }
 
     @Test
-    public void oneObservation() {
+    public void oneObservation() throws ZKNamingException {
         //load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -95,7 +96,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-    public void idPerfectMatch() {
+    public void idPerfectMatch() throws ZKNamingException {
         //load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -108,7 +109,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 	
 	@Test
-	public void multipleObservations() {
+	public void multipleObservations() throws ZKNamingException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -126,7 +127,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void multipleObservationsSameId() {
+	public void multipleObservationsSameId() throws ZKNamingException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -147,7 +148,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void noMatch() {
+	public void noMatch() throws ZKNamingException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -199,7 +200,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void matchLeft() {
+	public void matchLeft() throws ZKNamingException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -212,7 +213,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void matchMiddle() {
+	public void matchMiddle() throws ZKNamingException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -225,7 +226,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void matchRight() {
+	public void matchRight() throws ZKNamingException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 

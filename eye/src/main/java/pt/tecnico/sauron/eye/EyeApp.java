@@ -47,7 +47,8 @@ public class EyeApp {
 
 		//Tries to get Cam
 		//if it doesn't exist creates it
-		try{frontend.camInfo(request);}
+		Camera camera;
+		try{camera = frontend.camInfo(request).getCamera();}
 		catch(StatusRuntimeException e) {
 			LatLng camCoords = LatLng.newBuilder().
 					setLatitude(lat).
@@ -60,6 +61,7 @@ public class EyeApp {
 					setCamera(newCam).build();
 
 			frontend.camJoin(camJoinReq);
+			camera = newCam;
 		}
 
 		helpInputMessage();
@@ -75,7 +77,7 @@ public class EyeApp {
 			if (line.equals("")) {
 				if(observations.size()>0) {
 					try {
-						sendObservations(observations, frontend, camName);
+						sendObservations(observations, frontend, camName, camera);
 					} catch (StatusRuntimeException e) {
 						System.out.println(e.getStatus().getDescription());
 						if (e.getStatus().getCode() == Code.UNAVAILABLE) {
@@ -127,7 +129,7 @@ public class EyeApp {
 		//send observations
 		if(observations.size()>0) {
 			try {
-				sendObservations(observations, frontend, camName);
+				sendObservations(observations, frontend, camName, camera);
 			} catch (StatusRuntimeException e) {
 				System.out.println(e.getStatus().getDescription());
 				if (e.getStatus().getCode() == Code.UNAVAILABLE) {
@@ -141,8 +143,9 @@ public class EyeApp {
 		System.exit(0);
 	}
 
-	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) throws ZKNamingException {
-		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build());
+	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException {
+		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
+						CamJoinRequest.newBuilder().setCamera(cam).build());
 	}
 
 	//TODO Do this without using exceptions

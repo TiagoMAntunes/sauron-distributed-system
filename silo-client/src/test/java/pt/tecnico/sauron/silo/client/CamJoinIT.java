@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import pt.tecnico.sauron.silo.client.BaseIT;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
@@ -38,14 +39,14 @@ public class CamJoinIT extends BaseIT {
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws ZKNamingException {
         frontend.controlClear(ControlClearRequest.newBuilder().build());
     }
 
     // tests
 
     @Test
-    public void nonNullResponse() {
+    public void nonNullResponse() throws ZKNamingException {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         CamJoinResponse response = frontend.camJoin(request);
@@ -53,23 +54,22 @@ public class CamJoinIT extends BaseIT {
     }
 
     @Test
-    public void okResponse() {
+    public void okResponse() throws ZKNamingException {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         frontend.camJoin(request);
     }
 
     @Test
-    public void duplicateNameTest() {
+    public void duplicateNameTest() throws ZKNamingException {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         Camera camera_duplicate = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         CamJoinRequest request_duplicate = CamJoinRequest.newBuilder().setCamera(camera_duplicate).build();
         frontend.camJoin(request);
 
-        assertEquals(ALREADY_EXISTS,
-                assertThrows(StatusRuntimeException.class, () -> frontend.camJoin(request_duplicate)).getStatus()
-                        .getCode());
+        //Should not throw anything
+        frontend.camJoin(request_duplicate);
     }
 
     @Test
