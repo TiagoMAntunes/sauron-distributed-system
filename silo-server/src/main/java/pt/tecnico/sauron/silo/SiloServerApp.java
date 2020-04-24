@@ -85,34 +85,7 @@ public class SiloServerApp {
 		}
 
 		public void run(){
-			System.out.println("In replica " + whichReplica);
-
-			//TODO send updates
-			//TODO clear updates after sending
-			//TODO confirm / fix error at beginning because it cant find the other server then one of them stop  sending even when it connects
-			    		
-			try {
-				Collection<ZKRecord> available = zkNaming.listRecords(path);
-				//For every replica that is not this one
-				available.forEach(record -> {
-					String recPath = record.getPath();
-					int recID = Integer.parseInt(recPath.substring(recPath.length()-1));
-					if (recID != whichReplica) {
-						String target = record.getURI();
-						ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-						SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
-						GossipRequest req = GossipRequest.newBuilder().build(); 
-						try {
-							GossipResponse res = stub.gossip(req);
-							System.out.println("Received response");
-						} finally {
-							channel.shutdown();
-						} 
-					}
-				});
-			} catch (ZKNamingException e) {
-				System.out.println("Problem with gossip " + e.getMessage());
-			}
+			silo.doGossip(whichReplica, zkNaming, path);
 		}	
 	}
 

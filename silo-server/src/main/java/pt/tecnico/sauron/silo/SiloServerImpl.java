@@ -24,6 +24,9 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
@@ -38,9 +41,14 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.ALREADY_EXISTS;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
@@ -377,5 +385,44 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+	public void doGossip(int whichReplica, ZKNaming zkNaming, String path) {
+        System.out.println("In replica " + whichReplica);
+
+        //TODO send updates
+        //TODO clear updates after sending
+        //TODO confirm / fix error at beginning because it cant find the other server then one of them stop  sending even when it connects
+                    
+        try {
+            Collection<ZKRecord> available = zkNaming.listRecords(path);
+            
+            //For every replica that is not this one
+            available.forEach(record -> {
+                String recPath = record.getPath();
+                int recID = Integer.parseInt(recPath.substring(recPath.length()-1));
+
+                if (recID != whichReplica) {
+                    String target = record.getURI();
+                    ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+                    SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
+                
+                    GossipRequest req = GossipRequest.newBuilder().build(); 
+                    try {
+                        GossipResponse res = stub.gossip(req);
+                        System.out.println("Received response");
+                    } catch(StatusRuntimeException e) {
+
+                        //If host unreachable just advance. If any other error, throw
+                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode()))
+                            System.out.println("Target " + target + " is unreachable.");
+                        else throw e;
+                    } finally {
+                        channel.shutdown();
+                    } 
+                }
+            });
+        } catch (ZKNamingException e) {
+            System.out.println("Problem with gossip " + e.getMessage());
+        }
+	}
 
 }
