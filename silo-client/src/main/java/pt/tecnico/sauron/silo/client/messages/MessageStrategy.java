@@ -27,7 +27,7 @@ public abstract class MessageStrategy {
      * @return
      * @throws ZKNamingException
      */
-    protected abstract Message call(Message msg, SauronGrpc.SauronBlockingStub stub) throws ZKNamingException;
+    protected abstract Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException;
 
     /**
      * This method has the basic logic for checking all the servers and handling
@@ -63,7 +63,7 @@ public abstract class MessageStrategy {
 
             Message result = null;
             try {
-                result = call(msg, stub);
+                result = call(stub);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
                 if (e.getStatus().getCode() == Code.UNAVAILABLE)
