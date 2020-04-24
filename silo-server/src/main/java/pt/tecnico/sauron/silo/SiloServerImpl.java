@@ -8,6 +8,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.GossipRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.GossipResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
@@ -368,8 +370,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
-    public void gossip() {
-        System.out.println("I should gossip now, but I won't"); //TODO implement gossip
+    @Override
+    public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
+        System.out.println("Received request"); //TODO implement gossip
+        GossipResponse response = GossipResponse.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
 }

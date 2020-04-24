@@ -100,7 +100,16 @@ message ControlInitResponse {
     VectorClock new = 3;
 }
 
+message GossipRequest {
+    VectorClock ts = 1;
+}
+
+message GossipResponse {
+    //Empty
+}
+
 service Sauron {
+    rpc Gossip(GossipRequest) returns (GossipResponse);
     rpc CamJoin(CamJoinRequest) returns (CamJoinResponse);
     rpc CamInfo(CamInfoRequest) returns (CamInfoResponse);
     rpc Report(ReportRequest) returns (ReportResponse);
