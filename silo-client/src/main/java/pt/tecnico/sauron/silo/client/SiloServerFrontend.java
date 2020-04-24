@@ -1,7 +1,5 @@
 package pt.tecnico.sauron.silo.client;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.client.messages.CamInfoMessage;
 import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
@@ -12,7 +10,6 @@ import pt.tecnico.sauron.silo.client.messages.ReportMessage;
 import pt.tecnico.sauron.silo.client.messages.TraceMessage;
 import pt.tecnico.sauron.silo.client.messages.TrackMatchMessage;
 import pt.tecnico.sauron.silo.client.messages.TrackMessage;
-import pt.tecnico.sauron.silo.grpc.SauronGrpc;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
@@ -28,7 +25,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
-import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
@@ -38,8 +34,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
 import java.lang.AutoCloseable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 
 public class SiloServerFrontend implements AutoCloseable {
     private static final String path = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
@@ -47,37 +41,6 @@ public class SiloServerFrontend implements AutoCloseable {
     private final String instanceNumber;
     ArrayList<Integer> timestamp = new ArrayList<>();
 
-    ManagedChannel channel;
-    SauronGrpc.SauronBlockingStub stub;
-
-    /**
-     * This function generates a stub to communicate with a specific server
-     * instance. If instanceNumber is not defined, it will communicate with a random
-     * one.
-     * 
-     * @return A blocking stub to be used in that moment and then closed
-     * @throws ZKNamingException
-     */
-    private SauronGrpc.SauronBlockingStub getStub() throws ZKNamingException {
-        ZKRecord record;
-
-        if (!instanceNumber.equals("0")) // No specified prefered instance
-            record = zkNaming.lookup(path + "/" + instanceNumber);
-        else {
-            // Select one at random
-            Collection<ZKRecord> available = zkNaming.listRecords(path);
-            record = available.stream().skip((int) (available.size() * Math.random())).findFirst().get(); // this code
-                                                                                                          // selects a
-                                                                                                          // random
-                                                                                                          // option
-        }
-
-        String target = record.getURI();
-        channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-        return SauronGrpc.newBlockingStub(channel);
-    }
-
-    // TODO In case it fails to connect try again
     public SiloServerFrontend(String host, String port) {
         zkNaming = new ZKNaming(host, port);
         instanceNumber = "0"; // No instance specified
@@ -154,7 +117,7 @@ public class SiloServerFrontend implements AutoCloseable {
 
     @Override
     public final void close() {
-        channel.shutdown();
+        // Nothing needs to be closed anymore
     }
 
 }
