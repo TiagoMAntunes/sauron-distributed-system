@@ -41,11 +41,11 @@ public abstract class MessageStrategy {
      * @throws ZKNamingException
      * @throws StatusRuntimeException
      */
-    public Message execute(Message msg, final String instanceNumber, final ZKNaming zkNaming, final String path)
+    public Message execute(final String instanceNumber, final ZKNaming zkNaming, final String path)
             throws ZKNamingException, StatusRuntimeException, UnavailableException {
 
         List<ZKRecord> lst;
-        if (instanceNumber.equals("0")) {
+        if (!instanceNumber.equals("0")) {
             // try only one
             lst = new ArrayList<>();
             lst.add(zkNaming.lookup(path + "/" + instanceNumber));

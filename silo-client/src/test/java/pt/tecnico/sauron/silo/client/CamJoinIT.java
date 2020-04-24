@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pt.tecnico.sauron.silo.client.BaseIT;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
@@ -39,14 +40,14 @@ public class CamJoinIT extends BaseIT {
     }
 
     @AfterEach
-    public void tearDown() throws ZKNamingException {
+    public void tearDown() throws ZKNamingException, UnavailableException {
         frontend.controlClear(ControlClearRequest.newBuilder().build());
     }
 
     // tests
 
     @Test
-    public void nonNullResponse() throws ZKNamingException {
+    public void nonNullResponse() throws ZKNamingException, UnavailableException {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         CamJoinResponse response = frontend.camJoin(request);
@@ -54,14 +55,14 @@ public class CamJoinIT extends BaseIT {
     }
 
     @Test
-    public void okResponse() throws ZKNamingException {
+    public void okResponse() throws ZKNamingException, UnavailableException {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         frontend.camJoin(request);
     }
 
     @Test
-    public void duplicateNameTest() throws ZKNamingException {
+    public void duplicateNameTest() throws ZKNamingException, UnavailableException {
         Camera camera = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         Camera camera_duplicate = Camera.newBuilder().setName(NAME).setCoords(COORDS).build();
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();

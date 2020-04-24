@@ -18,7 +18,7 @@ import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
 
 import io.grpc.StatusRuntimeException;
-
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
@@ -58,14 +58,14 @@ public class TrackMatchIT extends BaseIT {
     }
 	
 	@AfterEach
-	public void tearDown() throws ZKNamingException {
+	public void tearDown() throws ZKNamingException, UnavailableException {
         //Clean the server state after each test
         frontend.controlClear(ControlClearRequest.newBuilder().build());
 
 	}
 
     @Test
-    public void nonNullResponse() throws ZKNamingException {
+    public void nonNullResponse() throws ZKNamingException, UnavailableException {
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
 		
@@ -74,7 +74,7 @@ public class TrackMatchIT extends BaseIT {
     }
 
     @Test
-    public void emptyResponse() throws ZKNamingException {
+    public void emptyResponse() throws ZKNamingException, UnavailableException {
 		//server is empty
 		TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(OBSERVABLE).build();
 		TrackMatchResponse response = frontend.trackMatch(request);
@@ -83,7 +83,7 @@ public class TrackMatchIT extends BaseIT {
     }
 
     @Test
-    public void oneObservation() throws ZKNamingException {
+    public void oneObservation() throws ZKNamingException, UnavailableException {
         //load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -96,7 +96,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-    public void idPerfectMatch() throws ZKNamingException {
+    public void idPerfectMatch() throws ZKNamingException, UnavailableException {
         //load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -109,7 +109,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 	
 	@Test
-	public void multipleObservations() throws ZKNamingException {
+	public void multipleObservations() throws ZKNamingException, UnavailableException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -127,7 +127,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void multipleObservationsSameId() throws ZKNamingException {
+	public void multipleObservationsSameId() throws ZKNamingException, UnavailableException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -148,7 +148,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void noMatch() throws ZKNamingException {
+	public void noMatch() throws ZKNamingException, UnavailableException {
 		//Load data first
 		List<Observation> values = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -200,7 +200,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void matchLeft() throws ZKNamingException {
+	public void matchLeft() throws ZKNamingException, UnavailableException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -213,7 +213,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void matchMiddle() throws ZKNamingException {
+	public void matchMiddle() throws ZKNamingException, UnavailableException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -226,7 +226,7 @@ public class TrackMatchIT extends BaseIT {
 	}
 
 	@Test
-	public void matchRight() throws ZKNamingException {
+	public void matchRight() throws ZKNamingException, UnavailableException {
 		//load data first
 		frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 

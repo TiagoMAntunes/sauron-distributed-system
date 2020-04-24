@@ -1,6 +1,7 @@
 package pt.tecnico.sauron.silo.client;
 
 import io.grpc.StatusRuntimeException;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
@@ -8,7 +9,7 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class SiloClientApp {
 	
-	public static void main(String[] args) throws ZKNamingException {
+	public static void main(String[] args) throws ZKNamingException, UnavailableException {
 		System.out.println(SiloClientApp.class.getSimpleName());
 		
 		// receive and print arguments
@@ -27,6 +28,8 @@ public class SiloClientApp {
 			System.out.println(res.getStatus());
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		} catch (UnavailableException e) {
+			System.out.println("No server available.");
 		}
 
 		ControlClearRequest r = ControlClearRequest.newBuilder().build();

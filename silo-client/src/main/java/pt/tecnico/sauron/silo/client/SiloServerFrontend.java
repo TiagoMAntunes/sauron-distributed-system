@@ -2,6 +2,16 @@ package pt.tecnico.sauron.silo.client;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
+import pt.tecnico.sauron.silo.client.messages.CamInfoMessage;
+import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
+import pt.tecnico.sauron.silo.client.messages.ControlClearMessage;
+import pt.tecnico.sauron.silo.client.messages.ControlInitMessage;
+import pt.tecnico.sauron.silo.client.messages.ControlPingMessage;
+import pt.tecnico.sauron.silo.client.messages.ReportMessage;
+import pt.tecnico.sauron.silo.client.messages.TraceMessage;
+import pt.tecnico.sauron.silo.client.messages.TrackMatchMessage;
+import pt.tecnico.sauron.silo.client.messages.TrackMessage;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
@@ -78,43 +88,23 @@ public class SiloServerFrontend implements AutoCloseable {
         this.instanceNumber = instanceNumber;
     }
 
-    public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.controlPing(r);
-        } finally {
-            channel.shutdown();
-        }
+    public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException, UnavailableException {
+        return (ControlPingResponse) (new ControlPingMessage(r)).execute(instanceNumber, zkNaming, path);
     }
 
-    public ControlClearResponse controlClear(ControlClearRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.controlClear(r);
-        } finally {
-            channel.shutdown();
-        }
+    public ControlClearResponse controlClear(ControlClearRequest r) throws ZKNamingException, UnavailableException {
+        return (ControlClearResponse) (new ControlClearMessage(r)).execute(instanceNumber, zkNaming, path);
     }
 
-    public CamJoinResponse camJoin(CamJoinRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.camJoin(r);
-        } finally {
-            channel.shutdown();
-        }
+    public CamJoinResponse camJoin(CamJoinRequest r) throws ZKNamingException, UnavailableException {
+        return (CamJoinResponse) (new CamJoinMessage(r)).execute(instanceNumber, zkNaming, path);        
     }
 
-    public CamInfoResponse camInfo(CamInfoRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.camInfo(r);
-        } finally {
-            channel.shutdown();
-        }
+    public CamInfoResponse camInfo(CamInfoRequest r) throws ZKNamingException, UnavailableException {
+        return (CamInfoResponse) (new CamInfoMessage(r)).execute(instanceNumber, zkNaming, path);
     }
 
-    public ControlInitResponse controlInit(ControlInitRequest r) throws ZKNamingException {
+    public ControlInitResponse controlInit(ControlInitRequest r) throws ZKNamingException, UnavailableException {
 
         // Creates VectorClock from the timestamp
         // Create new request and sent it with the VectorClock
@@ -122,14 +112,9 @@ public class SiloServerFrontend implements AutoCloseable {
         ControlInitRequest req = ControlInitRequest.newBuilder().addAllObservation(r.getObservationList())
                 .setPrev(vector).build(); // TODO Is it really necessary for init to register changes?
 
-        stub = getStub();
-        ControlInitResponse res;
-        try {
-            res = stub.controlInit(req);
-        } finally {
-            channel.shutdown();
-        }
-
+        
+        ControlInitResponse res = (ControlInitResponse) (new ControlInitMessage(r)).execute(instanceNumber, zkNaming, path);
+        
         // Update timestamp
         System.out.println("B4:" + this.timestamp);
         this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
@@ -139,48 +124,26 @@ public class SiloServerFrontend implements AutoCloseable {
 
     }
 
-    public TrackResponse track(TrackRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.track(r);
-        } finally {
-            channel.shutdown();
-        }
+    public TrackResponse track(TrackRequest r) throws ZKNamingException, UnavailableException {
+        return (TrackResponse) (new TrackMessage(r)).execute(instanceNumber, zkNaming, path);
     }
 
-    public TrackMatchResponse trackMatch(TrackMatchRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.trackMatch(r);
-        } finally {
-            channel.shutdown();
-        }
+    public TrackMatchResponse trackMatch(TrackMatchRequest r) throws ZKNamingException, UnavailableException {
+        return (TrackMatchResponse) (new TrackMatchMessage(r)).execute(instanceNumber, zkNaming, path);
     }
 
-    public TraceResponse trace(TraceRequest r) throws ZKNamingException {
-        stub = getStub();
-        try {
-            return stub.trace(r);
-        } finally {
-            channel.shutdown();
-        }
+    public TraceResponse trace(TraceRequest r) throws ZKNamingException, UnavailableException {
+        return (TraceResponse) (new TraceMessage(r)).execute(instanceNumber, zkNaming, path);
     }
 
-    public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException {
+    public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException, UnavailableException {
         // Creates VectorClock from the timestamp
         // Create new request and sent it with the VectorClock
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
                 .addAllObservations(r.getObservationsList()).build();
 
-        stub = getStub();
-        ReportResponse res;
-        try {
-            stub.camJoin(jr);
-            res = stub.report(req);
-        } finally {
-            channel.shutdown();
-        }
+        ReportResponse res =  (ReportResponse) (new ReportMessage(r)).execute(instanceNumber, zkNaming, path);
 
         // Update timestamp
         System.out.println("B4:" + this.timestamp);

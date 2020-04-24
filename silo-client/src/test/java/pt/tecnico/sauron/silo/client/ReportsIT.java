@@ -11,7 +11,7 @@ import static com.google.protobuf.util.Timestamps.fromMillis;
 import static io.grpc.Status.Code.INVALID_ARGUMENT;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import io.grpc.StatusRuntimeException;
-
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
@@ -91,7 +91,7 @@ public class ReportsIT extends BaseIT {
     // initialization and clean-up for each test
 
     @BeforeEach
-    public void setUp() throws ZKNamingException {
+    public void setUp() throws ZKNamingException, UnavailableException {
         //Set up a valid camera for each test
         CamJoinRequest camReq = CamJoinRequest.newBuilder().
                 setCamera(CAMERA).
@@ -101,7 +101,7 @@ public class ReportsIT extends BaseIT {
     }
 
     @AfterEach
-    public void tearDown() throws ZKNamingException {
+    public void tearDown() throws ZKNamingException, UnavailableException {
         //Clean server state after each test
         frontend.controlClear(Silo.ControlClearRequest.newBuilder().build());
     }
@@ -109,7 +109,7 @@ public class ReportsIT extends BaseIT {
     // tests
 
     @Test
-    public void reportOkTest() throws ZKNamingException {
+    public void reportOkTest() throws ZKNamingException, UnavailableException {
         ReportRequest request = ReportRequest.newBuilder().
                 setCameraName(VALID_CAM_NAME).
                 addObservations(VALID_CAR_OBSERVATION).addObservations(VALID_PERSON_OBSERVATION).

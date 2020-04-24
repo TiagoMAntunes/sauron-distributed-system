@@ -16,6 +16,7 @@ import static com.google.protobuf.util.Timestamps.fromMillis;
 import static java.lang.System.currentTimeMillis;
 
 import io.grpc.StatusRuntimeException;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
@@ -49,14 +50,14 @@ public class TrackIT extends BaseIT {
     }
 	
 	@AfterEach
-	public void tearDown() throws ZKNamingException {
+	public void tearDown() throws ZKNamingException, UnavailableException {
         //Clean the server state after each test
         frontend.controlClear(ControlClearRequest.newBuilder().build());
 
 	}
 
     @Test
-    public void nonNullResponse() throws ZKNamingException {
+    public void nonNullResponse() throws ZKNamingException, UnavailableException {
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
         TrackRequest request = TrackRequest.newBuilder().setIdentity(OBSERVABLE).build();
         TrackResponse response = frontend.track(request);
@@ -75,7 +76,7 @@ public class TrackIT extends BaseIT {
     }
 
     @Test
-    public void okResponse() throws ZKNamingException {
+    public void okResponse() throws ZKNamingException, UnavailableException {
         //load data first
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 
@@ -87,7 +88,7 @@ public class TrackIT extends BaseIT {
     }
 
     @Test
-    public void noMatch() throws ZKNamingException {
+    public void noMatch() throws ZKNamingException, UnavailableException {
         //load data first
         frontend.controlInit(ControlInitRequest.newBuilder().addObservation(OBSERVATION).build());
 

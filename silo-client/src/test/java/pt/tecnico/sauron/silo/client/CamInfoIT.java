@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pt.tecnico.sauron.silo.client.BaseIT;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
@@ -30,27 +31,27 @@ public class CamInfoIT extends BaseIT {
     // initialization and clean-up for each test
 
     @BeforeEach
-	public void setUp() throws ZKNamingException {
+	public void setUp() throws ZKNamingException, UnavailableException {
         CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(camera).build();
         frontend.camJoin(request);
     }
 	
 	@AfterEach
-	public void tearDown() throws ZKNamingException {
+	public void tearDown() throws ZKNamingException, UnavailableException {
         frontend.controlClear(ControlClearRequest.newBuilder().build());
 	}
 		
 	// tests
 
     @Test
-    public void nonNullResponse() throws ZKNamingException {
+    public void nonNullResponse() throws ZKNamingException, UnavailableException {
         CamInfoRequest request = Silo.CamInfoRequest.newBuilder().setName(NAME).build();
         CamInfoResponse response = frontend.camInfo(request);
         assertNotEquals(null, response, "Response shouldn't be null");
     }
 
 	@Test
-	public void okResponse() throws ZKNamingException {
+	public void okResponse() throws ZKNamingException, UnavailableException {
         CamInfoRequest request = CamInfoRequest.newBuilder().setName(NAME).build();
         CamInfoResponse response = frontend.camInfo(request);
 
