@@ -47,8 +47,10 @@ public class SiloServer {
 
     private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
+
     private VectorClockDomain ts;
     private int replicaIndex;
+
     public SiloServer(int nRep, int whichReplica) {
         this.ts = new VectorClockDomain(nRep);
         this.replicaIndex = whichReplica-1;
@@ -92,7 +94,7 @@ public class SiloServer {
         this.ts.incUpdate(this.replicaIndex);
         System.out.println("Current ts:" + this.ts + "; Incoming: " + vec);
         
-        if(this.ts.isMoreRecent(vec)) {
+        if(this.ts.isMoreRecent(vec)) { //Check if should be updated
             for (Registry r : registries) {
                 if (registriesMap.containsKey(RegistryKey.getKey(r)))
                     registriesMap.get(RegistryKey.getKey(r)).add(r);

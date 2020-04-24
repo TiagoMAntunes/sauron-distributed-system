@@ -28,7 +28,7 @@
 		<server.port>808${instance}</server.port>
 		<server.path>/grpc/sauron/silo/${instance}</server.path>
 		
-		<numberOfReplicas>1</numberOfReplicas>
+		<numberOfReplicas>9</numberOfReplicas>
 	</properties>
 
 	<dependencies>

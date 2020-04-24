@@ -42,7 +42,6 @@ public class EyeApp {
 		final double lon = Double.parseDouble(args[4]);
 
 		SiloServerFrontend frontend = new SiloServerFrontend(host, port);
-
 		CamInfoRequest request = CamInfoRequest.newBuilder().
 				setName(camName).build();
 
@@ -142,7 +141,7 @@ public class EyeApp {
 		System.exit(0);
 	}
 
-	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) {
+	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName) throws ZKNamingException {
 		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build());
 	}
 

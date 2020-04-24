@@ -145,9 +145,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
             //Save the registries
+
             //Gets vector from SiloServer and sends it in the response
             VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList()));
+            
             VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(newVec.getList()).build();
+
             response = ReportResponse.newBuilder().setNew(newVectorClock).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -211,8 +214,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             }
         
         //Gets vector from SiloServer and sends it in the response
-        VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList())); // TODO change this to be dependent on number of replicas and not hard coded
+        VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList()));
+        
         VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(newVec.getList()).build();
+        
         ControlInitResponse response = ControlInitResponse.newBuilder().setNew(newVectorClock).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
