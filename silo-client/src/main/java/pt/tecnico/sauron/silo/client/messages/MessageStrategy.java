@@ -66,8 +66,10 @@ public abstract class MessageStrategy {
                 result = call(stub);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
-                if (e.getStatus().getCode() == Code.UNAVAILABLE)
+                if (e.getStatus().getCode() == Code.UNAVAILABLE) {
                     System.out.println("Target " + target + " is unreachable.");
+                    continue;
+                }
                 else
                     throw e;
             } finally {
