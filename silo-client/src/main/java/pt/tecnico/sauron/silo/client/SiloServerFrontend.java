@@ -63,7 +63,6 @@ public class SiloServerFrontend implements AutoCloseable {
         }
 
         String target = record.getURI();
-        System.out.println(target);
         channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
         return SauronGrpc.newBlockingStub(channel);
     }
