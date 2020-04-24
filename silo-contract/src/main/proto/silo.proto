@@ -105,7 +105,7 @@ message GossipRequest {
 }
 
 message GossipResponse {
-    //Empty
+    VectorClock ts = 1;
 }
 
 service Sauron {

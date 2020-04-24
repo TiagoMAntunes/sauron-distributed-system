@@ -381,7 +381,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
         System.out.println("Received request"); //TODO implement gossip
-        GossipResponse response = GossipResponse.newBuilder().build();
+
+        VectorClock ts = VectorClock.newBuilder().addAllUpdates(silo.getClock()).build();
+        GossipResponse response = GossipResponse.newBuilder().setTs(ts).build();
+        
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -405,9 +408,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
                 
-                    GossipRequest req = GossipRequest.newBuilder().build(); 
+                    VectorClock ts = VectorClock.newBuilder().addAllUpdates(silo.getClock()).build();
+                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).build(); 
                     try {
                         GossipResponse res = stub.gossip(req);
+                        silo.handleShare(res.getTs().getUpdatesList());
                         System.out.println("Received response");
                     } catch(StatusRuntimeException e) {
 

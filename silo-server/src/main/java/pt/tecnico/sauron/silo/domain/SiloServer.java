@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
+
 public class SiloServer {
 
     private static class RegistryKey {
@@ -134,4 +136,14 @@ public class SiloServer {
     public synchronized boolean noRegistries() {
         return registriesMap.isEmpty();
     }
+
+	public void handleShare(List<Integer> versions) {
+        System.out.println("Previous version: " + ts);
+        this.ts.merge(new VectorClockDomain(versions));
+        System.out.println("New version: " + ts);
+	}
+
+	public Iterable<Integer> getClock() {
+		return ts.getList();
+	}
 }
