@@ -62,4 +62,8 @@ public class VectorClockDomain {
     public ArrayList<Integer> getList() {
         return this.updates;
     }
+
+    public void clear() {
+        this.updates = new ArrayList<>(Collections.nCopies(updates.size(), 0));
+    }
 }

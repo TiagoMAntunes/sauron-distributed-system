@@ -59,6 +59,7 @@ public class SiloServer {
     public synchronized boolean clear() {
         cameras.clear();
         registriesMap.clear();
+        ts.clear();
         return true;
     }
 
