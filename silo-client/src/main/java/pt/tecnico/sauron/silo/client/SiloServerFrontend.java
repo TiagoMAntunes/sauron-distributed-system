@@ -82,11 +82,10 @@ public class SiloServerFrontend implements AutoCloseable {
     public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException {
         stub = getStub();
         try {
-            ControlPingResponse response = stub.controlPing(r);
+            return stub.controlPing(r);
         } finally {
             channel.shutdown();
         }
-        return response;
     }
 
     public ControlClearResponse controlClear(ControlClearRequest r) throws ZKNamingException {
@@ -109,7 +108,7 @@ public class SiloServerFrontend implements AutoCloseable {
 
     public CamInfoResponse camInfo(CamInfoRequest r) throws ZKNamingException {
         stub = getStub();
-        try { 
+        try {
             return stub.camInfo(r);
         } finally {
             channel.shutdown();
@@ -122,8 +121,8 @@ public class SiloServerFrontend implements AutoCloseable {
         // Create new request and sent it with the VectorClock
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
         ControlInitRequest req = ControlInitRequest.newBuilder().addAllObservation(r.getObservationList())
-                .setPrev(vector).build(); //TODO Is it really necessary for init to register changes?
-        
+                .setPrev(vector).build(); // TODO Is it really necessary for init to register changes?
+
         stub = getStub();
         ControlInitResponse res;
         try {
@@ -144,12 +143,11 @@ public class SiloServerFrontend implements AutoCloseable {
     public TrackResponse track(TrackRequest r) throws ZKNamingException {
         stub = getStub();
         TrackResponse response;
-        try { 
-            response = stub.track(r);
+        try {
+            return stub.track(r);
         } finally {
             channel.shutdown();
         }
-        return response;
     }
 
     public TrackMatchResponse trackMatch(TrackMatchRequest r) throws ZKNamingException {
@@ -163,7 +161,7 @@ public class SiloServerFrontend implements AutoCloseable {
 
     public TraceResponse trace(TraceRequest r) throws ZKNamingException {
         stub = getStub();
-        try { 
+        try {
             return stub.trace(r);
         } finally {
             channel.shutdown();
@@ -176,10 +174,10 @@ public class SiloServerFrontend implements AutoCloseable {
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
                 .addAllObservations(r.getObservationsList()).build();
-        
+
         stub = getStub();
         ReportResponse res;
-        try { 
+        try {
             res = stub.report(req);
         } finally {
             channel.shutdown();
