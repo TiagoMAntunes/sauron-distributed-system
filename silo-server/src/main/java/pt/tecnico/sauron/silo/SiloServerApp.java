@@ -2,6 +2,7 @@ package pt.tecnico.sauron.silo;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -48,27 +49,25 @@ public class SiloServerApp {
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
 
 		ZKNaming zkNaming = null;
-		try {
-			zkNaming = new ZKNaming(zooHost, zooPort);
-			zkNaming.rebind(path, host, String.valueOf(port));
-			//Start the server
-			server.start();
+	
+		zkNaming = new ZKNaming(zooHost, zooPort);
+		zkNaming.rebind(path, host, String.valueOf(port));
+		//Start the server
+		server.start();
 
-			// Server threads are running in the background.
-			System.out.println("Server started");
+		// Server threads are running in the background.
+		System.out.println("Server started");
 
-			//Start gossip at every interval ms
-			Timer timer = new Timer();
-			timer.schedule(new GossipRun(silo, zooHost, zooPort, whichReplica), 1000, interval); //TODO introduced delay to allow for other silos to connect
-			
-			//Do not exit until termination
-			server.awaitTermination();	
-		} finally {
-			if (zkNaming != null) {
-				//remove
-				zkNaming.unbind(path, host, String.valueOf(port));
-			}
-		}
+		//Start gossip at every interval ms
+		Timer timer = new Timer();
+		timer.schedule(new GossipRun(silo, zooHost, zooPort, whichReplica), 1000, interval); //TODO introduced delay to allow for other silos to connect
+		
+		//Handle end of the server
+		Runtime.getRuntime().addShutdownHook(new HandleEnd(zkNaming, path, host, String.valueOf(port)));
+
+		//Do not exit until termination
+		server.awaitTermination();	
+	
 
 	}
 
@@ -87,6 +86,28 @@ public class SiloServerApp {
 		public void run(){
 			silo.doGossip(whichReplica, zkNaming, path);
 		}	
+	}
+
+	static class HandleEnd extends Thread {
+		private final ZKNaming zk;
+		private final String path, host, port;
+
+		public HandleEnd(ZKNaming zk, String path, String host, String port) {
+			this.zk = zk;
+			this.path = path;
+			this.host = host;
+			this.port = port;
+		}
+		public void run() {
+			System.out.println("Server closing...");
+			try {
+				if (zk != null)
+					zk.unbind(path, host, port);
+			}
+			catch(ZKNamingException e) {
+				System.out.printf("There was a problem unbinding the server at %s %s:%s%n", path, host, port);	
+			}
+		}
 	}
 
 }
