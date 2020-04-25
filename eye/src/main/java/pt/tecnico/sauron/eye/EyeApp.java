@@ -13,6 +13,7 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 
 import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
@@ -22,7 +23,7 @@ import io.grpc.Status.Code;
 
 public class EyeApp {
 
-	public static void main(String[] args) throws ZKNamingException {
+	public static void main(String[] args) throws ZKNamingException, UnavailableException {
 		System.out.println(EyeApp.class.getSimpleName());
 		if(args.length != 5) {
 			System.out.println("Invalid usage.");

@@ -14,6 +14,7 @@ import com.google.type.LatLng;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
@@ -35,7 +36,7 @@ import static java.lang.System.currentTimeMillis;
 
 public class SpotterApp {
 	
-	public static void main(String[] args) throws ZKNamingException {
+	public static void main(String[] args) throws ZKNamingException, UnavailableException {
 		System.out.println(SpotterApp.class.getSimpleName());
 		
 		// receive and print arguments

@@ -50,18 +50,13 @@ public class SiloServer {
     private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
 
-    private VectorClockDomain ts;
-    private int replicaIndex;
-
-    public SiloServer(int nRep, int whichReplica) {
-        this.ts = new VectorClockDomain(nRep);
-        this.replicaIndex = whichReplica-1;
+    public SiloServer() {
     }
 
     public synchronized boolean clear() {
         cameras.clear();
         registriesMap.clear();
-        ts.clear();
+        //ts.clear(); //TODO do we need to do something in impl
         return true;
     }
 
@@ -91,14 +86,10 @@ public class SiloServer {
         return cameras.get(cameraName);
     }
 
-    public synchronized VectorClockDomain addRegistries(List<Registry> registries, VectorClockDomain vec) {
+
+    public synchronized void addRegistries(List<Registry> registries) {
         //When Adding Registries update the vector clock regarding this replica
-        //TODO has to be changed to wait for being stable
-        this.ts.incUpdate(this.replicaIndex);
-        System.out.println("Current ts:" + this.ts + "; Incoming: " + vec);
-        
-        if(this.ts.isMoreRecent(vec)) { //Check if should be updated
-            for (Registry r : registries) {
+        for (Registry r : registries) {
                 if (registriesMap.containsKey(RegistryKey.getKey(r)))
                     registriesMap.get(RegistryKey.getKey(r)).add(r);
                 else {
@@ -107,12 +98,7 @@ public class SiloServer {
                     registriesMap.put(RegistryKey.getKey(r), list);
                 }
             }
-            System.out.println("Should update");    
-            return this.ts;
-        } else {
-            System.out.println("Doesn't update");
-            return vec;
-        }
+            
     }
 
    
@@ -137,13 +123,4 @@ public class SiloServer {
         return registriesMap.isEmpty();
     }
 
-	public void handleShare(List<Integer> versions) {
-        System.out.println("Previous version: " + ts);
-        this.ts.merge(new VectorClockDomain(versions));
-        System.out.println("New version: " + ts);
-	}
-
-	public Iterable<Integer> getClock() {
-		return ts.getList();
-	}
 }

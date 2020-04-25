@@ -59,9 +59,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private final SiloServer silo;
     private static final RegistryFactory registryFactory = new RegistryFactory();
-
+    private VectorClockDomain ts;
+    private int replicaIndex;
+    
     public SiloServerImpl (int nReplicas, int whichReplica) {
-        this.silo =  new SiloServer(nReplicas,whichReplica);
+        this.silo =  new SiloServer();
+        this.ts = new VectorClockDomain(nReplicas);
+        this.replicaIndex = whichReplica - 1;
     }
     //Add camera to server
     @Override
@@ -157,11 +161,18 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
             //Save the registries
-
-            //Gets vector from SiloServer and sends it in the response
-            VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList()));
             
-            VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(newVec.getList()).build();
+            this.ts.incUpdate(this.replicaIndex);
+            VectorClockDomain vec = new VectorClockDomain(prevVec.getUpdatesList());
+            VectorClock newVectorClock;
+            
+            if(this.ts.isMoreRecent(vec)) {
+                silo.addRegistries(list);
+                newVectorClock = VectorClock.newBuilder().addAllUpdates(this.ts.getList()).build(); 
+            } else {
+                newVectorClock = VectorClock.newBuilder().addAllUpdates(vec.getList()).build(); 
+            }
+            
 
             response = ReportResponse.newBuilder().setNew(newVectorClock).build();
             responseObserver.onNext(response);
@@ -225,12 +236,22 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 list.add(r);
             }
         
-        //Gets vector from SiloServer and sends it in the response
-        VectorClockDomain newVec = silo.addRegistries(list, new VectorClockDomain(prevVec.getUpdatesList()));
+
         
-        VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(newVec.getList()).build();
+        this.ts.incUpdate(this.replicaIndex);
+        VectorClockDomain vec = new VectorClockDomain(prevVec.getUpdatesList());
+        VectorClock newVectorClock;
+        
+        if(this.ts.isMoreRecent(vec)) {
+            silo.addRegistries(list);
+            newVectorClock = VectorClock.newBuilder().addAllUpdates(this.ts.getList()).build(); 
+        } else {
+            newVectorClock = VectorClock.newBuilder().addAllUpdates(vec.getList()).build(); 
+        }
+        //Gets vector from SiloServer and sends it in the response
         
         ControlInitResponse response = ControlInitResponse.newBuilder().setNew(newVectorClock).build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -382,7 +403,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
         System.out.println("Received request"); //TODO implement gossip
 
-        VectorClock ts = VectorClock.newBuilder().addAllUpdates(silo.getClock()).build();
+        VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build();
+        //VectorClock ts = VectorClock.newBuilder().build();
         GossipResponse response = GossipResponse.newBuilder().setTs(ts).build();
         
         responseObserver.onNext(response);
@@ -408,11 +430,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
                 
-                    VectorClock ts = VectorClock.newBuilder().addAllUpdates(silo.getClock()).build();
+                    VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
+                    //VectorClock ts = VectorClock.newBuilder().build();
                     GossipRequest req = GossipRequest.newBuilder().setTs(ts).build(); 
                     try {
                         GossipResponse res = stub.gossip(req);
-                        silo.handleShare(res.getTs().getUpdatesList());
+                        handleShare(res.getTs().getUpdatesList()); //TODO
                         System.out.println("Received response");
                     } catch(StatusRuntimeException e) {
 
@@ -428,6 +451,16 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } catch (ZKNamingException e) {
             System.out.println("Problem with gossip " + e.getMessage());
         }
+    }
+    
+    public void handleShare(List<Integer> versions) {
+        System.out.println("Previous version: " + this.ts);
+        this.ts.merge(new VectorClockDomain(versions));
+        System.out.println("New version: " + this.ts);
+	}
+
+	public Iterable<Integer> getClock() {
+		return this.ts.getList();
 	}
 
 }
