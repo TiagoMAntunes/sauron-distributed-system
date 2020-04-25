@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeSet;
 
+import com.google.protobuf.Timestamp;
 import com.google.type.LatLng;
 
 import io.grpc.ManagedChannel;
@@ -59,14 +61,19 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private static final RegistryFactory registryFactory = new RegistryFactory();
     private VectorClockDomain replicaTS;
     private int replicaIndex;
-    private ArrayList<Observation> log;
+    private TreeSet<Observation> log;
 
     public SiloServerImpl (int nReplicas, int whichReplica) {
         this.silo =  new SiloServer();
         this.replicaTS = new VectorClockDomain(nReplicas);
         this.replicaIndex = whichReplica - 1;
-        this.log = new ArrayList<>();
+        this.log = new TreeSet<Observation>((Observation a, Observation b) -> (int) (getTime(a) - getTime(b)));
     }
+
+    private long getTime(Observation o) {
+        return (o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000);
+    }
+
     //Add camera to server
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
@@ -431,90 +438,68 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
-        System.out.println("Received request");
         List<Observation> observations = req.getUpdatesList();
-        System.out.println(observations);
+        System.out.println("Received gossip: " + observations);
 
-        //TODO encapsulate this
-        //Transform into registries
-        ArrayList<Registry> list = new ArrayList<>();
-        for (Observation o : observations) {
-            CameraDomain cam = silo.getCamera(o.getCamera().getName()); // This should be guaranteed to exist because CAUSALITY TODO check
-            String type = o.getObservated().getType();
-            String id = o.getObservated().getIdentifier();
-            Date time = new Date();
-            Registry r = null;
-            try {
-                r = registryFactory.build(cam, type, id, time); 
-            } catch (InvalidTypeException e) {
-                responseObserver.onError(INVALID_ARGUMENT.withDescription("The type " + e.getType() + " is not available in the current system").asRuntimeException());
-                return;
-            } catch (IncorrectDataException e) {
-                responseObserver.onError(INVALID_ARGUMENT.withDescription("The identifier " + e.getId() + " does not match type's " + e.getType() + " specification").asRuntimeException());
-                return;
-            } catch (Exception e) {
-                System.out.println("Unhandled exception caught.");
-                e.printStackTrace();
-                System.out.println("Rethrowing...");
-                throw e;
+        for (Observation o : observations) { //For each modification
+            //Check if exists and if not, adds to log
+            if (!log.contains(o)) log.add(o);
+
+            //Updates log timestamp entry
+            synchronized (replicaTS) {
+                replicaTS.incUpdate(replicaIndex); //Number of received updates
             }
-            list.add(r);
         }
 
-        VectorClockDomain comingTs = new VectorClockDomain(req.getTs().getUpdatesList());
-        //TODO Is more recent is not what we wanna check to update we need to verify causality
-        if(comingTs.isMoreRecent(this.replicaTS) && list.size()!= 0) {
-            //Save the registries
-            System.out.println("Updating in gossip");
-            silo.addRegistries(list);
-        } else {
-            System.out.println("Not updating in gossip");
-            //TODO has to wait and afteer receiving gossip try to run ops that havent been executed if stable
-        }
-
-        VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build();
-        GossipResponse response = GossipResponse.newBuilder().setTs(ts).build();
-        
+        //Send gossip OK message
+        GossipResponse response = GossipResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
+        //TODO Apply available updates
     }
 
 
 	public void doGossip(int whichReplica, ZKNaming zkNaming, String path) {
         System.out.println("In replica " + whichReplica);
-                    
+
         try {
             Collection<ZKRecord> available = zkNaming.listRecords(path);
             
-            //For every replica that is not this one
-            available.forEach(record -> {
-                String recPath = record.getPath();
-                int recID = Integer.parseInt(recPath.substring(recPath.length()-1));
+            //For every replica
+            for (ZKRecord record : available) {
+                String recordPath = record.getPath();
+                int replicaID = Integer.parseInt(recordPath.substring(recordPath.length()-1));
 
-                if (recID != whichReplica) {
+                if (replicaID != whichReplica) { //Avoid sending to itself
+                    //Build channel
                     String target = record.getURI();
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
-                    VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
-                    
-                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).addAllUpdates(this.log).build(); 
-                    //TODO we have to check that all replicas ack before clearing
-                    this.log = new ArrayList<>(); // Clear log
-                    try {
-                        GossipResponse res = stub.gossip(req);
-                        handleShare(res.getTs().getUpdatesList());
-                        System.out.println("Received response");
-                    } catch(StatusRuntimeException e) {
 
-                        //If host unreachable just advance. If any other error, throw
-                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode()))
+                    //Build request
+                    VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
+                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).addAllUpdates(this.log).build(); 
+
+                    //Send request and handle answer
+                    try {
+                        //Response is empty == ok
+                        stub.gossip(req);
+                    } catch (StatusRuntimeException e) {
+
+                        //If host unreachable just advance. If any other error, throw as it is unexpected
+                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) 
                             System.out.println("Target " + target + " is unreachable.");
                         else throw e;
+                    
                     } finally {
+                        //Shutdown channel and proceed
                         channel.shutdown();
-                    } 
+                    }
+
                 }
-            });
+
+            }
         } catch (ZKNamingException e) {
             System.out.println("Problem with gossip " + e.getMessage());
         }
