@@ -144,7 +144,7 @@ public class EyeApp {
 		System.exit(0);
 	}
 
-	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException {
+	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException, UnavailableException {
 		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
 						CamJoinRequest.newBuilder().setCamera(cam).build());
 	}

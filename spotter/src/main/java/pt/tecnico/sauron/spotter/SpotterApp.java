@@ -115,7 +115,7 @@ public class SpotterApp {
 
 	}
 
-	private static void spotHandler(SiloServerFrontend frontend, String[] line) {
+	private static void spotHandler(SiloServerFrontend frontend, String[] line) throws ZKNamingException, UnavailableException {
 		if (line.length < 3) {
 			System.out.println("Invalid number of arguments!");
 			return;
@@ -147,7 +147,7 @@ public class SpotterApp {
 		printObservations(System.out, observations);
 	}
 
-	private static void trailHandler(SiloServerFrontend frontend, String[] line) {
+	private static void trailHandler(SiloServerFrontend frontend, String[] line) throws ZKNamingException, UnavailableException {
 		if (line.length < 3) {
 			System.out.println("Invalid number of arguments!");
 			return;
@@ -179,7 +179,7 @@ public class SpotterApp {
 		}
 	}
 
-	private static void pingHandler(SiloServerFrontend frontend, String[] line) {
+	private static void pingHandler(SiloServerFrontend frontend, String[] line) throws ZKNamingException, UnavailableException {
 		String name;
 		if (line.length < 2) {
 			System.out.println("Assuming default name value");
@@ -193,13 +193,13 @@ public class SpotterApp {
 		System.out.println(response.getStatus());
 	}
 
-	private static void clearHandler(SiloServerFrontend frontend, String[] line) {
+	private static void clearHandler(SiloServerFrontend frontend, String[] line) throws ZKNamingException, UnavailableException {
 		ControlClearRequest request = ControlClearRequest.getDefaultInstance();
 		frontend.controlClear(request);
 		System.out.println("System has been cleared");
 	}
 
-	private static void initHandler(SiloServerFrontend frontend, String[] line) {
+	private static void initHandler(SiloServerFrontend frontend, String[] line) throws ZKNamingException, UnavailableException {
 		if (line.length < 2 || Integer.parseInt(line[1]) * 5 + 2 > line.length) {
 			System.out.println("Invalid number of arguments!");
 			return;
