@@ -29,6 +29,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
@@ -106,7 +107,7 @@ public class SiloServerFrontend implements AutoCloseable {
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
                 .addAllObservations(r.getObservationsList()).build();
 
-        ReportResponse res =  (ReportResponse) (new ReportMessage(r)).execute(instanceNumber, zkNaming, path);
+        ReportResponse res =  (ReportResponse) (new ReportMessage(r,jr)).execute(instanceNumber, zkNaming, path);
 
         // Update timestamp
         System.out.println("B4:" + this.timestamp);

@@ -179,8 +179,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
             //Add observations to update log
             ArrayList<LogElement> els = new ArrayList<>();
-            for (Observation o : observations) 
-                els.add(LogElement.newBuilder().setObservation(o).setTs(prevVec).build());
+            for (Observation o : observations) {
+                Camera cam = cameraFromDomain(silo.getCamera(camName));
+                Observation new_obs = Observation.newBuilder().setCamera(cam).setObservated(o.getObservated()).setTime(o.getTime()).build();
+                els.add(LogElement.newBuilder().setObservation(new_obs).setTs(prevVec).build());
+            }
             this.log.addAll(els);
 
             VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
@@ -202,7 +205,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
-    //Verify if server is OK
+    // Verify if server is OK
     @Override
     public void controlPing(ControlPingRequest request, StreamObserver<ControlPingResponse> responseObserver) {
         String inputText = request.getInputText();
@@ -539,6 +542,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
      */
     public Registry registryFromObservation(Observation o) {
         CameraDomain cam = silo.getCamera(o.getCamera().getName());
+        if (cam == null) {
+            silo.addCamera(cameraDomainFromCamera(o.getCamera()));
+            cam = silo.getCamera(o.getCamera().getName());
+        }
         String type = o.getObservated().getType();
         String id = o.getObservated().getIdentifier();
         Date time = new Date(getTime(o));
@@ -549,11 +556,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
+    public CameraDomain cameraDomainFromCamera(Camera c) {
+        return new CameraDomain(c.getName(), c.getCoords().getLatitude(), c.getCoords().getLongitude());
+    }
+
     /**
      * Gets an observation's time in miliseconds
      */
     private long getTime(Observation o) {
         return (o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000);
+    }
+
+
+    /**
+     * Creates a camera from domain camera name
+     */
+    private Camera cameraFromDomain(CameraDomain camera) {
+        LatLng coords = LatLng.newBuilder().setLatitude(camera.getLatitude()).setLongitude(camera.getLongitude()).build();
+        return Camera.newBuilder().setName(camera.getName()).setCoords(coords).build();
     }
 
 }
