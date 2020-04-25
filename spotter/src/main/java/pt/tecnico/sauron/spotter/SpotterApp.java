@@ -45,15 +45,17 @@ public class SpotterApp {
 			System.out.printf("arg[%d] = %s%n", i, args[i]);
 		}
 
-		if (args.length < 2) {
-			System.out.printf("Usage: java %s <address> <port>%n", SpotterApp.class.getName());
+		if (args.length < 2 || args.length > 3) {
+			System.out.printf("Usage: java %s <address> <port> [instance]%n", SpotterApp.class.getName());
 			System.exit(0);
 		}
 
 		final String host = args[0];
 		final String port = args[1];
 
-		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port); Scanner sc = new Scanner(System.in)) {
+		String instance = args.length ==3 ? args[2] : "0";
+
+		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port, instance); Scanner sc = new Scanner(System.in)) {
 			boolean end = false;
 			while(!end) {
 

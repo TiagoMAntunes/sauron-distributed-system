@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import com.google.type.LatLng;
 
@@ -61,13 +62,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private static final RegistryFactory registryFactory = new RegistryFactory();
     private VectorClockDomain replicaTS;
     private int replicaIndex;
-    private TreeSet<LogElement> log;
+    private TreeSet<LogLocalElement> log;
 
     public SiloServerImpl (int nReplicas, int whichReplica) {
         this.silo =  new SiloServer(new VectorClockDomain(nReplicas));
         this.replicaTS = new VectorClockDomain(nReplicas);
         this.replicaIndex = whichReplica - 1;
-        this.log = new TreeSet<>((LogElement a, LogElement b) -> (int) (getTime(a.getObservation()) - getTime(b.getObservation())));
+        this.log = new TreeSet<>((LogLocalElement a, LogLocalElement b) -> (int) (getTime(a.element().getObservation()) - getTime(b.element().getObservation())));
     }
 
     //Add camera to server
@@ -178,11 +179,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
             //Add observations to update log
-            ArrayList<LogElement> els = new ArrayList<>();
+            ArrayList<LogLocalElement> els = new ArrayList<>();
             for (Observation o : observations) {
                 Camera cam = cameraFromDomain(silo.getCamera(camName));
                 Observation new_obs = Observation.newBuilder().setCamera(cam).setObservated(o.getObservated()).setTime(o.getTime()).build();
-                els.add(LogElement.newBuilder().setObservation(new_obs).setTs(prevVec).build());
+                els.add(new LogLocalElement(LogElement.newBuilder().setObservation(new_obs).setTs(prevVec).build()));
             }
             this.log.addAll(els);
 
@@ -274,9 +275,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
         //Add observations to update log
-        ArrayList<LogElement> els = new ArrayList<>();
+        ArrayList<LogLocalElement> els = new ArrayList<>();
         for (Observation o : observations) 
-            els.add(LogElement.newBuilder().setObservation(o).setTs(prevVec).build());
+            els.add(new LogLocalElement(LogElement.newBuilder().setObservation(o).setTs(prevVec).build()));
         this.log.addAll(els);
 
 
@@ -449,10 +450,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
         for (LogElement o : logs) { //For each modification
             //Check if exists and if not, adds to log
-            if (!log.contains(o)) log.add(o);
+            synchronized(this) {
+                if (!log.contains(new LogLocalElement(o))) log.add(new LogLocalElement(o));
 
-            //Updates log timestamp entry
-            synchronized (replicaTS) {
+                //Updates log timestamp entry
                 replicaTS.incUpdate(replicaIndex); //Number of received updates
             }
         }
@@ -467,13 +468,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             //Gets current value of silo
             VectorClockDomain value = silo.getClock();
 
-            for (LogElement e : log) {
+            for (LogLocalElement l : log) {
                 //Get prev from client request
+                LogElement e = l.element();
                 VectorClockDomain prev = new VectorClockDomain(e.getTs().getUpdatesList());
-                if (value.isMoreRecent(prev)) { //Can execute update
+                if (!l.isApplied() && value.isMoreRecent(prev)) { //Can execute update
                     //Create the registry and insert it into silo
                     Registry r = registryFromObservation(e.getObservation());
                     if (r != null) silo.addRegistry(r);
+                    l.applied();
                 }
             }
         }
@@ -498,7 +501,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
                     //Build request
                     VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
-                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).addAllUpdates(this.log).build(); 
+
+                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).addAllUpdates(this.log.stream().map(el -> el.element()).collect(Collectors.toList())).build(); 
 
                     //Send request and handle answer
                     try {
@@ -574,6 +578,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private Camera cameraFromDomain(CameraDomain camera) {
         LatLng coords = LatLng.newBuilder().setLatitude(camera.getLatitude()).setLongitude(camera.getLongitude()).build();
         return Camera.newBuilder().setName(camera.getName()).setCoords(coords).build();
+    }
+
+    private static class LogLocalElement {
+        private final LogElement element;
+        private boolean applied;
+
+        public LogLocalElement(LogElement element) {
+            this.element = element;
+            this.applied = false;
+        }
+
+        public void applied() {
+            this.applied = true;
+        }
+
+        public boolean isApplied() { return applied; }
+
+        public LogElement element() { return this.element; }
     }
 
 }
