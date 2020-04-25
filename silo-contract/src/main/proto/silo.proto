@@ -102,11 +102,16 @@ message ControlInitResponse {
 
 message GossipRequest {
     VectorClock ts = 1;
-    repeated Observation updates = 2;
+    repeated LogElement updates = 2;
 }
 
 message GossipResponse {
     VectorClock ts = 1;
+}
+
+message LogElement {
+    VectorClock ts = 1;
+    Observation observation = 2;
 }
 
 service Sauron {

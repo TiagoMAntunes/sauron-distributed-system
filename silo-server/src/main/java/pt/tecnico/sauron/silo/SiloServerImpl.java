@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
 
-import com.google.protobuf.Timestamp;
 import com.google.type.LatLng;
 
 import io.grpc.ManagedChannel;
@@ -39,6 +38,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.GossipRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.GossipResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.LogElement;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
@@ -61,17 +61,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private static final RegistryFactory registryFactory = new RegistryFactory();
     private VectorClockDomain replicaTS;
     private int replicaIndex;
-    private TreeSet<Observation> log;
+    private TreeSet<LogElement> log;
 
     public SiloServerImpl (int nReplicas, int whichReplica) {
-        this.silo =  new SiloServer();
+        this.silo =  new SiloServer(new VectorClockDomain(nReplicas));
         this.replicaTS = new VectorClockDomain(nReplicas);
         this.replicaIndex = whichReplica - 1;
-        this.log = new TreeSet<Observation>((Observation a, Observation b) -> (int) (getTime(a) - getTime(b)));
-    }
-
-    private long getTime(Observation o) {
-        return (o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000);
+        this.log = new TreeSet<>((LogElement a, LogElement b) -> (int) (getTime(a.getObservation()) - getTime(b.getObservation())));
     }
 
     //Add camera to server
@@ -182,7 +178,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
             //Add observations to update log
-            this.log.addAll(observations);
+            ArrayList<LogElement> els = new ArrayList<>();
+            for (Observation o : observations) 
+                els.add(LogElement.newBuilder().setObservation(o).setTs(prevVec).build());
+            this.log.addAll(els);
 
             VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
 
@@ -272,7 +271,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
         //Add observations to update log
-        this.log.addAll(observations);
+        ArrayList<LogElement> els = new ArrayList<>();
+        for (Observation o : observations) 
+            els.add(LogElement.newBuilder().setObservation(o).setTs(prevVec).build());
+        this.log.addAll(els);
+
 
         VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
 
@@ -438,10 +441,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
-        List<Observation> observations = req.getUpdatesList();
-        System.out.println("Received gossip: " + observations);
+        List<LogElement> logs = req.getUpdatesList();
+        System.out.println("Received gossip: " + logs);
 
-        for (Observation o : observations) { //For each modification
+        for (LogElement o : logs) { //For each modification
             //Check if exists and if not, adds to log
             if (!log.contains(o)) log.add(o);
 
@@ -456,11 +459,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
-        //TODO Apply available updates
+        //Apply available updates
+        synchronized (silo) { //External lock to avoid invalid data TODO Is this really necessary?
+            //Gets current value of silo
+            VectorClockDomain value = silo.getClock();
+
+            for (LogElement e : log) {
+                //Get prev from client request
+                VectorClockDomain prev = new VectorClockDomain(e.getTs().getUpdatesList());
+                if (value.isMoreRecent(prev)) { //Can execute update
+                    //Create the registry and insert it into silo
+                    Registry r = registryFromObservation(e.getObservation());
+                    if (r != null) silo.addRegistry(r);
+                }
+            }
+        }
     }
 
-
-	public void doGossip(int whichReplica, ZKNaming zkNaming, String path) {
+    public void doGossip(int whichReplica, ZKNaming zkNaming, String path) {
         System.out.println("In replica " + whichReplica);
 
         try {
@@ -495,11 +511,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     } finally {
                         //Shutdown channel and proceed
                         channel.shutdown();
-                    }
+                    
+                    } // try
 
-                }
+                } // if
 
-            }
+            } // for
         } catch (ZKNamingException e) {
             System.out.println("Problem with gossip " + e.getMessage());
         }
@@ -513,6 +530,30 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
 	public Iterable<Integer> getClock() {
 		return this.replicaTS.getList();
-	}
+    }
+    
+    /**
+     * This function is to be used for log updates only
+     * @param o
+     * @return
+     */
+    public Registry registryFromObservation(Observation o) {
+        CameraDomain cam = silo.getCamera(o.getCamera().getName());
+        String type = o.getObservated().getType();
+        String id = o.getObservated().getIdentifier();
+        Date time = new Date(getTime(o));
+        try {
+            return registryFactory.build(cam, type, id, time);
+        } catch (InvalidTypeException | IncorrectDataException e) {
+            return null; //Invalid information, just ignore
+        }
+    }
+
+    /**
+     * Gets an observation's time in miliseconds
+     */
+    private long getTime(Observation o) {
+        return (o.getTime().getSeconds()*1000 + o.getTime().getNanos()/1000000);
+    }
 
 }
