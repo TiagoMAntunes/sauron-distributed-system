@@ -13,6 +13,7 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.client.SiloServerFrontend;
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 
 import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
@@ -45,11 +46,14 @@ public class EyeApp {
 		CamInfoRequest request = CamInfoRequest.newBuilder().
 				setName(camName).build();
 
+
+				
 		//Tries to get Cam
 		//if it doesn't exist creates it
 		Camera camera;
-		try{camera = frontend.camInfo(request).getCamera();}
-		catch(StatusRuntimeException e) {
+		try{
+			camera = frontend.camInfo(request).getCamera();
+		} catch(StatusRuntimeException | UnavailableException e) {
 			LatLng camCoords = LatLng.newBuilder().
 					setLatitude(lat).
 					setLongitude(lon).build();
@@ -59,8 +63,11 @@ public class EyeApp {
 					setCoords(camCoords).build();
 			CamJoinRequest camJoinReq = CamJoinRequest.newBuilder().
 					setCamera(newCam).build();
-
-			frontend.camJoin(camJoinReq);
+			try {
+				frontend.camJoin(camJoinReq);
+			} catch (UnavailableException u) {
+				System.out.println("Couldn't register camera in server. Saving locally...");
+			}
 			camera = newCam;
 		}
 
@@ -144,8 +151,21 @@ public class EyeApp {
 	}
 
 	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException  {
-		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
-						CamJoinRequest.newBuilder().setCamera(cam).build());
+		boolean done;
+		int counter = 0;
+		do {
+			try {
+				frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
+							CamJoinRequest.newBuilder().setCamera(cam).build());
+							done = true;
+			} catch (UnavailableException e) {
+				counter++;
+				done = false;
+			}
+		} while(!done && counter < 5);
+
+		if (counter == 5) System.out.println("Couldn't submit reports after several times. Please try again later.");
+		
 	}
 
 	//TODO Do this without using exceptions
