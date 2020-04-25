@@ -90,14 +90,14 @@ public class SiloServer {
     public synchronized void addRegistries(List<Registry> registries) {
         //When Adding Registries update the vector clock regarding this replica
         for (Registry r : registries) {
-                if (registriesMap.containsKey(RegistryKey.getKey(r)))
-                    registriesMap.get(RegistryKey.getKey(r)).add(r);
-                else {
-                    ArrayList<Registry> list = new ArrayList<>();
-                    list.add(r);
-                    registriesMap.put(RegistryKey.getKey(r), list);
-                }
+            if (registriesMap.containsKey(RegistryKey.getKey(r)))
+                registriesMap.get(RegistryKey.getKey(r)).add(r);
+            else {
+                ArrayList<Registry> list = new ArrayList<>();
+                list.add(r);
+                registriesMap.put(RegistryKey.getKey(r), list);
             }
+        }
             
     }
 

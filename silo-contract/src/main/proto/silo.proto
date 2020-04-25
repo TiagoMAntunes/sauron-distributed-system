@@ -102,6 +102,7 @@ message ControlInitResponse {
 
 message GossipRequest {
     VectorClock ts = 1;
+    repeated Observation updates = 2;
 }
 
 message GossipResponse {

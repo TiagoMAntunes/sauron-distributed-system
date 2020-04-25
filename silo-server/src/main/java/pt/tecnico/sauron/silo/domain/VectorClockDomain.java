@@ -25,6 +25,12 @@ public class VectorClockDomain {
         return this.updates.get(index);
     }
 
+    public void setUpdate(int index, int val) {
+        System.out.println(this.updates);
+        this.updates.set(index,val);
+        System.out.println(this.updates);
+    }
+ 
     //Compares to another VectorClockDomain and checks if more recent
     public boolean isMoreRecent(VectorClockDomain v) {
         for( int i = 0; i < updates.size(); i++) {
