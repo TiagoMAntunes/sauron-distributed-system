@@ -25,9 +25,9 @@ public class EyeApp {
 
 	public static void main(String[] args) throws ZKNamingException  {
 		System.out.println(EyeApp.class.getSimpleName());
-		if(args.length != 5) {
+		if(args.length > 6) {
 			System.out.println("Invalid usage.");
-			System.out.println("Please run as: 'eye host port cameraName latitude longitude'");
+			System.out.println("Please run as: 'eye host port cameraName latitude longitude [replica]'");
 			System.exit(0);
 		}
 		// receive and print arguments
@@ -41,8 +41,14 @@ public class EyeApp {
 		final String camName = args[2];
 		final double lat = Double.parseDouble(args[3]);
 		final double lon = Double.parseDouble(args[4]);
+		SiloServerFrontend frontend;
+		
+		if (args.length == 6) //Connect to a specific port
+			frontend = new SiloServerFrontend(host, port, args[5]);
+		else
+			frontend = new SiloServerFrontend(host, port);
 
-		SiloServerFrontend frontend = new SiloServerFrontend(host, port);
+
 		CamInfoRequest request = CamInfoRequest.newBuilder().
 				setName(camName).build();
 
