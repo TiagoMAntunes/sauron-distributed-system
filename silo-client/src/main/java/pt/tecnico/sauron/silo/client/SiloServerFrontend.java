@@ -103,16 +103,15 @@ public class SiloServerFrontend implements AutoCloseable {
     public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException, UnavailableException {
         // Creates VectorClock from the timestamp
         // Create new request and sent it with the VectorClock
+    
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
                 .addAllObservations(r.getObservationsList()).build();
 
-        ReportResponse res =  (ReportResponse) (new ReportMessage(r,jr)).execute(instanceNumber, zkNaming, path);
+        ReportResponse res =  (ReportResponse) (new ReportMessage(req,jr)).execute(instanceNumber, zkNaming, path);
 
         // Update timestamp
-        System.out.println("B4:" + this.timestamp);
         this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
-        System.out.println("After:" + this.timestamp);
         return res;
     }
 
