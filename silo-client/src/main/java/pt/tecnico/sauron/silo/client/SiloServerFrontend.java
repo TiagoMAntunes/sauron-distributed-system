@@ -80,12 +80,9 @@ public class SiloServerFrontend implements AutoCloseable {
         ControlInitResponse res = (ControlInitResponse) (new ControlInitMessage(r)).execute(instanceNumber, zkNaming, path);
         
         // Update timestamp
-        System.out.println("B4:" + this.timestamp);
         this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
-        System.out.println("After:" + this.timestamp);
 
         return res;
-
     }
 
     public TrackResponse track(TrackRequest r) throws ZKNamingException, UnavailableException {
