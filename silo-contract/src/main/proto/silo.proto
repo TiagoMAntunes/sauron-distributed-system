@@ -103,6 +103,7 @@ message ControlInitResponse {
 message GossipRequest {
     VectorClock ts = 1;
     repeated LogElement updates = 2;
+    int32 incomingReplicaIndex = 3;
 }
 
 message GossipResponse {

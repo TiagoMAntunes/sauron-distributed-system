@@ -446,17 +446,19 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
         List<LogElement> logs = req.getUpdatesList();
-        System.out.println("Received gossip: " + logs);
-
+        System.out.println("b4 gossip: " + this.replicaTS);
         for (LogElement o : logs) { //For each modification
             //Check if exists and if not, adds to log
             synchronized(this) {
-                if (!log.contains(new LogLocalElement(o))) log.add(new LogLocalElement(o));
-
-                //Updates log timestamp entry
-                replicaTS.incUpdate(replicaIndex); //Number of received updates
+                //
+                if (!log.contains(new LogLocalElement(o))) {
+                    log.add(new LogLocalElement(o));
+                    replicaTS.incUpdate(req.getIncomingReplicaIndex()); //Number of received updates
+                } 
+                
             }
         }
+        System.out.println("after gossip: " + this.replicaTS);
 
         //Send gossip OK message
         GossipResponse response = GossipResponse.newBuilder().build();
@@ -502,7 +504,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     //Build request
                     VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
 
-                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).addAllUpdates(this.log.stream().map(el -> el.element()).collect(Collectors.toList())).build(); 
+                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(whichReplica-1).addAllUpdates(this.log.stream().map(el -> el.element()).collect(Collectors.toList())).build(); 
 
                     //Send request and handle answer
                     try {
