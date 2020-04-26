@@ -112,7 +112,8 @@ message GossipResponse {
 
 message LogElement {
     VectorClock ts = 1;
-    Observation observation = 2;
+    repeated Observation observation = 2;
+    int32 origin = 3; //This is the replica that first created this element
 }
 
 service Sauron {
