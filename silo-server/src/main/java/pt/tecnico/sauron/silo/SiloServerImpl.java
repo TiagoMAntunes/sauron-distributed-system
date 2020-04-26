@@ -69,7 +69,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         this.silo =  new SiloServer(new VectorClockDomain(nReplicas));
         this.replicaTS = new VectorClockDomain(nReplicas);
         this.replicaIndex = whichReplica - 1;
-        this.log = new TreeSet<>((LogLocalElement a, LogLocalElement b) -> (int) (getTime(a.element().getObservation()) - getTime(b.element().getObservation())));
+        this.log = new TreeSet<>((LogLocalElement a, LogLocalElement b) -> {
+            VectorClockDomain na = new VectorClockDomain(a.element().getTs().getUpdatesList());
+            VectorClockDomain nb = new VectorClockDomain(b.element().getTs().getUpdatesList());
+            if (na.sameAs(nb)) return 0;
+            else if (na.isMoreRecent(nb)) return 1;
+            return -1;
+        });
     }
 
     //Add camera to server
@@ -180,9 +186,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
             //Add observations to update log
-            ArrayList<LogLocalElement> els = new ArrayList<>();
+            List<Observation> new_obs = observations.stream()
+                            .map(obs -> Observation.newBuilder()
+                                        .setCamera(cameraFromDomain(silo.getCamera(camName)))
+                                        .setObservated(obs.getObservated())
+                                        .setTime(obs.getTime())
+                                        .build())
+                            .collect(Collectors.toList());
+
+                            /*
             for (Observation o : observations) {
-                Camera cam = cameraFromDomain(silo.getCamera(camName));
+                Camera cam = cameraFromDomain(silo.getCamera(camName)); //add camera info to observation
                 Observation new_obs = Observation.newBuilder().setCamera(cam).setObservated(o.getObservated()).setTime(o.getTime()).build();
                 LogElement newLogEl;
                 if(prevVec.getUpdatesList().size() == 0) {
@@ -193,7 +207,16 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 }
                 els.add(new LogLocalElement(newLogEl));
             }
-            this.log.addAll(els);
+            */
+            LogLocalElement el = new LogLocalElement(LogElement.newBuilder() 
+                                                            .addAllObservation(new_obs)
+                                                            .setTs(VectorClock.newBuilder()
+                                                            .addAllUpdates(
+                                                                modTS.getList())
+                                                                .build())
+                                                            .setOrigin(replicaIndex)
+                                                            .build());
+            this.log.add(el);
 
             VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
 
@@ -201,7 +224,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             //TODO is more recent is not what we wanna use to verify causality
             if(this.replicaTS.isMoreRecent(prev)) {
                 //Save the registries
-                silo.addRegistries(list);
+                silo.addRegistries(list, replicaIndex);
             } else {
                 //TODO has to wait and afteer receiving gossip try to run ops that havent been executed if stable
             }
@@ -282,6 +305,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
         modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
+        /* FIXME
         //Add observations to update log
         ArrayList<LogLocalElement> els = new ArrayList<>();
         for (Observation o : observations) {
@@ -295,7 +319,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             els.add(new LogLocalElement(newLogEl));
         }
         this.log.addAll(els);
-        
+        */
 
 
         VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
@@ -304,7 +328,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         //If so adds to register if not -> TODO
         //TODO is more recent is not what we wanna use to verify causality
         if(this.replicaTS.isMoreRecent(prev)) {
-            silo.addRegistries(list);
+            silo.addRegistries(list, replicaIndex);
         } else {
             //TODO has to wait and afteer receiving gossip try to run ops that havent been executed if stable
         }
@@ -462,8 +486,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
         List<LogElement> logs = req.getUpdatesList();
-        
         //TODO Change LogElement to group updates under same timestamp in a single log and fix this accordingly
+
         VectorClockDomain last = new VectorClockDomain(this.replicaTS.getList().size());
         boolean initial = true;
         for (LogElement o : logs) { //For each modification
@@ -495,11 +519,14 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 //Get prev from client request
                 LogElement e = l.element();
                 VectorClockDomain prev = new VectorClockDomain(e.getTs().getUpdatesList());
-                if (!l.isApplied() && value.isMoreRecent(prev)) { //Can execute update
+                if (!l.isApplied() && value.isMoreRecent(prev, e.getOrigin())) { //Can execute update
                     //Create the registry and insert it into silo
-                    Registry r = registryFromObservation(e.getObservation());
-                    if (r != null) silo.addRegistry(r);
-                    l.applied();
+                    List<Registry> registries = registriesFromObservations(e.getObservationList());
+                    for (Registry r : registries) {
+                        if (r != null) silo.addRegistry(r, e.getOrigin());
+                        l.applied();
+                    }
+                    
                 }
             }
         }
@@ -562,6 +589,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 		return this.replicaTS.getList();
     }
     
+    public List<Registry> registriesFromObservations(List<Observation> obs) {
+        return obs.stream().map(o -> registryFromObservation(o)).collect(Collectors.toList());
+    }
+
     /**
      * This function is to be used for log updates only
      * @param o
