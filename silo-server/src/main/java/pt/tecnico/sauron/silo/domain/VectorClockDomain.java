@@ -72,4 +72,13 @@ public class VectorClockDomain {
     public void clear() {
         this.updates = new ArrayList<>(Collections.nCopies(updates.size(), 0));
     }
+
+    public boolean sameAs(VectorClockDomain d) {
+        for(int i=0; i< this.updates.size(); i++) {
+            if (this.updates.get(i) != d.getList().get(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

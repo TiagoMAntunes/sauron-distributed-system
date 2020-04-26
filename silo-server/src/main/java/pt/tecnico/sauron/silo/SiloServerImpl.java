@@ -463,13 +463,23 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
         List<LogElement> logs = req.getUpdatesList();
         System.out.println("b4 gossip: " + this.replicaTS);
+        VectorClockDomain last = new VectorClockDomain(this.replicaTS.getList().size());
+        boolean initial = true;
+
         for (LogElement o : logs) { //For each modification
             //Check if exists and if not, adds to log
+            System.out.println(o);
             synchronized(this) {
                 //
-                if (!log.contains(new LogLocalElement(o))) {
+                VectorClockDomain logTS = new VectorClockDomain(o.getTs().getUpdatesList());
+                if (!log.contains(new LogLocalElement(o)))  {
                     log.add(new LogLocalElement(o));
-                    replicaTS.incUpdate(req.getIncomingReplicaIndex()); //Number of received updates
+                    if(initial || !logTS.sameAs(last)) {
+                        replicaTS.incUpdate(req.getIncomingReplicaIndex()); //Number of received updates
+                        last = new VectorClockDomain(logTS.getList());
+                        initial = false;
+                    }
+                        
                 } 
                 
             }
