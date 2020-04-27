@@ -52,6 +52,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
+import pt.tecnico.sauron.silo.grpc.Silo.LogElement.ObservationLog;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
@@ -97,12 +98,23 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (!(camCoords.getLatitude() >= - 90 && camCoords.getLatitude() <= 90.0 && camCoords.getLongitude() >= -180 && camCoords.getLongitude() <= 180)) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Coordinates are invalid. Should be in degrees and latitude should be in range [-90.0, +90.0] and longitude in [-180.0, +180.0]").asRuntimeException());
         } else {
-            //Create server side representation of camera and add it
-            CameraDomain newCam = new CameraDomain(camName, camCoords.getLatitude(), camCoords.getLongitude());
-            silo.addCamera(newCam);
+            this.replicaTS.incUpdate(replicaIndex);
+            // Add cam join request 
+            this.log.add(new LogLocalElement(LogElement
+                                                .newBuilder()
+                                                .setCamera(request.getCamera())
+                                                .setTs(VectorClock.newBuilder()
+                                                .addAllUpdates(
+                                                    this.replicaTS.getList())
+                                                    .build())
+                                                .setOrigin(replicaIndex)
+                                                .build())); 
+
             response = CamJoinResponse.newBuilder().build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();   
+
+            applyAvailableUpdates(); //New modification so run
         }
     }
 
@@ -192,8 +204,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                             .collect(Collectors.toList());
 
             //Add request to log
-            LogLocalElement el = new LogLocalElement(LogElement.newBuilder() 
-                                                            .addAllObservation(new_obs)
+            LogLocalElement el = new LogLocalElement(LogElement.newBuilder()
+                                                            .setObservation(
+                                                                ObservationLog
+                                                                    .newBuilder()
+                                                                    .addAllObservation(new_obs)    
+                                                                    .build()
+                                                            )
                                                             .setTs(VectorClock.newBuilder()
                                                             .addAllUpdates(
                                                                 modTS.getList())
@@ -201,15 +218,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                             .setOrigin(replicaIndex)
                                                             .build());
             this.log.add(el);
-
-            //Apply new changes since we got a modification
-            applyAvailableUpdates();
             
             //Send modification ts as response to update client
             VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(modTS.getList()).build();
             response = ReportResponse.newBuilder().setNew(newVectorClock).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
+
+            //Apply new changes since we got a modification
+            applyAvailableUpdates();
         }
     }
 
@@ -246,8 +263,23 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         //Create required cameras
         for (Observation o : observations) {
             //Create cameras if needed
-            if (!silo.cameraExists(o.getCamera().getName()))
+            if (!silo.cameraExists(o.getCamera().getName())) {
                 silo.addCamera(new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude()));
+
+                
+                // Add cam join request 
+                this.log.add(new LogLocalElement(LogElement
+                                                        .newBuilder()
+                                                        .setCamera(o.getCamera())
+                                                        .setTs(VectorClock.newBuilder()
+                                                        .addAllUpdates(
+                                                            this.replicaTS.getList())
+                                                            .build())
+                                                        .setOrigin(replicaIndex)
+                                                        .build())); 
+
+                this.replicaTS.incUpdate(replicaIndex); // Increment replica clock
+            }
         }
 
         //Creates new modification timestamp based on prev and increment on replicas timeline
@@ -269,15 +301,20 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                     .build())
                         .collect(Collectors.toList());
 
-        //Add request to log
-        LogLocalElement el = new LogLocalElement(LogElement.newBuilder() 
-                                                        .addAllObservation(new_obs)
-                                                        .setTs(VectorClock.newBuilder()
-                                                        .addAllUpdates(
-                                                            modTS.getList())
-                                                            .build())
-                                                        .setOrigin(replicaIndex)
-                                                        .build());
+       //Add request to log
+       LogLocalElement el = new LogLocalElement(LogElement.newBuilder()
+                                                .setObservation(
+                                                    ObservationLog
+                                                        .newBuilder()
+                                                        .addAllObservation(new_obs)    
+                                                        .build()
+                                                )
+                                                .setTs(VectorClock.newBuilder()
+                                                    .addAllUpdates(
+                                                        modTS.getList())
+                                                        .build())
+                                                    .setOrigin(replicaIndex)
+                                                .build());
         this.log.add(el);
 
         //Apply new changes since we got a modification
@@ -474,13 +511,27 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 LogElement e = l.element();
                 VectorClockDomain prev = new VectorClockDomain(e.getTs().getUpdatesList());
                 if (!l.isApplied() && value.isMoreRecent(prev, e.getOrigin())) { //Can execute update
-                    //Create the registry and insert it into silo
-                    List<Registry> registries = registriesFromObservations(e.getObservationList());
-                    for (Registry r : registries) {
-                        if (r != null) silo.addRegistry(r, e.getOrigin());
-                        l.applied();
-                    }
                     
+                    //Decide message type
+                    switch(e.getContentCase()) {
+                        case OBSERVATION:
+                            //Create the registry and insert it into silo
+                            List<Registry> registries = registriesFromObservations(e.getObservation().getObservationList());
+                            for (Registry r : registries) {
+                                if (r != null) silo.addRegistry(r, e.getOrigin());
+                            }
+                            break;
+                        case CAMERA:
+                            //Register camera
+                            silo.addCamera(cameraDomainFromCamera(e.getCamera()));
+                            break;
+                        case CONTENT_NOT_SET:
+                            System.out.println("ERROR: LogElement not set found");
+                            break;
+                    }
+
+                    l.applied();
+                    value.incUpdate(replicaIndex);
                 }
             }
         }

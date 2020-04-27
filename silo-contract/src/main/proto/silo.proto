@@ -111,9 +111,15 @@ message GossipResponse {
 }
 
 message LogElement {
+    message ObservationLog {
+        repeated Observation observation = 1;
+    }
     VectorClock ts = 1;
-    repeated Observation observation = 2;
-    int32 origin = 3; //This is the replica that first created this element
+    oneof content {
+        ObservationLog observation = 2;
+        Camera camera = 3;
+    }
+    int32 origin = 4; //This is the replica that first created this element
 }
 
 service Sauron {
