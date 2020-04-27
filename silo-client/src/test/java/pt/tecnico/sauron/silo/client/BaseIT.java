@@ -3,6 +3,7 @@ package pt.tecnico.sauron.silo.client;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
+import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ public class BaseIT {
 	protected static SiloServerFrontend frontend;
 	
 	@BeforeAll
-	public static void oneTimeSetup () throws IOException, ZKNamingException {
+	public static void oneTimeSetup () throws IOException, ZKNamingException, UnavailableException {
 		testProps = new Properties();
 		
 		try {

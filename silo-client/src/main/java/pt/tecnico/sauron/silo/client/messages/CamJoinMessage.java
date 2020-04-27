@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class CamJoinMessage extends MessageStrategy {
+public class CamJoinMessage implements Request {
 
     private CamJoinRequest req;
 
@@ -13,7 +13,7 @@ public class CamJoinMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.camJoin(req);
     }
 }

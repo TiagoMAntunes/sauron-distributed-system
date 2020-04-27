@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class ControlInitMessage extends MessageStrategy {
+public class ControlInitMessage implements Request {
 
     private ControlInitRequest req;
 
@@ -13,7 +13,7 @@ public class ControlInitMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.controlInit(req);
     }
 }

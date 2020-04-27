@@ -42,12 +42,15 @@ public class EyeApp {
 		final double lat = Double.parseDouble(args[3]);
 		final double lon = Double.parseDouble(args[4]);
 		SiloServerFrontend frontend;
-		
-		if (args.length == 6) //Connect to a specific port
-			frontend = new SiloServerFrontend(host, port, args[5]);
-		else
-			frontend = new SiloServerFrontend(host, port);
-
+		try {
+			if (args.length == 6) //Connect to a specific port
+				frontend = new SiloServerFrontend(host, port, args[5]);
+			else
+				frontend = new SiloServerFrontend(host, port);
+		} catch (UnavailableException e) {
+			System.out.println("Couldn't connect. Please try again later.");
+			return;
+		}
 
 		CamInfoRequest request = CamInfoRequest.newBuilder().
 				setName(camName).build();

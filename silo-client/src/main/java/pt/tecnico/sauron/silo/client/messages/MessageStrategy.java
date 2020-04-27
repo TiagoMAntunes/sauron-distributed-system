@@ -16,18 +16,38 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
-public abstract class MessageStrategy {
+public class MessageStrategy {
+    private final ZKNaming zkNaming;
+    private final String path;
+    private final String instanceNumber;
+    private SauronGrpc.SauronBlockingStub stub;
+    private ManagedChannel channel;
 
-    /**
-     * This method is what defines the specific message logic and must be
-     * reimplemented
-     * 
-     * @param msg
-     * @param stub
-     * @return
-     * @throws ZKNamingException
-     */
-    protected abstract Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException;
+    public MessageStrategy(ZKNaming zkNaming, String path, String instanceNumber) throws ZKNamingException {
+        this.zkNaming = zkNaming;
+        this.path = path;
+        this.instanceNumber = instanceNumber;
+
+
+        channel = ManagedChannelBuilder.forTarget(getPossibleAddresses().get(0).getURI()).usePlaintext().build();
+        stub = SauronGrpc.newBlockingStub(channel);
+    }
+
+
+    private List<ZKRecord> getPossibleAddresses() throws ZKNamingException {
+         // Initialize stub
+         List<ZKRecord> lst;
+         if (!instanceNumber.equals("0")) {
+             // try only one
+             lst = new ArrayList<>();
+             lst.add(zkNaming.lookup(path + "/" + instanceNumber));
+         } else {
+             // try multiple in random order
+             lst = new ArrayList<>(zkNaming.listRecords(path));
+             Collections.shuffle(lst);
+         }
+         return lst;
+    }
 
     /**
      * This method has the basic logic for checking all the servers and handling
@@ -41,45 +61,45 @@ public abstract class MessageStrategy {
      * @throws ZKNamingException
      * @throws StatusRuntimeException
      */
-    public Message execute(final String instanceNumber, final ZKNaming zkNaming, final String path)
-            throws ZKNamingException, StatusRuntimeException, UnavailableException {
+    public Message execute(Request req) throws ZKNamingException, StatusRuntimeException, UnavailableException {
 
-        List<ZKRecord> lst;
-        if (!instanceNumber.equals("0")) {
-            // try only one
-            lst = new ArrayList<>();
-            lst.add(zkNaming.lookup(path + "/" + instanceNumber));
-        } else {
-            // try multiple in random order
-            lst = new ArrayList<>(zkNaming.listRecords(path));
-            Collections.shuffle(lst);
+        try {
+            return req.call(stub);
+        } catch (final StatusRuntimeException e) {
+            // If host unreachable just advance. If any other error, throw
+            if (e.getStatus().getCode() == Code.UNAVAILABLE) 
+                System.out.println("Target is unreachable. Retrying...");
+            else
+                throw e;
         }
 
-        // Check every record, in a non-specific way
-        for (final ZKRecord r : lst) {
-            final String target = r.getURI();
-            final ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-            final SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
+        //Couldn't connect
+        //Needs to retry new host
+        channel.shutdown(); //close previous channel
 
-            Message result = null;
+        //Get new hosts to try
+        List<ZKRecord> lst = getPossibleAddresses();
+        
+        for (ZKRecord r : lst) {
+            //Update connection information
+            channel = ManagedChannelBuilder.forTarget(r.getURI()).usePlaintext().build();
+            stub = SauronGrpc.newBlockingStub(channel);
+
             try {
-                result = call(stub);
+                return req.call(stub);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
-                if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-                    System.out.println("Target " + target + " is unreachable.");
-                    continue;
-                }
+                if (e.getStatus().getCode() == Code.UNAVAILABLE)
+                    System.out.println("Target " + r.getURI() + " is unreachable. Retrying...");
                 else
                     throw e;
-            } finally {
-                channel.shutdown();
             }
-            // completed successfully
-            return result;
 
-            // TODO maybe change timestamp here?
+            //Did not connect, try next one
+            channel.shutdown();
         }
+
+        // TODO maybe change timestamp here?
 
         // What? No return yet? Alright then, catch this...
         throw new UnavailableException();

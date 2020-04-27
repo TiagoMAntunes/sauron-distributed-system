@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class TraceMessage extends MessageStrategy {
+public class TraceMessage implements Request {
 
     private TraceRequest req;
 
@@ -13,7 +13,7 @@ public class TraceMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.trace(req);
     }
 }

@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class CamInfoMessage extends MessageStrategy {
+public class CamInfoMessage implements Request {
 
     private CamInfoRequest req;
 
@@ -13,7 +13,7 @@ public class CamInfoMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.camInfo(req);
     }
 }

@@ -6,6 +6,7 @@ import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlClearMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlInitMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlPingMessage;
+import pt.tecnico.sauron.silo.client.messages.MessageStrategy;
 import pt.tecnico.sauron.silo.client.messages.ReportMessage;
 import pt.tecnico.sauron.silo.client.messages.TraceMessage;
 import pt.tecnico.sauron.silo.client.messages.TrackMatchMessage;
@@ -41,31 +42,36 @@ public class SiloServerFrontend implements AutoCloseable {
     private final ZKNaming zkNaming;
     private final String instanceNumber;
     ArrayList<Integer> timestamp = new ArrayList<>();
+    private MessageStrategy requestManager;
 
-    public SiloServerFrontend(String host, String port) {
-        zkNaming = new ZKNaming(host, port);
-        instanceNumber = "0"; // No instance specified
+    public SiloServerFrontend(String host, String port) throws UnavailableException {
+        this(host, port, "0");
     }
 
-    public SiloServerFrontend(String host, String port, String instanceNumber) {
+    public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
         zkNaming = new ZKNaming(host, port);
         this.instanceNumber = instanceNumber;
+        try {
+            requestManager = new MessageStrategy(zkNaming, path, instanceNumber);
+        } catch (ZKNamingException e) {
+            throw new UnavailableException();
+        }
     }
 
     public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException, UnavailableException {
-        return (ControlPingResponse) (new ControlPingMessage(r)).execute(instanceNumber, zkNaming, path);
+        return (ControlPingResponse) requestManager.execute((new ControlPingMessage(r)));
     }
 
     public ControlClearResponse controlClear(ControlClearRequest r) throws ZKNamingException, UnavailableException {
-        return (ControlClearResponse) (new ControlClearMessage(r)).execute(instanceNumber, zkNaming, path);
+        return (ControlClearResponse) requestManager.execute((new ControlClearMessage(r)));
     }
 
     public CamJoinResponse camJoin(CamJoinRequest r) throws ZKNamingException, UnavailableException {
-        return (CamJoinResponse) (new CamJoinMessage(r)).execute(instanceNumber, zkNaming, path);        
+        return (CamJoinResponse) requestManager.execute((new CamJoinMessage(r)));
     }
 
     public CamInfoResponse camInfo(CamInfoRequest r) throws ZKNamingException, UnavailableException {
-        return (CamInfoResponse) (new CamInfoMessage(r)).execute(instanceNumber, zkNaming, path);
+        return (CamInfoResponse) requestManager.execute((new CamInfoMessage(r)));
     }
 
     public ControlInitResponse controlInit(ControlInitRequest r) throws ZKNamingException, UnavailableException {
@@ -76,9 +82,8 @@ public class SiloServerFrontend implements AutoCloseable {
         ControlInitRequest req = ControlInitRequest.newBuilder().addAllObservation(r.getObservationList())
                 .setPrev(vector).build(); // TODO Is it really necessary for init to register changes?
 
-        
-        ControlInitResponse res = (ControlInitResponse) (new ControlInitMessage(r)).execute(instanceNumber, zkNaming, path);
-        
+        ControlInitResponse res = (ControlInitResponse) requestManager.execute((new ControlInitMessage(req)));
+
         // Update timestamp
         this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
 
@@ -86,26 +91,26 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public TrackResponse track(TrackRequest r) throws ZKNamingException, UnavailableException {
-        return (TrackResponse) (new TrackMessage(r)).execute(instanceNumber, zkNaming, path);
+        return (TrackResponse) requestManager.execute(new TrackMessage(r));
     }
 
     public TrackMatchResponse trackMatch(TrackMatchRequest r) throws ZKNamingException, UnavailableException {
-        return (TrackMatchResponse) (new TrackMatchMessage(r)).execute(instanceNumber, zkNaming, path);
+        return (TrackMatchResponse) requestManager.execute((new TrackMatchMessage(r)));
     }
 
     public TraceResponse trace(TraceRequest r) throws ZKNamingException, UnavailableException {
-        return (TraceResponse) (new TraceMessage(r)).execute(instanceNumber, zkNaming, path);
+        return (TraceResponse) requestManager.execute((new TraceMessage(r)));
     }
 
     public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException, UnavailableException {
         // Creates VectorClock from the timestamp
         // Create new request and sent it with the VectorClock
-    
+
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
                 .addAllObservations(r.getObservationsList()).build();
 
-        ReportResponse res =  (ReportResponse) (new ReportMessage(req,jr)).execute(instanceNumber, zkNaming, path);
+        ReportResponse res = (ReportResponse) requestManager.execute(new ReportMessage(req, jr));
 
         // Update timestamp
         this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());

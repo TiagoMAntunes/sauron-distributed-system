@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class TrackMatchMessage extends MessageStrategy {
+public class TrackMatchMessage implements Request {
 
     private TrackMatchRequest req;
 
@@ -13,7 +13,7 @@ public class TrackMatchMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.trackMatch(req);
     }
 }

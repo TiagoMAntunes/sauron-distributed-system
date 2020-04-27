@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class ControlClearMessage extends MessageStrategy {
+public class ControlClearMessage implements Request {
 
     private ControlClearRequest req;
 
@@ -13,7 +13,7 @@ public class ControlClearMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.controlClear(req);
     }
 }

@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class ControlPingMessage extends MessageStrategy {
+public class ControlPingMessage implements Request {
 
     private ControlPingRequest req;
 
@@ -13,7 +13,7 @@ public class ControlPingMessage extends MessageStrategy {
         this.req = req;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         return stub.controlPing(req);
     }
 }

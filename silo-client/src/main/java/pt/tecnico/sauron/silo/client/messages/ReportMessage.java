@@ -6,7 +6,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
-public class ReportMessage extends MessageStrategy {
+public class ReportMessage implements Request {
 
     private ReportRequest req;
     private CamJoinRequest camReq;
@@ -15,7 +15,7 @@ public class ReportMessage extends MessageStrategy {
         this.camReq = camReq;
     }
 
-    protected Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
         stub.camJoin(camReq); //Must guarantee camera is registered
         return stub.report(req);
     }
