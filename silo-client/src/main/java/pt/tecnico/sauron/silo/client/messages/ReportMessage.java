@@ -16,7 +16,6 @@ public class ReportMessage implements Request {
     }
 
     public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
-        stub.camJoin(camReq); //Must guarantee camera is registered
         return stub.report(req);
     }
 }

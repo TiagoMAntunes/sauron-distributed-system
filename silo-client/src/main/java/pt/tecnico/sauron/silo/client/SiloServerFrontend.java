@@ -40,7 +40,6 @@ import java.util.ArrayList;
 public class SiloServerFrontend implements AutoCloseable {
     private static final String path = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
     private final ZKNaming zkNaming;
-    private final String instanceNumber;
     ArrayList<Integer> timestamp = new ArrayList<>();
     private MessageStrategy requestManager;
 
@@ -50,7 +49,6 @@ public class SiloServerFrontend implements AutoCloseable {
 
     public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
         zkNaming = new ZKNaming(host, port);
-        this.instanceNumber = instanceNumber;
         try {
             requestManager = new MessageStrategy(zkNaming, path, instanceNumber);
         } catch (ZKNamingException e) {

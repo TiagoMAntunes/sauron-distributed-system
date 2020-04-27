@@ -16,6 +16,8 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
+
+// TODO maybe this class can also manage versions (vector clock)
 public class MessageStrategy {
     private final ZKNaming zkNaming;
     private final String path;
@@ -27,7 +29,6 @@ public class MessageStrategy {
         this.zkNaming = zkNaming;
         this.path = path;
         this.instanceNumber = instanceNumber;
-
 
         channel = ManagedChannelBuilder.forTarget(getPossibleAddresses().get(0).getURI()).usePlaintext().build();
         stub = SauronGrpc.newBlockingStub(channel);
@@ -98,8 +99,6 @@ public class MessageStrategy {
             //Did not connect, try next one
             channel.shutdown();
         }
-
-        // TODO maybe change timestamp here?
 
         // What? No return yet? Alright then, catch this...
         throw new UnavailableException();
