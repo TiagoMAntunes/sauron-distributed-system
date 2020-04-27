@@ -150,16 +150,14 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
             //TODO Confirmed that observation has not been already reported
 
-            //Transform into registries
-            ArrayList<Registry> list = new ArrayList<>();
+            //Validate data 
             for (Observation o : observations) {
                 CameraDomain cam = silo.getCamera(camName);
                 String type = o.getObservated().getType();
                 String id = o.getObservated().getIdentifier();
                 Date time = new Date();
-                Registry r = null;
                 try {
-                    r = registryFactory.build(cam, type, id, time); 
+                    registryFactory.build(cam, type, id, time); 
                 } catch (InvalidTypeException e) {
                     responseObserver.onError(INVALID_ARGUMENT.withDescription("The type " + e.getType() + " is not available in the current system").asRuntimeException());
                     return;
@@ -172,7 +170,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     System.out.println("Rethrowing...");
                     throw e;
                 }
-                list.add(r);
             }
 
             //Creates new modification timestamp based on prev and increment on replicas timeline
@@ -194,20 +191,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                         .build())
                             .collect(Collectors.toList());
 
-                            /*
-            for (Observation o : observations) {
-                Camera cam = cameraFromDomain(silo.getCamera(camName)); //add camera info to observation
-                Observation new_obs = Observation.newBuilder().setCamera(cam).setObservated(o.getObservated()).setTime(o.getTime()).build();
-                LogElement newLogEl;
-                if(prevVec.getUpdatesList().size() == 0) {
-                    VectorClock newVec = VectorClock.newBuilder().addAllUpdates(new VectorClockDomain(this.replicaTS.getList().size()).getList()).build();
-                    newLogEl = LogElement.newBuilder().setObservation(new_obs).setTs(newVec).build();
-                }else {
-                    newLogEl = LogElement.newBuilder().setObservation(new_obs).setTs(prevVec).build();
-                }
-                els.add(new LogLocalElement(newLogEl));
-            }
-            */
+            //Add request to log
             LogLocalElement el = new LogLocalElement(LogElement.newBuilder() 
                                                             .addAllObservation(new_obs)
                                                             .setTs(VectorClock.newBuilder()
@@ -218,17 +202,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                             .build());
             this.log.add(el);
 
-            VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
-
-            //Check if updates are already stable if not TODO
-            //TODO is more recent is not what we wanna use to verify causality
-            if(this.replicaTS.isMoreRecent(prev)) {
-                //Save the registries
-                silo.addRegistries(list, replicaIndex);
-            } else {
-                //TODO has to wait and afteer receiving gossip try to run ops that havent been executed if stable
-            }
-
+            //Apply new changes since we got a modification
+            applyAvailableUpdates();
+            
             //Send modification ts as response to update client
             VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(modTS.getList()).build();
             response = ReportResponse.newBuilder().setNew(newVectorClock).build();
@@ -266,35 +242,14 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
         VectorClock prevVec = request.getPrev(); //Get timestamp from request
-        ArrayList<Registry> list = new ArrayList<>();
-            //For every observation that is provided        
-            for (Observation o : observations) {
 
-                //Create camera if there's none
-                if(!silo.cameraExists(o.getCamera().getName())) {
-                    CameraDomain newCam = new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude());
-                    silo.addCamera(newCam);
-                }
-                //Create registries
-                CameraDomain cam = silo.getCamera(o.getCamera().getName());
-                String type = o.getObservated().getType();
-                String id = o.getObservated().getIdentifier();
-                Date time = new Date(o.getTime().getSeconds() * 1000 + o.getTime().getNanos() / 1000000);
-                Registry r = null;
-                try {
-                    r = registryFactory.build(cam, type, id, time); 
-                } catch (InvalidTypeException e) {
-                    responseObserver.onError(INVALID_ARGUMENT.withDescription("The type " + e.getType() + " is not available in the current system").asRuntimeException());
-                    return;
-                } catch (IncorrectDataException e) {
-                    responseObserver.onError(INVALID_ARGUMENT.withDescription("The identifier " + e.getId() + " does not match type's " + e.getType() + " specification").asRuntimeException());
-                    return;
-                } 
-                list.add(r);
-            }
-        
+        //Create required cameras
+        for (Observation o : observations) {
+            //Create cameras if needed
+            if (!silo.cameraExists(o.getCamera().getName()))
+                silo.addCamera(new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude()));
+        }
 
-        //TODO do I need to repeat code from report? Encapsulate it
         //Creates new modification timestamp based on prev and increment on replicas timeline
         VectorClockDomain modTS;
         this.replicaTS.incUpdate(this.replicaIndex);
@@ -305,36 +260,31 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
         modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
-        /* FIXME
         //Add observations to update log
-        ArrayList<LogLocalElement> els = new ArrayList<>();
-        for (Observation o : observations) {
-            LogElement newLogEl;
-            if(prevVec.getUpdatesList().size() == 0) {
-                VectorClock newVec = VectorClock.newBuilder().addAllUpdates(new VectorClockDomain(this.replicaTS.getList().size()).getList()).build();
-                newLogEl = LogElement.newBuilder().setObservation(o).setTs(newVec).build();
-            }else {
-                newLogEl = LogElement.newBuilder().setObservation(o).setTs(prevVec).build();
-            }
-            els.add(new LogLocalElement(newLogEl));
-        }
-        this.log.addAll(els);
-        */
+        List<Observation> new_obs = observations.stream()
+                        .map(obs -> Observation.newBuilder()
+                                    .setCamera(cameraFromDomain(silo.getCamera(obs.getCamera().getName())))
+                                    .setObservated(obs.getObservated())
+                                    .setTime(obs.getTime())
+                                    .build())
+                        .collect(Collectors.toList());
 
+        //Add request to log
+        LogLocalElement el = new LogLocalElement(LogElement.newBuilder() 
+                                                        .addAllObservation(new_obs)
+                                                        .setTs(VectorClock.newBuilder()
+                                                        .addAllUpdates(
+                                                            modTS.getList())
+                                                            .build())
+                                                        .setOrigin(replicaIndex)
+                                                        .build());
+        this.log.add(el);
 
-        VectorClockDomain prev = new VectorClockDomain(prevVec.getUpdatesList()); // Timestamp coming from client
-
-        //Check if updates are already stable 
-        //If so adds to register if not -> TODO
-        //TODO is more recent is not what we wanna use to verify causality
-        if(this.replicaTS.isMoreRecent(prev)) {
-            silo.addRegistries(list, replicaIndex);
-        } else {
-            //TODO has to wait and afteer receiving gossip try to run ops that havent been executed if stable
-        }
-
+        //Apply new changes since we got a modification
+        applyAvailableUpdates();
+        
         //Send modification ts as response to update client
-        VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(modTS.getList()).build();   
+        VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(modTS.getList()).build();
         ControlInitResponse response = ControlInitResponse.newBuilder().setNew(newVectorClock).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -510,6 +460,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
+        applyAvailableUpdates();
+    }
+
+    private void applyAvailableUpdates() {
         //Apply available updates
         synchronized (silo) { //External lock to avoid invalid data TODO Is this really necessary?
             //Gets current value of silo
@@ -610,7 +564,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         try {
             return registryFactory.build(cam, type, id, time);
         } catch (InvalidTypeException | IncorrectDataException e) {
-            return null; //Invalid information, just ignore
+            System.out.printf("ERROR: %s > %s%n", e.getClass(), e.getMessage());
+            return null;
         }
     }
 
