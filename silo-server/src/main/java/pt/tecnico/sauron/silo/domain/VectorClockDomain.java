@@ -97,4 +97,14 @@ public class VectorClockDomain {
         }
         return true;
     }
+
+    public synchronized ArrayList<Integer> moreRecentIndexes(VectorClockDomain replica) {
+        ArrayList<Integer> list = new ArrayList<>();
+        for (int i = 0; i < replica.getList().size(); i++) {
+            if(replica.getList().get(i) < this.updates.get(i)) {
+                list.add(i);
+            }
+        }
+        return list;
+    }
 }
