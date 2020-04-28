@@ -104,4 +104,8 @@ public class MessageStrategy {
         throw new UnavailableException();
     }
 
+    public void close() {
+        channel.shutdown();
+    }
+
 }

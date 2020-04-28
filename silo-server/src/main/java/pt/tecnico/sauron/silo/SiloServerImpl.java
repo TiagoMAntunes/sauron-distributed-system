@@ -62,9 +62,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private final SiloServer silo;
     private static final RegistryFactory registryFactory = new RegistryFactory();
-    private VectorClockDomain replicaTS;
-    private int replicaIndex;
-    private TreeSet<LogLocalElement> log;
+    private VectorClockDomain replicaTS;  // VectorClockDomain is synchronized
+    private final int replicaIndex;
+    private TreeSet<LogLocalElement> log; // Requires external synchronization
 
     public SiloServerImpl (int nReplicas, int whichReplica) {
         this.silo =  new SiloServer(new VectorClockDomain(nReplicas));
@@ -93,6 +93,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             //Everything is ok, just accept and go on
             responseObserver.onNext(CamJoinResponse.getDefaultInstance());
             responseObserver.onCompleted();
+            return;
         } else if (camName.length() < 3 || camName.length() > 15 ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Camera name must be between 3 and 15 characters in length").asRuntimeException());
         } else if (!(camCoords.getLatitude() >= - 90 && camCoords.getLatitude() <= 90.0 && camCoords.getLongitude() >= -180 && camCoords.getLongitude() <= 180)) {
@@ -100,16 +101,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else {
             this.replicaTS.incUpdate(replicaIndex);
             // Add cam join request 
-            this.log.add(new LogLocalElement(LogElement
-                                                .newBuilder()
-                                                .setCamera(request.getCamera())
-                                                .setTs(VectorClock.newBuilder()
-                                                .addAllUpdates(
-                                                    this.replicaTS.getList())
-                                                    .build())
-                                                .setOrigin(replicaIndex)
-                                                .build())); 
-
+            synchronized (this.log) {
+                this.log.add(new LogLocalElement(LogElement
+                                                    .newBuilder()
+                                                    .setCamera(request.getCamera())
+                                                    .setTs(VectorClock.newBuilder()
+                                                    .addAllUpdates(
+                                                        this.replicaTS.getList())
+                                                        .build())
+                                                    .setOrigin(replicaIndex)
+                                                    .build())); 
+            }
             response = CamJoinResponse.newBuilder().build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();   
@@ -217,8 +219,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                                 .build())
                                                             .setOrigin(replicaIndex)
                                                             .build());
-            this.log.add(el);
-            
+            synchronized(this.log) {
+                this.log.add(el);
+            }
             //Send modification ts as response to update client
             VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(modTS.getList()).build();
             response = ReportResponse.newBuilder().setNew(newVectorClock).build();
@@ -264,10 +267,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         for (Observation o : observations) {
             //Create cameras if needed
             if (!silo.cameraExists(o.getCamera().getName())) {
-                silo.addCamera(new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude()));
-
-                
-                // Add cam join request 
+                silo.addCamera(new CameraDomain(o.getCamera().getName(), o.getCamera().getCoords().getLatitude(), o.getCamera().getCoords().getLongitude()), replicaIndex);
+                this.replicaTS.incUpdate(replicaIndex); // New modification (camera)
+            }
+            // Add cam join request 
+            synchronized(this.log) {
                 this.log.add(new LogLocalElement(LogElement
                                                         .newBuilder()
                                                         .setCamera(o.getCamera())
@@ -277,14 +281,14 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                             .build())
                                                         .setOrigin(replicaIndex)
                                                         .build())); 
-
-                this.replicaTS.incUpdate(replicaIndex); // Increment replica clock
             }
+            this.replicaTS.incUpdate(replicaIndex); // Increment replica clock
+        
         }
 
         //Creates new modification timestamp based on prev and increment on replicas timeline
         VectorClockDomain modTS;
-        this.replicaTS.incUpdate(this.replicaIndex);
+        
         if (prevVec.getUpdatesList().size() == 0) {
             modTS = new VectorClockDomain(this.replicaTS.getList().size());
         } else {
@@ -315,7 +319,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                         .build())
                                                     .setOrigin(replicaIndex)
                                                 .build());
-        this.log.add(el);
+        synchronized(this.log) {
+            this.log.add(el);
+        }
+        this.replicaTS.incUpdate(replicaIndex); // Increment replica clock
 
         //Apply new changes since we got a modification
         applyAvailableUpdates();
@@ -473,21 +480,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
         List<LogElement> logs = req.getUpdatesList();
-        //TODO Change LogElement to group updates under same timestamp in a single log and fix this accordingly
-
-        VectorClockDomain last = new VectorClockDomain(this.replicaTS.getList().size());
-        boolean initial = true;
         for (LogElement o : logs) { //For each modification
             //Check if exists and if not, adds to log
-            synchronized(this) {
-                VectorClockDomain logTS = new VectorClockDomain(o.getTs().getUpdatesList());
-                if (!log.contains(new LogLocalElement(o)))  {
+            synchronized(this.log) {
+                if (!log.contains(new LogLocalElement(o)))  { //Log does not exist yet
                     log.add(new LogLocalElement(o));
-                    if(initial || !logTS.sameAs(last)) {
-                        replicaTS.incUpdate(req.getIncomingReplicaIndex()); //Number of received updates
-                        last = new VectorClockDomain(logTS.getList());
-                        initial = false;
-                    }   
+                    replicaTS.incUpdate(req.getIncomingReplicaIndex()); //Number of received updates
                 } 
             }
         }
@@ -502,7 +500,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private void applyAvailableUpdates() {
         //Apply available updates
-        synchronized (silo) { //External lock to avoid invalid data TODO Is this really necessary?
+        synchronized (this.log) { //External lock to avoid invalid data TODO Is this really necessary?
             //Gets current value of silo
             VectorClockDomain value = silo.getClock();
 
@@ -517,13 +515,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                         case OBSERVATION:
                             //Create the registry and insert it into silo
                             List<Registry> registries = registriesFromObservations(e.getObservation().getObservationList());
-                            for (Registry r : registries) {
-                                if (r != null) silo.addRegistry(r, e.getOrigin());
-                            }
+                            silo.addRegistries(registries, e.getOrigin());
                             break;
                         case CAMERA:
                             //Register camera
-                            silo.addCamera(cameraDomainFromCamera(e.getCamera()));
+                            silo.addCamera(cameraDomainFromCamera(e.getCamera()), e.getOrigin());
                             break;
                         case CONTENT_NOT_SET:
                             System.out.println("ERROR: LogElement not set found");
@@ -531,14 +527,17 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     }
 
                     l.applied();
-                    value.incUpdate(replicaIndex);
                 }
+                //if (!replicaTS.isMoreRecent(silo.getClock()))    System.out.println(e);
             }
+            System.out.println("-- AFTER UPDATES -- ");
+            System.out.println("Server ts: " + replicaTS);
+            System.out.println("Silo ts: " + silo.getClock());
         }
     }
 
-    public void doGossip(int whichReplica, ZKNaming zkNaming, String path) {
-        System.out.println("In replica " + whichReplica);
+    public void doGossip(ZKNaming zkNaming, String path) {
+        System.out.println("In replica " + replicaIndex);
 
         try {
             Collection<ZKRecord> available = zkNaming.listRecords(path);
@@ -546,9 +545,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             //For every replica
             for (ZKRecord record : available) {
                 String recordPath = record.getPath();
-                int replicaID = Integer.parseInt(recordPath.substring(recordPath.length()-1));
+                int replicaID = Integer.parseInt(recordPath.substring(recordPath.length()-1)) - 1; //Replica ids are -1
 
-                if (replicaID != whichReplica) { //Avoid sending to itself
+                if (replicaID != replicaIndex) { //Avoid sending to itself
                     //Build channel
                     String target = record.getURI();
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
@@ -556,9 +555,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
                     //Build request
                     VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
-
-                    GossipRequest req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(whichReplica-1).addAllUpdates(this.log.stream().map(el -> el.element()).collect(Collectors.toList())).build(); 
-
+                    GossipRequest req;
+                    synchronized(this.log) {
+                        req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(replicaIndex).addAllUpdates(this.log.stream().map(el -> el.element()).collect(Collectors.toList())).build(); 
+                    }
                     //Send request and handle answer
                     try {
                         //Response is empty == ok
@@ -605,10 +605,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
      */
     public Registry registryFromObservation(Observation o) {
         CameraDomain cam = silo.getCamera(o.getCamera().getName());
-        if (cam == null) {
-            silo.addCamera(cameraDomainFromCamera(o.getCamera()));
-            cam = silo.getCamera(o.getCamera().getName());
-        }
         String type = o.getObservated().getType();
         String id = o.getObservated().getIdentifier();
         Date time = new Date(getTime(o));

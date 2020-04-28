@@ -79,8 +79,9 @@ public class SiloServer {
         return cameras.containsKey(cameraName);
     }
 
-    public synchronized void addCamera(CameraDomain camObj) {
+    public synchronized void addCamera(CameraDomain camObj, int origin) {
         cameras.put(camObj.getName(), camObj);
+        clock.incUpdate(origin);
     }
 
     public synchronized CameraDomain getCamera(String cameraName) {
@@ -91,11 +92,21 @@ public class SiloServer {
     public synchronized void addRegistries(List<Registry> registries, int origin) {
         //When Adding Registries update the vector clock regarding this replica
         for (Registry r : registries) {
-            addRegistry(r, origin);
+            addRegistry(r); // only add
         }
+        System.out.println("Incrementing multiple registries");
+        clock.incUpdate(origin);
     }
 
+    //Increment origin and add
     public synchronized void addRegistry(Registry r, int origin) {
+        System.out.println("Incrementing single registry");
+        clock.incUpdate(origin);
+        addRegistry(r);
+    }
+
+    //Only add
+    public synchronized void addRegistry(Registry r) {
         if (registriesMap.containsKey(RegistryKey.getKey(r)))
                 registriesMap.get(RegistryKey.getKey(r)).add(r);
             else {
@@ -103,7 +114,6 @@ public class SiloServer {
                 list.add(r);
                 registriesMap.put(RegistryKey.getKey(r), list);
             }
-        clock.incUpdate(origin);
     }
 
    

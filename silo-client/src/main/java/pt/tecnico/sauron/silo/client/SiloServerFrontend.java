@@ -118,6 +118,7 @@ public class SiloServerFrontend implements AutoCloseable {
     @Override
     public final void close() {
         // Nothing needs to be closed anymore
+        requestManager.close();
     }
 
 }

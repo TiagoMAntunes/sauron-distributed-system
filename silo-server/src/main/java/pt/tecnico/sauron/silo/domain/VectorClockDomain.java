@@ -16,23 +16,21 @@ public class VectorClockDomain {
         this.updates = new ArrayList<>(Collections.nCopies(nReplicas, 0));
     }
 
-    public void incUpdate(int index) {
+    public synchronized void incUpdate(int index) {
         int currentValue = this.updates.get(index);
         this.updates.set(index, currentValue+1);
     }
 
-    public int getUpdate(int index) {
+    public synchronized int getUpdate(int index) {
         return this.updates.get(index);
     }
 
-    public void setUpdate(int index, int val) {
-        System.out.println(this.updates);
+    public synchronized void setUpdate(int index, int val) {
         this.updates.set(index,val);
-        System.out.println(this.updates);
     }
  
     //Compares to another VectorClockDomain and checks if more recent
-    public boolean isMoreRecent(VectorClockDomain v) {
+    public synchronized boolean isMoreRecent(VectorClockDomain v) {
         for( int i = 0; i < updates.size(); i++) {
             if(v.getList().size() ==0) {
                 //TODO check if correct
@@ -47,11 +45,9 @@ public class VectorClockDomain {
     }
 
     //Gets valid prev from request by removing the origin
-    public boolean isMoreRecent(VectorClockDomain v, int origin) {
+    public synchronized boolean isMoreRecent(VectorClockDomain v, int origin) {
         ArrayList<Integer> n = new ArrayList<>(v.getList());
-        System.out.println("prev vector: " + n);
         n.set(origin, n.get(origin) - 1);
-        System.out.println("New vector: " + n);
         for( int i = 0; i < updates.size(); i++) {
             if(v.getList().size() ==0) {
                 //TODO check if correct
@@ -67,7 +63,7 @@ public class VectorClockDomain {
 
     //TODO Confirm this is the way to do it
     //TODO Ensure we are not only updating the vectorclock but actually making the changes
-    public void merge(VectorClockDomain v) {
+    public synchronized void merge(VectorClockDomain v) {
         for( int i = 0; i < updates.size(); i++) {
             if (this.updates.get(i) < v.getUpdate(i))
                 this.updates.set(i, v.getUpdate(i));
@@ -75,7 +71,7 @@ public class VectorClockDomain {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         String vectorStr = "[";
         for( int i = 0; i < updates.size(); i++) {
             vectorStr += getUpdate(i) + ",";
@@ -84,16 +80,16 @@ public class VectorClockDomain {
         return vectorStr;
     }
 
-    public ArrayList<Integer> getList() {
+    public synchronized ArrayList<Integer> getList() {
         return this.updates;
     }
 
-    public void clear() {
+    public synchronized void clear() {
         this.updates = new ArrayList<>(Collections.nCopies(updates.size(), 0));
     }
 
     /* FIXME Why isn't this an equals? */
-    public boolean sameAs(VectorClockDomain d) {
+    public synchronized boolean sameAs(VectorClockDomain d) {
         for(int i=0; i< this.updates.size(); i++) {
             if (this.updates.get(i) != d.getList().get(i)) {
                 return false;

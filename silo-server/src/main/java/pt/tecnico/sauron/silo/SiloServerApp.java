@@ -44,6 +44,8 @@ public class SiloServerApp {
 		
 		SiloServerImpl silo = new SiloServerImpl(nReplicas,whichReplica); //Passes number of replicas and which replica it is
 		final BindableService impl = silo;
+
+		System.out.printf("[DEBUG] PID = %d%n", ProcessHandle.current().pid());
 		
 		//Create a new server
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
@@ -84,7 +86,7 @@ public class SiloServerApp {
 		}
 
 		public void run(){
-			silo.doGossip(whichReplica, zkNaming, path);
+			silo.doGossip(zkNaming, path);
 		}	
 	}
 
