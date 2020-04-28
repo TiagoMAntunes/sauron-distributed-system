@@ -110,6 +110,14 @@ message GossipResponse {
     VectorClock ts = 1;
 }
 
+message GetReplicaTimestampRequest {
+    //Empty
+}
+
+message GetReplicaTimestampResponse {
+    VectorClock currentTS = 1;
+}
+
 message LogElement {
     message ObservationLog {
         repeated Observation observation = 1;
@@ -123,6 +131,7 @@ message LogElement {
 }
 
 service Sauron {
+    rpc GetReplicaTimestamp(GetReplicaTimestampRequest) returns (GetReplicaTimestampResponse);
     rpc Gossip(GossipRequest) returns (GossipResponse);
     rpc CamJoin(CamJoinRequest) returns (CamJoinResponse);
     rpc CamInfo(CamInfoRequest) returns (CamInfoResponse);
