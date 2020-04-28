@@ -38,6 +38,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.GetReplicaTimestampRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.GetReplicaTimestampResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.GossipRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.GossipResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.LogElement;
@@ -553,6 +555,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
 
+                    //Ask for destiny's TS to check which entries should be sent
+                    getReplicaTS(stub);
+
                     //Build request
                     VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
                     GossipRequest req;
@@ -584,6 +589,22 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
     
+    public void getReplicaTS(SauronGrpc.SauronBlockingStub stub) {
+        GetReplicaTimestampRequest req = GetReplicaTimestampRequest.newBuilder().build();
+        GetReplicaTimestampResponse res = stub.getReplicaTimestamp(req);
+        VectorClock replicaTS = res.getCurrentTS();
+        VectorClockDomain replicaTSDom= new VectorClockDomain(replicaTS.getUpdatesList());
+        System.out.println(replicaTSDom);
+    }
+
+    @Override
+    public void getReplicaTimestamp(GetReplicaTimestampRequest req,StreamObserver<GetReplicaTimestampResponse> responseObserver ) {
+        VectorClock currentTS = VectorClock.newBuilder().addAllUpdates(this.replicaTS.getList()).build();
+        GetReplicaTimestampResponse response = GetReplicaTimestampResponse.newBuilder().setCurrentTS(currentTS).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
     public void handleShare(List<Integer> versions) {
         System.out.println("Previous version: " + this.replicaTS);
         this.replicaTS.merge(new VectorClockDomain(versions));
