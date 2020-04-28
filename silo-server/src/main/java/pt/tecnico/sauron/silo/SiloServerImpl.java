@@ -556,8 +556,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
 
                     //Ask for destiny's TS to check which entries should be sent
-                    getReplicaTS(stub);
-
+                    VectorClockDomain incomingReplicaTS = getReplicaTS(stub);
+                    System.out.println(this.replicaTS.moreRecentIndexes(incomingReplicaTS));
                     //Build request
                     VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
                     GossipRequest req;
@@ -588,13 +588,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             System.out.println("Problem with gossip " + e.getMessage());
         }
     }
-    
-    public void getReplicaTS(SauronGrpc.SauronBlockingStub stub) {
+
+    public VectorClockDomain getReplicaTS(SauronGrpc.SauronBlockingStub stub) {
         GetReplicaTimestampRequest req = GetReplicaTimestampRequest.newBuilder().build();
         GetReplicaTimestampResponse res = stub.getReplicaTimestamp(req);
         VectorClock replicaTS = res.getCurrentTS();
-        VectorClockDomain replicaTSDom= new VectorClockDomain(replicaTS.getUpdatesList());
-        System.out.println(replicaTSDom);
+        return new VectorClockDomain(replicaTS.getUpdatesList());
     }
 
     @Override
