@@ -43,7 +43,7 @@ import java.util.ArrayList;
 public class SiloServerFrontend implements AutoCloseable {
     private static final String path = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
     private final ZKNaming zkNaming;
-    ArrayList<Integer> timestamp = new ArrayList<>();
+    ArrayList<Integer> timestamp;
     private MessageStrategy requestManager;
 
     public SiloServerFrontend(String host, String port) throws UnavailableException {
@@ -57,6 +57,8 @@ public class SiloServerFrontend implements AutoCloseable {
         } catch (ZKNamingException e) {
             throw new UnavailableException();
         }
+        timestamp = new ArrayList<>(9);
+        for (int i = 0; i < 9; i++) timestamp.add(0);
     }
 
     public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException, UnavailableException {
@@ -68,7 +70,15 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public CamJoinResponse camJoin(CamJoinRequest r) throws ZKNamingException, UnavailableException {
-        return (CamJoinResponse) requestManager.execute((new CamJoinMessage(r)));
+        VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
+        CamJoinRequest req = CamJoinRequest.newBuilder().setCamera(r.getCamera())
+                        .setPrev(vector).build();
+
+        CamJoinResponse response = (CamJoinResponse) requestManager.execute((new CamJoinMessage(req)));
+
+        this.timestamp = new ArrayList<>(response.getNew().getUpdatesList());
+        
+        return response;
     }
 
     public CamInfoResponse camInfo(CamInfoRequest r) throws ZKNamingException, UnavailableException {

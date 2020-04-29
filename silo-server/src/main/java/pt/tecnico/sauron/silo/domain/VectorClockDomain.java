@@ -112,4 +112,11 @@ public class VectorClockDomain {
         list.add(values);
         return list;
     }
+
+	public synchronized VectorClockDomain getCopy() {
+        ArrayList<Integer> arr = new ArrayList<>();
+        for (Integer i : this.updates)
+            arr.add(Integer.valueOf(i));
+        return new VectorClockDomain(arr);
+	}
 }

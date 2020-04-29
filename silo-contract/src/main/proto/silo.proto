@@ -28,10 +28,11 @@ message Observation {
 
 message CamJoinRequest {
     Camera camera = 1;
+    VectorClock prev = 2;
 }
 
 message CamJoinResponse {
-    
+    VectorClock new = 1;
 }
 
 message CamInfoRequest {

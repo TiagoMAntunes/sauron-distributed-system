@@ -103,20 +103,34 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (!(camCoords.getLatitude() >= - 90 && camCoords.getLatitude() <= 90.0 && camCoords.getLongitude() >= -180 && camCoords.getLongitude() <= 180)) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Coordinates are invalid. Should be in degrees and latitude should be in range [-90.0, +90.0] and longitude in [-180.0, +180.0]").asRuntimeException());
         } else {
-            this.replicaTS.incUpdate(replicaIndex);
+            VectorClockDomain copy_replica;
+            synchronized (this.replicaTS) {
+                this.replicaTS.incUpdate(replicaIndex);             // Increment replica timestamp
+                copy_replica = this.replicaTS.getCopy();            // gets deep copy avoid thread concurrency
+            }
+            
+            ArrayList<Integer> prev_copy = new ArrayList<>(request.getPrev().getUpdatesList());
+            prev_copy.set(replicaIndex, copy_replica.getUpdate(replicaIndex));
+            VectorClock prev = VectorClock.newBuilder().addAllUpdates(prev_copy).build();
             // Add cam join request 
             synchronized (this.log) {
                 this.log.add(new LogLocalElement(LogElement
                                                     .newBuilder()
                                                     .setCamera(request.getCamera())
                                                     .setTs(VectorClock.newBuilder()
-                                                    .addAllUpdates(
-                                                        this.replicaTS.getList())
+                                                        .addAllUpdates(prev.getUpdatesList())
                                                         .build())
                                                     .setOrigin(replicaIndex)
                                                     .build())); 
             }
-            response = CamJoinResponse.newBuilder().build();
+
+            response = CamJoinResponse.newBuilder()
+                                        .setNew(
+                                            VectorClock.newBuilder()
+                                                .addAllUpdates(
+                                                    copy_replica.getList())
+                                                .build())
+                                        .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();   
 
@@ -190,15 +204,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 }
             }
 
-            //Creates new modification timestamp based on prev and increment on replicas timeline
-            VectorClockDomain modTS;
-            this.replicaTS.incUpdate(this.replicaIndex);
-            if (prevVec.getUpdatesList().size() == 0) {
-                modTS = new VectorClockDomain(this.replicaTS.getList().size());
-            } else {
-                modTS = new VectorClockDomain(prevVec.getUpdatesList());
+            VectorClockDomain copy_replica;
+            synchronized (this.replicaTS) {
+                this.replicaTS.incUpdate(replicaIndex);             // Increment replica timestamp
+                copy_replica = this.replicaTS.getCopy();            // gets deep copy avoid thread concurrency
             }
-            modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
+            
+            ArrayList<Integer> prev_copy = new ArrayList<>(request.getPrev().getUpdatesList());
+            prev_copy.set(replicaIndex, copy_replica.getUpdate(replicaIndex));
+            VectorClock prev = VectorClock.newBuilder().addAllUpdates(prev_copy).build();
 
             //Add observations to update log
             List<Observation> new_obs = observations.stream()
@@ -218,8 +232,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                                     .build()
                                                             )
                                                             .setTs(VectorClock.newBuilder()
-                                                            .addAllUpdates(
-                                                                modTS.getList())
+                                                                .addAllUpdates(
+                                                                    prev.getUpdatesList())
                                                                 .build())
                                                             .setOrigin(replicaIndex)
                                                             .build());
@@ -227,8 +241,13 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 this.log.add(el);
             }
             //Send modification ts as response to update client
-            VectorClock newVectorClock = VectorClock.newBuilder().addAllUpdates(modTS.getList()).build();
-            response = ReportResponse.newBuilder().setNew(newVectorClock).build();
+            response = ReportResponse.newBuilder()
+                                        .setNew(
+                                            VectorClock.newBuilder()
+                                                .addAllUpdates(
+                                                    copy_replica.getList())
+                                                .build())
+                                        .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
@@ -702,6 +721,10 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         public boolean isApplied() { return applied; }
 
         public LogElement element() { return this.element; }
+
+        public String toString() {
+            return element + "\n Applied: " + (this.applied ? "Yes" : "No"); 
+        }
     }
 
 }
