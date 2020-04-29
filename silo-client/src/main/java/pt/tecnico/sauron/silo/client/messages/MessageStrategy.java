@@ -16,8 +16,6 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
-
-// TODO maybe this class can also manage versions (vector clock)
 public class MessageStrategy {
     private final ZKNaming zkNaming;
     private final String path;

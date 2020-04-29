@@ -1,22 +1,14 @@
 package pt.tecnico.sauron.silo;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import io.grpc.BindableService;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import pt.tecnico.sauron.silo.grpc.SauronGrpc;
-import pt.tecnico.sauron.silo.grpc.Silo.GossipRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.GossipResponse;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
-import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 public class SiloServerApp {
 	
@@ -62,7 +54,7 @@ public class SiloServerApp {
 
 		//Start gossip at every interval ms
 		Timer timer = new Timer();
-		timer.schedule(new GossipRun(silo, zooHost, zooPort, whichReplica), 1000, interval); //TODO introduced delay to allow for other silos to connect
+		timer.schedule(new GossipRun(silo, zooHost, zooPort, whichReplica), interval, interval); //Delay exists for it not to do immediately
 		
 		//Handle end of the server
 		Runtime.getRuntime().addShutdownHook(new HandleEnd(zkNaming, path, host, String.valueOf(port)));
@@ -75,14 +67,12 @@ public class SiloServerApp {
 
 	static class GossipRun extends TimerTask {
 		private final SiloServerImpl silo;
-		private int whichReplica;
 		private ZKNaming zkNaming;
 		private final String path = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
 
 		public GossipRun(SiloServerImpl s, String host, String port, int rep) {
 			silo = s;
 			zkNaming = new ZKNaming(host, port);;
-			whichReplica = rep;
 		}
 
 		public void run(){

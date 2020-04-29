@@ -4,8 +4,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
-
 public class SiloServer {
 
     private static class RegistryKey {
@@ -57,7 +55,7 @@ public class SiloServer {
     public synchronized boolean clear() {
         cameras.clear();
         registriesMap.clear();
-        //ts.clear(); //TODO do we need to do something in impl
+        clock.clear();
         return true;
     }
 

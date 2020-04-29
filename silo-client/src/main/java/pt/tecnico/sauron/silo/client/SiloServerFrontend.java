@@ -6,7 +6,6 @@ import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlClearMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlInitMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlPingMessage;
-import pt.tecnico.sauron.silo.client.messages.LogsMessage;
 import pt.tecnico.sauron.silo.client.messages.MessageStrategy;
 import pt.tecnico.sauron.silo.client.messages.ReportMessage;
 import pt.tecnico.sauron.silo.client.messages.TraceMessage;
@@ -14,8 +13,6 @@ import pt.tecnico.sauron.silo.client.messages.TrackMatchMessage;
 import pt.tecnico.sauron.silo.client.messages.TrackMessage;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
-import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
@@ -33,7 +30,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
-import pt.tecnico.sauron.silo.grpc.Silo.Camera;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
@@ -91,7 +87,7 @@ public class SiloServerFrontend implements AutoCloseable {
         // Create new request and sent it with the VectorClock
         VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
         ControlInitRequest req = ControlInitRequest.newBuilder().addAllObservation(r.getObservationList())
-                .setPrev(vector).build(); // TODO Is it really necessary for init to register changes?
+                .setPrev(vector).build();
 
         ControlInitResponse res = (ControlInitResponse) requestManager.execute((new ControlInitMessage(req)));
 
@@ -133,9 +129,5 @@ public class SiloServerFrontend implements AutoCloseable {
         // Nothing needs to be closed anymore
         requestManager.close();
     }
-
-	public GetNonAppliedLogsResponse logs(GetNonAppliedLogsRequest req) throws ZKNamingException, UnavailableException {
-		return (GetNonAppliedLogsResponse) requestManager.execute(new LogsMessage(req)); 
-	}
 
 }

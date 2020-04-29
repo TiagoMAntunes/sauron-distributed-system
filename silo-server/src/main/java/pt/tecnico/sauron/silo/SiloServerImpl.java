@@ -6,7 +6,6 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
@@ -38,8 +37,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
-import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsRequest;
-import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.GetReplicaTimestampRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.GetReplicaTimestampResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.GossipRequest;
@@ -168,7 +165,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String camName = request.getCameraName();
         List<Observation> observations = request.getObservationsList();
         ReportResponse response;
-        VectorClock prevVec = request.getPrev(); //Get timestamp from request
         //Verify that request has been properly constructed
         if (camName == null || camName.equals("") ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Input cannot be empty or null").asRuntimeException());
@@ -179,8 +175,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (observations.isEmpty()) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Observations List must not be empty").asRuntimeException());
         } else {
-
-            //TODO Confirmed that observation has not been already reported
 
             //Validate data 
             for (Observation o : observations) {
@@ -523,7 +517,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private void applyAvailableUpdates() {
         //Apply available updates
-        synchronized (this.log) { //External lock to avoid invalid data TODO Is this really necessary?
+        synchronized (this.log) {
             //Gets current value of silo
             VectorClockDomain value = silo.getClock();
 
@@ -631,24 +625,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void getReplicaTimestamp(GetReplicaTimestampRequest req,StreamObserver<GetReplicaTimestampResponse> responseObserver ) {
         VectorClock currentTS = VectorClock.newBuilder().addAllUpdates(this.replicaTS.getList()).build();
         GetReplicaTimestampResponse response = GetReplicaTimestampResponse.newBuilder().setCurrentTS(currentTS).build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-
-
-    /**
-     * This service is only for debugging
-     */
-    @Override
-    public void getNonAppliedLogs(GetNonAppliedLogsRequest req, StreamObserver<GetNonAppliedLogsResponse> responseObserver) {
-        GetNonAppliedLogsResponse response;
-        synchronized (this.log) {
-            response = GetNonAppliedLogsResponse.newBuilder()
-                                                .addAllElements(
-                                                    this.log.stream().filter(log -> !log.isApplied()).map(el -> el.element()).collect(Collectors.toList())
-                                                )
-                                                .build();
-        }
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
