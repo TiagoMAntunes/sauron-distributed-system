@@ -557,12 +557,22 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
                     //Ask for destiny's TS to check which entries should be sent
                     VectorClockDomain incomingReplicaTS = getReplicaTS(stub);
-                    System.out.println(this.replicaTS.moreRecentIndexes(incomingReplicaTS));
+                    ArrayList<ArrayList<Integer>> toSend = this.replicaTS.moreRecentIndexes(incomingReplicaTS);
+                    ArrayList<Integer> indexesToSend = toSend.get(0);
+                    ArrayList<Integer> replicaValues = toSend.get(1);
+
                     //Build request
                     VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
                     GossipRequest req;
                     synchronized(this.log) {
-                        req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(replicaIndex).addAllUpdates(this.log.stream().map(el -> el.element()).collect(Collectors.toList())).build(); 
+
+                        //Filter log to get only the updates that refer to the proper indexes
+                        req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(replicaIndex).addAllUpdates(this.log.stream()
+                            .filter(el -> indexesToSend.contains(el.element().getOrigin())) // Filter for indexes of interest
+                            .filter(el -> el.element().getTs().getUpdatesList().get(el.element().getOrigin()) > // Filter for logs whose timestamp at the index of interest
+                                    replicaValues.get(indexesToSend.indexOf(el.element().getOrigin()))) // is bigger than the replicas timestamp at that index
+                            .map(el -> el.element()).collect(Collectors.toList())).build(); 
+                        
                     }
                     //Send request and handle answer
                     try {
