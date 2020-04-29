@@ -2,7 +2,7 @@ package pt.tecnico.sauron.silo.domain;
 
 import java.util.Date;
 
-public class Registry {
+public class Registry implements Comparable<Registry> {
 
     private CameraDomain camera;
     private String type;
@@ -14,6 +14,22 @@ public class Registry {
         this.type = type.toUpperCase();
         this.identifier = id.toUpperCase();
         this.time = time;
+    }
+
+    @Override
+    public int compareTo(Registry t) {
+        if (time.before(t.getTime()) || time.equals(t.getTime()) && camera.getName().compareTo(t.getCamera().getName()) == -1) return -1;
+        else return 1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return false; //Two registries are never equal although they the same content (time is in milliseconds, which can't differentiate)
+    }
+
+    @Override
+    public int hashCode() {
+        return identifier.hashCode();
     }
 
     public CameraDomain getCamera() { return camera; }

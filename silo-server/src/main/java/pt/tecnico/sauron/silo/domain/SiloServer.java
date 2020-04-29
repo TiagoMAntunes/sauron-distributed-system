@@ -45,7 +45,7 @@ public class SiloServer {
 
     }
 
-    private Map<RegistryKey, ArrayList<Registry>> registriesMap = new HashMap<>();
+    private Map<RegistryKey, TreeSet<Registry>> registriesMap = new HashMap<>();
     private Map<String, CameraDomain> cameras = new HashMap<>();
     private VectorClockDomain clock;
     public SiloServer(VectorClockDomain clock) {
@@ -59,7 +59,7 @@ public class SiloServer {
         return true;
     }
 
-    public synchronized List<Registry> getRegistries(String type, String identifier) {
+    public synchronized Collection<Registry> getRegistries(String type, String identifier) {
         return registriesMap.get(RegistryKey.getKey(type, identifier));
     }
 
@@ -69,7 +69,7 @@ public class SiloServer {
 
     public synchronized Registry getMostRecentRegistry(String type, String identifier) {
         if (registriesMap.containsKey(RegistryKey.getKey(type, identifier))) {
-            return registriesMap.get(RegistryKey.getKey(type, identifier)).get(registriesMap.get(RegistryKey.getKey(type, identifier)).size() -1);
+            return registriesMap.get(RegistryKey.getKey(type, identifier)).last();
         } else return null;
     }
 
@@ -105,13 +105,9 @@ public class SiloServer {
 
     //Only add
     public synchronized void addRegistry(Registry r) {
-        if (registriesMap.containsKey(RegistryKey.getKey(r)))
-                registriesMap.get(RegistryKey.getKey(r)).add(r);
-            else {
-                ArrayList<Registry> list = new ArrayList<>();
-                list.add(r);
-                registriesMap.put(RegistryKey.getKey(r), list);
-            }
+        if (!registriesMap.containsKey(RegistryKey.getKey(r))) //Adds treemap
+            registriesMap.put(RegistryKey.getKey(r), new TreeSet<Registry>());
+        registriesMap.get(RegistryKey.getKey(r)).add(r);
     }
 
    

@@ -466,7 +466,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
         
         else {
-            registries = silo.getRegistries(type, identifier);
+            registries = new ArrayList<Registry>(silo.getRegistries(type, identifier));
             
             // Builds observations to return from the registries
             for (int i = registries.size() - 1; i >= 0; i--) {
