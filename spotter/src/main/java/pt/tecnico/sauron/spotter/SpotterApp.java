@@ -20,7 +20,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
-import pt.tecnico.sauron.silo.grpc.Silo.LogElement;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;

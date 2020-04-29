@@ -32,12 +32,6 @@ public class VectorClockDomain {
     //Compares to another VectorClockDomain and checks if more recent
     public synchronized boolean isMoreRecent(VectorClockDomain v) {
         for( int i = 0; i < updates.size(); i++) {
-            if(v.getList().size() ==0) {
-                //TODO check if correct
-                //For an initial message from client which has no history
-                return true;
-            }
-            /* TODO what if they are the same */
             if (this.updates.get(i) < v.getUpdate(i))  
                 return false;
         }
@@ -49,25 +43,10 @@ public class VectorClockDomain {
         ArrayList<Integer> n = new ArrayList<>(v.getList());
         n.set(origin, n.get(origin) - 1);
         for( int i = 0; i < updates.size(); i++) {
-            if(v.getList().size() ==0) {
-                //TODO check if correct
-                //For an initial message from client which has no history
-                return true;
-            }
-            /* TODO what if they are the same */
             if (this.updates.get(i) < n.get(i))  
                 return false;
         }
         return true;
-    }
-
-    //TODO Confirm this is the way to do it
-    //TODO Ensure we are not only updating the vectorclock but actually making the changes
-    public synchronized void merge(VectorClockDomain v) {
-        for( int i = 0; i < updates.size(); i++) {
-            if (this.updates.get(i) < v.getUpdate(i))
-                this.updates.set(i, v.getUpdate(i));
-        }
     }
 
     @Override
@@ -88,8 +67,11 @@ public class VectorClockDomain {
         this.updates = new ArrayList<>(Collections.nCopies(updates.size(), 0));
     }
 
-    /* FIXME Why isn't this an equals? */
-    public synchronized boolean sameAs(VectorClockDomain d) {
+    @Override
+    public synchronized boolean equals(Object o) {
+        if (! (o instanceof VectorClockDomain)) return false;
+        VectorClockDomain d = (VectorClockDomain) o;
+
         for(int i=0; i< this.updates.size(); i++) {
             if (this.updates.get(i) != d.getList().get(i)) {
                 return false;

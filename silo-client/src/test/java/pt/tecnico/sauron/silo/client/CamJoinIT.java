@@ -1,6 +1,5 @@
 package pt.tecnico.sauron.silo.client;
 
-import static io.grpc.Status.Code.ALREADY_EXISTS;
 import static io.grpc.Status.Code.INVALID_ARGUMENT;
 import static org.junit.jupiter.api.Assertions.*;
 

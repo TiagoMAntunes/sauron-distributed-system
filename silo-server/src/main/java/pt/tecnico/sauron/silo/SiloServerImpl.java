@@ -74,7 +74,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         this.log = new TreeSet<>((LogLocalElement a, LogLocalElement b) -> {
             VectorClockDomain na = new VectorClockDomain(a.element().getTs().getUpdatesList());
             VectorClockDomain nb = new VectorClockDomain(b.element().getTs().getUpdatesList());
-            if (na.sameAs(nb)) return 0;
+            if (na.equals(nb)) return 0;
             else if (na.isMoreRecent(nb)) return 1;
             return -1;
         });
@@ -628,12 +628,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
-
-    public void handleShare(List<Integer> versions) {
-        System.out.println("Previous version: " + this.replicaTS);
-        this.replicaTS.merge(new VectorClockDomain(versions));
-        System.out.println("New version: " + this.replicaTS);
-	}
 
 	public Iterable<Integer> getClock() {
 		return this.replicaTS.getList();
