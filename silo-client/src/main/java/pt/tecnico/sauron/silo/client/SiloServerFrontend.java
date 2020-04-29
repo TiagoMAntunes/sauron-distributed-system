@@ -33,11 +33,10 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
-import java.lang.AutoCloseable;
 import java.util.ArrayList;
 
 public class SiloServerFrontend implements AutoCloseable {
-    private static final String path = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
+    private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
     private final ZKNaming zkNaming;
     ArrayList<Integer> timestamp;
     private MessageStrategy requestManager;
@@ -49,7 +48,7 @@ public class SiloServerFrontend implements AutoCloseable {
     public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
         zkNaming = new ZKNaming(host, port);
         try {
-            requestManager = new MessageStrategy(zkNaming, path, instanceNumber);
+            requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber);
         } catch (ZKNamingException e) {
             throw new UnavailableException();
         }

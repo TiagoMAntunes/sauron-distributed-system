@@ -100,15 +100,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (!(camCoords.getLatitude() >= - 90 && camCoords.getLatitude() <= 90.0 && camCoords.getLongitude() >= -180 && camCoords.getLongitude() <= 180)) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Coordinates are invalid. Should be in degrees and latitude should be in range [-90.0, +90.0] and longitude in [-180.0, +180.0]").asRuntimeException());
         } else {
-            VectorClockDomain copy_replica;
+            VectorClockDomain copyReplica;
             synchronized (this.replicaTS) {
                 this.replicaTS.incUpdate(replicaIndex);             // Increment replica timestamp
-                copy_replica = this.replicaTS.getCopy();            // gets deep copy avoid thread concurrency
+                copyReplica = this.replicaTS.getCopy();            // gets deep copy avoid thread concurrency
             }
             
-            ArrayList<Integer> prev_copy = new ArrayList<>(request.getPrev().getUpdatesList());
-            prev_copy.set(replicaIndex, copy_replica.getUpdate(replicaIndex));
-            VectorClock prev = VectorClock.newBuilder().addAllUpdates(prev_copy).build();
+            ArrayList<Integer> prevCopy = new ArrayList<>(request.getPrev().getUpdatesList());
+            prevCopy.set(replicaIndex, copyReplica.getUpdate(replicaIndex));
+            VectorClock prev = VectorClock.newBuilder().addAllUpdates(prevCopy).build();
             // Add cam join request 
             synchronized (this.log) {
                 this.log.add(new LogLocalElement(LogElement
@@ -125,7 +125,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                         .setNew(
                                             VectorClock.newBuilder()
                                                 .addAllUpdates(
-                                                    copy_replica.getList())
+                                                    copyReplica.getList())
                                                 .build())
                                         .build();
             responseObserver.onNext(response);
@@ -198,15 +198,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 }
             }
 
-            VectorClockDomain copy_replica;
+            VectorClockDomain copyReplica;
             synchronized (this.replicaTS) {
                 this.replicaTS.incUpdate(replicaIndex);             // Increment replica timestamp
-                copy_replica = this.replicaTS.getCopy();            // gets deep copy avoid thread concurrency
+                copyReplica = this.replicaTS.getCopy();            // gets deep copy avoid thread concurrency
             }
             
-            ArrayList<Integer> prev_copy = new ArrayList<>(request.getPrev().getUpdatesList());
-            prev_copy.set(replicaIndex, copy_replica.getUpdate(replicaIndex));
-            VectorClock prev = VectorClock.newBuilder().addAllUpdates(prev_copy).build();
+            ArrayList<Integer> prevCopy = new ArrayList<>(request.getPrev().getUpdatesList());
+            prevCopy.set(replicaIndex, copyReplica.getUpdate(replicaIndex));
+            VectorClock prev = VectorClock.newBuilder().addAllUpdates(prevCopy).build();
 
             //Add observations to update log
             List<Observation> new_obs = observations.stream()
@@ -239,7 +239,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                         .setNew(
                                             VectorClock.newBuilder()
                                                 .addAllUpdates(
-                                                    copy_replica.getList())
+                                                    copyReplica.getList())
                                                 .build())
                                         .build();
             responseObserver.onNext(response);
@@ -269,6 +269,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void controlClear(ControlClearRequest request, StreamObserver<ControlClearResponse> responseObserver) {
         silo.clear();
+        log.clear();
+        replicaTS.clear();
         ControlClearResponse response = ControlClearResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
