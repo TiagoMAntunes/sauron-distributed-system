@@ -20,6 +20,9 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlClearRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.LogElement;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.Observation;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
@@ -78,6 +81,9 @@ public class SpotterApp {
 							break;
 						case "init":
 							initHandler(frontend, line);
+							break;
+						case "logs":
+							logsHandler(frontend, line);
 							break;
 						case "help":
 							System.out.println("Available commands: ");
@@ -228,5 +234,14 @@ public class SpotterApp {
 		frontend.controlInit(request);
 	}
 	
+	private static void logsHandler(SiloServerFrontend frontend, String[] line) throws ZKNamingException, UnavailableException {
+		GetNonAppliedLogsRequest req = GetNonAppliedLogsRequest.getDefaultInstance();
+		GetNonAppliedLogsResponse res = frontend.logs(req);
+		
+		for (LogElement l : res.getElementsList()) {
+			System.out.println(l);
+		}
+
+	}
 
 }

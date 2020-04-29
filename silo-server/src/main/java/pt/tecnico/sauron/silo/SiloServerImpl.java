@@ -38,6 +38,8 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.GetReplicaTimestampRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.GetReplicaTimestampResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.GossipRequest;
@@ -487,7 +489,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             synchronized(this.log) {
                 if (!log.contains(new LogLocalElement(o)))  { //Log does not exist yet
                     log.add(new LogLocalElement(o));
-                    replicaTS.incUpdate(req.getIncomingReplicaIndex()); //Number of received updates
+                    replicaTS.incUpdate(o.getOrigin()); //Number of received updates
                 } 
             }
         }
@@ -610,6 +612,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     public void getReplicaTimestamp(GetReplicaTimestampRequest req,StreamObserver<GetReplicaTimestampResponse> responseObserver ) {
         VectorClock currentTS = VectorClock.newBuilder().addAllUpdates(this.replicaTS.getList()).build();
         GetReplicaTimestampResponse response = GetReplicaTimestampResponse.newBuilder().setCurrentTS(currentTS).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+
+    /**
+     * This service is only for debugging
+     */
+    @Override
+    public void getNonAppliedLogs(GetNonAppliedLogsRequest req, StreamObserver<GetNonAppliedLogsResponse> responseObserver) {
+        GetNonAppliedLogsResponse response;
+        synchronized (this.log) {
+            response = GetNonAppliedLogsResponse.newBuilder()
+                                                .addAllElements(
+                                                    this.log.stream().filter(log -> !log.isApplied()).map(el -> el.element()).collect(Collectors.toList())
+                                                )
+                                                .build();
+        }
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

@@ -6,6 +6,7 @@ import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlClearMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlInitMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlPingMessage;
+import pt.tecnico.sauron.silo.client.messages.LogsMessage;
 import pt.tecnico.sauron.silo.client.messages.MessageStrategy;
 import pt.tecnico.sauron.silo.client.messages.ReportMessage;
 import pt.tecnico.sauron.silo.client.messages.TraceMessage;
@@ -13,6 +14,8 @@ import pt.tecnico.sauron.silo.client.messages.TrackMatchMessage;
 import pt.tecnico.sauron.silo.client.messages.TrackMessage;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlPingResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.GetNonAppliedLogsResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TraceResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
@@ -120,5 +123,9 @@ public class SiloServerFrontend implements AutoCloseable {
         // Nothing needs to be closed anymore
         requestManager.close();
     }
+
+	public GetNonAppliedLogsResponse logs(GetNonAppliedLogsRequest req) throws ZKNamingException, UnavailableException {
+		return (GetNonAppliedLogsResponse) requestManager.execute(new LogsMessage(req)); 
+	}
 
 }

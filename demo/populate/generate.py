@@ -22,4 +22,4 @@ for i in range(100):
 for i in range(30):
     with open('cam{:03d}.txt'.format(i), 'w+') as f:
         random.shuffle(ops)
-        run(ops[:501], f)
+        run(ops[:101], f)

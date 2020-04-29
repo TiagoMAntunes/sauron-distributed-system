@@ -130,6 +130,14 @@ message LogElement {
     int32 origin = 4; //This is the replica that first created this element
 }
 
+message GetNonAppliedLogsRequest {
+
+}
+
+message GetNonAppliedLogsResponse {
+    repeated LogElement elements = 1;
+}
+
 service Sauron {
     rpc GetReplicaTimestamp(GetReplicaTimestampRequest) returns (GetReplicaTimestampResponse);
     rpc Gossip(GossipRequest) returns (GossipResponse);
@@ -142,4 +150,5 @@ service Sauron {
     rpc ControlClear(ControlClearRequest) returns (ControlClearResponse);
     rpc ControlPing(ControlPingRequest) returns (ControlPingResponse);
     rpc ControlInit(ControlInitRequest) returns (ControlInitResponse);
+    rpc GetNonAppliedLogs(GetNonAppliedLogsRequest) returns (GetNonAppliedLogsResponse);
 }
