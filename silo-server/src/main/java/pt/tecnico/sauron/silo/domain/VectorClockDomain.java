@@ -98,13 +98,18 @@ public class VectorClockDomain {
         return true;
     }
 
-    public synchronized ArrayList<Integer> moreRecentIndexes(VectorClockDomain replica) {
-        ArrayList<Integer> list = new ArrayList<>();
+    public synchronized ArrayList<ArrayList<Integer>> moreRecentIndexes(VectorClockDomain replica) {
+        ArrayList<ArrayList<Integer>> list = new ArrayList<>();; 
+        ArrayList<Integer> indexes = new ArrayList<>();
+        ArrayList<Integer> values = new ArrayList<>();
         for (int i = 0; i < replica.getList().size(); i++) {
             if(replica.getList().get(i) < this.updates.get(i)) {
-                list.add(i);
+                indexes.add(i);
+                values.add(replica.getList().get(i));
             }
         }
+        list.add(indexes);
+        list.add(values);
         return list;
     }
 }
