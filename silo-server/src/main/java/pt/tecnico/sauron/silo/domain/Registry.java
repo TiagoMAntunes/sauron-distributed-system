@@ -29,7 +29,7 @@ public class Registry implements Comparable<Registry> {
 
     @Override
     public int compareTo(Registry t) {
-        if (time.before(t.getTime()) || time.equals(t.getTime()) && camera.getName().compareTo(t.getCamera().getName()) == -1) return -1;
+        if (time.before(t.getTime()) || time.equals(t.getTime()) && (camera.getName().compareTo(t.getCamera().getName()) < 0)) return -1;
         else return 1;
     }
 

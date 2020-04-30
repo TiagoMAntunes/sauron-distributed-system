@@ -15,7 +15,8 @@ public class SiloServer {
             Which would cause collisions 
         */
 
-        private String type, id;
+        private String type;
+        private String id;
         
         private RegistryKey(String type, String id) {
             this.type = type.toUpperCase();
@@ -49,7 +50,7 @@ public class SiloServer {
          */
         @Override
         public boolean equals(Object o) {
-            if (o == null ||  ! (o instanceof RegistryKey))
+            if (! (o instanceof RegistryKey))
                 return false;
             RegistryKey k = (RegistryKey) o;
             return type.equals(k.type) && id.equals(k.id);
