@@ -572,8 +572,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
 
+                    
                     //Ask for destiny's TS to check which entries should be sent
-                    VectorClockDomain incomingReplicaTS = getReplicaTS(stub);
+                    VectorClockDomain incomingReplicaTS;
+                    
+                    try {    
+                        incomingReplicaTS = getReplicaTS(stub);
+                    } catch (StatusRuntimeException e) {
+                        channel.shutdown(); // Close the channel as it will be skipped always
+                        
+                        //If host unreachable it should skip the server. If any other error, throw as it is unexpected
+                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) {
+                            System.out.println("Target " + target + " is unreachable.");
+                            continue;
+                        }
+                        else throw e;
+                    }
+
+                    // Get
                     ArrayList<ArrayList<Integer>> toSend = this.replicaTS.moreRecentIndexes(incomingReplicaTS);
                     ArrayList<Integer> indexesToSend = toSend.get(0);
                     ArrayList<Integer> replicaValues = toSend.get(1);
