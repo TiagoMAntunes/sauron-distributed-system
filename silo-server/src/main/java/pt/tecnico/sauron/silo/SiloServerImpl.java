@@ -59,6 +59,9 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 
+/**
+ * Silo server.
+ */
 public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     private final SiloServer silo;
@@ -80,7 +83,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         });
     }
 
-    //Add camera to server
+    /**
+     * Add a camera to server
+     * @param request request from the client
+     * @param responseObserver response observer
+     */
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
         String camName = request.getCamera().getName();
@@ -135,7 +142,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
-    //Return camera coords based on name
+    /**
+     * Return camera coords based on name
+     * @param request request from the client
+     * @param responseObserver response observer
+     */
     @Override
     public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
         String camName = request.getName();
@@ -158,7 +169,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     }
 
-    //Send observations
+    /**
+     * Send observations
+     * @param request request from the client
+     * @param responseObserver response observer
+     */
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
 
@@ -250,7 +265,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
-    // Verify if server is OK
+    /**
+     * Verify if server is OK
+     * @param request request from the client
+     * @param responseObserver response observer
+     */
     @Override
     public void controlPing(ControlPingRequest request, StreamObserver<ControlPingResponse> responseObserver) {
         String inputText = request.getInputText();
@@ -265,7 +284,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
-    //Clears testing
+    /**
+     * Clears testing
+     * @param request request from the client
+     * @param responseObserver response observer
+     */
     @Override
     public void controlClear(ControlClearRequest request, StreamObserver<ControlClearResponse> responseObserver) {
         silo.clear();
@@ -276,7 +299,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onCompleted();
     }
 
-    //Initializes conditions for testing
+    /**
+     * Initializes conditions for testing
+     * @param request request from the client
+     * @param responseObserver response observer
+     */
     @Override
     public void controlInit(ControlInitRequest request, StreamObserver<ControlInitResponse> responseObserver) {
         List<Observation> observations =  request.getObservationList();
@@ -353,7 +380,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         responseObserver.onCompleted();
     }
 
-    //Returns latest observation of an entity
+    /**
+     * Returns latest observation of an entity
+     * @param request request from the client
+     * @param responseObserver ??
+     */
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
 
@@ -400,7 +431,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
     }
 
-    //Returns list of observations that match the partial identifier provided
+    /**
+     * Returns list of observations that match the partial identifier provided
+     * @param request request from the client
+     * @param responseObserver ??
+     */
     @Override
     public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
         String partialIdentifier = request.getIdentity().getIdentifier();
@@ -443,7 +478,11 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     }
 
 
-    //Returns a list of observations refering to the identity
+   /**
+   * Returns a list of observations refering to the identity
+   * @param request request from the client
+   * @param responseObserver ??
+   */
     @Override
     public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
         String type =  request.getIdentity().getType();
@@ -572,8 +611,24 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                     SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
 
+                    
                     //Ask for destiny's TS to check which entries should be sent
-                    VectorClockDomain incomingReplicaTS = getReplicaTS(stub);
+                    VectorClockDomain incomingReplicaTS;
+                    
+                    try {    
+                        incomingReplicaTS = getReplicaTS(stub);
+                    } catch (StatusRuntimeException e) {
+                        channel.shutdown(); // Close the channel as it will be skipped always
+                        
+                        //If host unreachable it should skip the server. If any other error, throw as it is unexpected
+                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) {
+                            System.out.println("Target " + target + " is unreachable.");
+                            continue;
+                        }
+                        else throw e;
+                    }
+
+                    // Get
                     ArrayList<ArrayList<Integer>> toSend = this.replicaTS.moreRecentIndexes(incomingReplicaTS);
                     ArrayList<Integer> indexesToSend = toSend.get(0);
                     ArrayList<Integer> replicaValues = toSend.get(1);
