@@ -439,8 +439,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         String partialIdentifier = request.getIdentity().getIdentifier();
         String type = request.getIdentity().getType();
         TrackMatchResponse response;
-        ArrayList<Registry> registries;
-        ArrayList<Observation> observations = new ArrayList<>();
+        List<Registry> registries;
+        List<Observation> observations = new ArrayList<>();
 
         //Verify that request has been properly constructed
         if (partialIdentifier == null || partialIdentifier.equals("") || type == null || type.equals("")) {
@@ -591,7 +591,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     }
 
     public void doGossip(ZKNaming zkNaming, String path) throws ZKNamingException {
-        System.out.printf("%n[GOSSIP] Replica %d initiating gossip%n", replicaIndex);
+        System.out.printf("%n[GOSSIP] Replica %d initiating gossip%n", replicaIndex + 1);
 
         Collection<ZKRecord> available = zkNaming.listRecords(path);
         
