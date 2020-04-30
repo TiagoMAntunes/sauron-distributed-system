@@ -101,7 +101,6 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             //Everything is ok, just accept and go on
             responseObserver.onNext(CamJoinResponse.getDefaultInstance());
             responseObserver.onCompleted();
-            return;
         } else if (camName.length() < 3 || camName.length() > 15 ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.CAMERA_SIZE.toString()).asRuntimeException());
         } else if (!(camCoords.getLatitude() >= - 90 && camCoords.getLatitude() <= 90.0 && camCoords.getLongitude() >= -180 && camCoords.getLongitude() <= 180)) {
@@ -150,7 +149,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     @Override
     public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
         String camName = request.getName();
-        CamInfoResponse response = CamInfoResponse.newBuilder().build();
+        CamInfoResponse response;
 
         //Verify that request has been properly constructed
         if (camName == null || camName.equals("")) {
@@ -190,27 +189,26 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (observations.isEmpty()) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.OBSERVATIONS_NOT_EMPTY.toString()).asRuntimeException());
         } else {
-
-            //Validate data 
-            for (Observation o : observations) {
-                CameraDomain cam = silo.getCamera(camName);
-                String type = o.getObservated().getType();
-                String id = o.getObservated().getIdentifier();
-                Date time = new Date();
-                try {
-                    registryFactory.build(cam, type, id, time); 
-                } catch (InvalidTypeException e) {
-                    responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.TYPE_NOT_EXISTS.toString()).asRuntimeException());
-                    return;
-                } catch (IncorrectDataException e) {
-                    responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.IDENTIFIER_NOT_MATCHED.toString()).asRuntimeException());
-                    return;
-                } catch (Exception e) {
-                    System.out.println("Unhandled exception caught.");
-                    e.printStackTrace();
-                    System.out.println("Rethrowing...");
-                    throw e;
+            try {
+                //Validate data 
+                for (Observation o : observations) {
+                    CameraDomain cam = silo.getCamera(camName);
+                    String type = o.getObservated().getType();
+                    String id = o.getObservated().getIdentifier();
+                    Date time = new Date();
+                        registryFactory.build(cam, type, id, time); 
                 }
+            } catch (InvalidTypeException e) {
+                responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.TYPE_NOT_EXISTS.toString()).asRuntimeException());
+                return;
+            } catch (IncorrectDataException e) {
+                responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.IDENTIFIER_NOT_MATCHED.toString()).asRuntimeException());
+                return;
+            } catch (Exception e) {
+                System.out.println("Unhandled exception caught.");
+                e.printStackTrace();
+                System.out.println("Rethrowing...");
+                throw e;
             }
 
             VectorClockDomain copyReplica;
@@ -224,7 +222,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             VectorClock prev = VectorClock.newBuilder().addAllUpdates(prevCopy).build();
 
             //Add observations to update log
-            List<Observation> new_obs = observations.stream()
+            List<Observation> newObs = observations.stream()
                             .map(obs -> Observation.newBuilder()
                                         .setCamera(cameraFromDomain(silo.getCamera(camName)))
                                         .setObservated(obs.getObservated())
@@ -237,7 +235,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                             .setObservation(
                                                                 ObservationLog
                                                                     .newBuilder()
-                                                                    .addAllObservation(new_obs)    
+                                                                    .addAllObservation(newObs)    
                                                                     .build()
                                                             )
                                                             .setTs(VectorClock.newBuilder()
@@ -335,7 +333,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         //Creates new modification timestamp based on prev and increment on replicas timeline
         VectorClockDomain modTS;
         
-        if (prevVec.getUpdatesList().size() == 0) {
+        if (prevVec.getUpdatesList().isEmpty()) {
             modTS = new VectorClockDomain(this.replicaTS.getList().size());
         } else {
             modTS = new VectorClockDomain(prevVec.getUpdatesList());
@@ -343,7 +341,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         modTS.setUpdate(this.replicaIndex, this.replicaTS.getUpdate(this.replicaIndex));
 
         //Add observations to update log
-        List<Observation> new_obs = observations.stream()
+        List<Observation> newObs = observations.stream()
                         .map(obs -> Observation.newBuilder()
                                     .setCamera(cameraFromDomain(silo.getCamera(obs.getCamera().getName())))
                                     .setObservated(obs.getObservated())
@@ -356,7 +354,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                                                 .setObservation(
                                                     ObservationLog
                                                         .newBuilder()
-                                                        .addAllObservation(new_obs)    
+                                                        .addAllObservation(newObs)    
                                                         .build()
                                                 )
                                                 .setTs(VectorClock.newBuilder()
@@ -505,7 +503,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         }
         
         else {
-            registries = new ArrayList<Registry>(silo.getRegistries(type, identifier));
+            registries = new ArrayList<>(silo.getRegistries(type, identifier));
             
             // Builds observations to return from the registries
             for (int i = registries.size() - 1; i >= 0; i--) {
@@ -586,96 +584,99 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
                     l.applied();
                 }
-                //if (!replicaTS.isMoreRecent(silo.getClock()))    System.out.println(e);
             }
-            System.out.println("-- AFTER UPDATES -- ");
-            System.out.println("Server ts: " + replicaTS);
-            System.out.println("Silo ts: " + silo.getClock());
+            System.out.printf("%nAll available modifications have been applied.%nReplica timestamp is now %s%nSilo timestamp is now     %s%n", replicaTS.getList(), silo.getClock().getList());
         }
     }
 
-    public void doGossip(ZKNaming zkNaming, String path) {
-        System.out.println("In replica " + replicaIndex);
+    public void doGossip(ZKNaming zkNaming, String path) throws ZKNamingException {
+        System.out.printf("%n[GOSSIP] Replica %d initiating gossip%n", replicaIndex);
 
-        try {
-            Collection<ZKRecord> available = zkNaming.listRecords(path);
+        Collection<ZKRecord> available = zkNaming.listRecords(path);
+        
+        //For every replica
+        for (ZKRecord record : available) {
+            String recordPath = record.getPath();
+            int replicaID = Integer.parseInt(recordPath.substring(recordPath.length()-1)) - 1; //Replica ids are -1
+
+            if (replicaID == replicaIndex) continue; //Avoid sending to itself
+
+            //Build channel
+            String target = record.getURI();
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+            SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
+
+            System.out.printf("%n----------- Contacting replica %d at %s%n", replicaID + 1, target);
+
+            //Ask for destiny's TS to check which entries should be sent
+            VectorClockDomain incomingReplicaTS;
             
-            //For every replica
-            for (ZKRecord record : available) {
-                String recordPath = record.getPath();
-                int replicaID = Integer.parseInt(recordPath.substring(recordPath.length()-1)) - 1; //Replica ids are -1
+            try {    
+                System.out.printf("Requesting replica %d vectorclock%n", replicaID);
+                incomingReplicaTS = getReplicaTS(stub);
+                System.out.printf("Obtained vectorclock %s%n", incomingReplicaTS.getList());
+            } catch (StatusRuntimeException e) {
+                channel.shutdown(); // Close the channel as it will be skipped always
+                
+                System.out.printf("Caught exception %s when connecting to replica %d at %s%n", e.getClass(), replicaID, target);
+                //If host unreachable it should skip the server. If any other error, throw as it is unexpected
+                if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) {
+                    System.out.println("Target " + target + " is unreachable. Reconnecting to another replica.");
+                    continue;
+                }
+                else throw e;
+            }
 
-                if (replicaID != replicaIndex) { //Avoid sending to itself
-                    //Build channel
-                    String target = record.getURI();
-                    ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-                    SauronGrpc.SauronBlockingStub stub = SauronGrpc.newBlockingStub(channel);
+            System.out.println("Selecting non existing logs to send");
+            
+            // Get
+            ArrayList<ArrayList<Integer>> toSend = this.replicaTS.moreRecentIndexes(incomingReplicaTS);
+            ArrayList<Integer> indexesToSend = toSend.get(0);
+            ArrayList<Integer> replicaValues = toSend.get(1);
 
-                    
-                    //Ask for destiny's TS to check which entries should be sent
-                    VectorClockDomain incomingReplicaTS;
-                    
-                    try {    
-                        incomingReplicaTS = getReplicaTS(stub);
-                    } catch (StatusRuntimeException e) {
-                        channel.shutdown(); // Close the channel as it will be skipped always
-                        
-                        //If host unreachable it should skip the server. If any other error, throw as it is unexpected
-                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) {
-                            System.out.println("Target " + target + " is unreachable.");
-                            continue;
-                        }
-                        else throw e;
-                    }
+            System.out.println("All logs have been selected");
+            
+            //Build request
+            VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
+            GossipRequest req;
+            synchronized(this.log) {
 
-                    // Get
-                    ArrayList<ArrayList<Integer>> toSend = this.replicaTS.moreRecentIndexes(incomingReplicaTS);
-                    ArrayList<Integer> indexesToSend = toSend.get(0);
-                    ArrayList<Integer> replicaValues = toSend.get(1);
+                //Filter log to get only the updates that refer to the proper indexes
+                req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(replicaIndex).addAllUpdates(this.log.stream()
+                    .filter(el -> indexesToSend.contains(el.element().getOrigin())) // Filter for indexes of interest
+                    .filter(el -> el.element().getTs().getUpdatesList().get(el.element().getOrigin()) > // Filter for logs whose timestamp at the index of interest
+                            replicaValues.get(indexesToSend.indexOf(el.element().getOrigin()))) // is bigger than the replicas timestamp at that index
+                    .map(LogLocalElement::element).collect(Collectors.toList())).build(); 
+                
+            }
+            //Send request and handle answer
+            try {
+                //Response is empty == ok
+                System.out.printf("Sending logs to %s%n", target);
+                stub.gossip(req);
+                System.out.printf("Logs have been sent successfully%n");
+                
+            } catch (StatusRuntimeException e) {
+                System.out.printf("Caught exception %s when connecting to replica %d at %s%n", e.getClass(), replicaID, target);  
+                //If host unreachable just advance. If any other error, throw as it is unexpected
+                if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) 
+                    System.out.println("Target " + target + " is unreachable. Reconnecting to another replica.");
+                else throw e;
+            
+            } finally {
+                //Shutdown channel and proceed
+                channel.shutdown();
+            
+            } // try
 
-                    //Build request
-                    VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
-                    GossipRequest req;
-                    synchronized(this.log) {
-
-                        //Filter log to get only the updates that refer to the proper indexes
-                        req = GossipRequest.newBuilder().setTs(ts).setIncomingReplicaIndex(replicaIndex).addAllUpdates(this.log.stream()
-                            .filter(el -> indexesToSend.contains(el.element().getOrigin())) // Filter for indexes of interest
-                            .filter(el -> el.element().getTs().getUpdatesList().get(el.element().getOrigin()) > // Filter for logs whose timestamp at the index of interest
-                                    replicaValues.get(indexesToSend.indexOf(el.element().getOrigin()))) // is bigger than the replicas timestamp at that index
-                            .map(el -> el.element()).collect(Collectors.toList())).build(); 
-                        
-                    }
-                    //Send request and handle answer
-                    try {
-                        //Response is empty == ok
-                        stub.gossip(req);
-                    } catch (StatusRuntimeException e) {
-
-                        //If host unreachable just advance. If any other error, throw as it is unexpected
-                        if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) 
-                            System.out.println("Target " + target + " is unreachable.");
-                        else throw e;
-                    
-                    } finally {
-                        //Shutdown channel and proceed
-                        channel.shutdown();
-                    
-                    } // try
-
-                } // if
-
-            } // for
-        } catch (ZKNamingException e) {
-            System.out.println("Problem with gossip " + e.getMessage());
-        }
+        } // for
     }
 
     public VectorClockDomain getReplicaTS(SauronGrpc.SauronBlockingStub stub) {
         GetReplicaTimestampRequest req = GetReplicaTimestampRequest.newBuilder().build();
         GetReplicaTimestampResponse res = stub.getReplicaTimestamp(req);
-        VectorClock replicaTS = res.getCurrentTS();
-        return new VectorClockDomain(replicaTS.getUpdatesList());
+        VectorClock timestamp = res.getCurrentTS();
+        return new VectorClockDomain(timestamp.getUpdatesList());
     }
 
     @Override
