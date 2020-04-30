@@ -48,7 +48,7 @@ public class SiloServerApp {
 		SiloServerImpl silo = new SiloServerImpl(nReplicas,whichReplica); //Passes number of replicas and which replica it is
 		final BindableService impl = silo;
 
-		System.out.printf("[DEBUG] PID = %d%n", ProcessHandle.current().pid());
+		System.out.printf("[DEBUG] Replica %d with PID = %d started%n", whichReplica, ProcessHandle.current().pid());
 		
 		//Create a new server
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
@@ -87,7 +87,11 @@ public class SiloServerApp {
 		}
 
 		public void run(){
-			silo.doGossip(zkNaming, path);
+			try {
+				silo.doGossip(zkNaming, path);
+			} catch (ZKNamingException e) {
+				System.out.println("Problem with ZKNaming: " + e.getMessage());
+			}
 		}	
 	}
 
