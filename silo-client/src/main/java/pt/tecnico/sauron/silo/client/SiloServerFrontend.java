@@ -33,19 +33,27 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
+//For cache
+import com.google.protobuf.Message;
+import pt.tecnico.sauron.silo.client.messages.Request;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SiloServerFrontend implements AutoCloseable {
     private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
     private final ZKNaming zkNaming;
     ArrayList<Integer> timestamp;
     private MessageStrategy requestManager;
+    private Cache cache;
 
     public SiloServerFrontend(String host, String port) throws UnavailableException {
         this(host, port, "0");
     }
 
     public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
+        this.cache = new Cache(50); //TODO change the max
         zkNaming = new ZKNaming(host, port);
         try {
             requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber);
@@ -97,15 +105,33 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public TrackResponse track(TrackRequest r) throws ZKNamingException, UnavailableException {
-        return (TrackResponse) requestManager.execute(new TrackMessage(r));
+        //TODO test if I need to go to cache
+        TrackMessage reqMessage = new TrackMessage(r);
+        
+        TrackResponse res = (TrackResponse) requestManager.execute(reqMessage);
+
+        this.cache.insertReqRes(reqMessage, res);
+
+        return res ;
+        
     }
 
     public TrackMatchResponse trackMatch(TrackMatchRequest r) throws ZKNamingException, UnavailableException {
-        return (TrackMatchResponse) requestManager.execute((new TrackMatchMessage(r)));
+        TrackMatchMessage reqMessage = new TrackMatchMessage(r);
+        TrackMatchResponse res =  (TrackMatchResponse) requestManager.execute(reqMessage);
+
+        this.cache.insertReqRes(reqMessage, res);
+
+        return res;
     }
 
     public TraceResponse trace(TraceRequest r) throws ZKNamingException, UnavailableException {
-        return (TraceResponse) requestManager.execute((new TraceMessage(r)));
+        TraceMessage reqMessage = new TraceMessage(r);
+
+        TraceResponse res = (TraceResponse) requestManager.execute(reqMessage);
+        this.cache.insertReqRes(reqMessage, res);
+
+        return res;
     }
 
     public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException, UnavailableException {
@@ -116,8 +142,9 @@ public class SiloServerFrontend implements AutoCloseable {
         ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
                 .addAllObservations(r.getObservationsList()).build();
 
+                
         ReportResponse res = (ReportResponse) requestManager.execute(new ReportMessage(req, jr));
-
+        
         // Update timestamp
         this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
         return res;
@@ -129,4 +156,42 @@ public class SiloServerFrontend implements AutoCloseable {
         requestManager.close();
     }
 
+    private class Cache {
+        //TODO do I need to use two
+        private Map<Request, Message> cache = new HashMap<>();
+        private Map<Integer, Request> orderCache = new HashMap<>();
+        private int currentSize;
+        private int maxSize;
+
+        private Message testMessage;
+        private boolean test;
+        public Cache(int max) {
+            this.maxSize = max;
+            this.currentSize = 0;
+        }
+
+        public void insertReqRes(Request req, Message res) {
+           
+            if (!inCache(req)) {
+                System.out.println("Not cache");
+                cache.put(req, res);
+                this.currentSize++;
+                System.out.print(this);
+            } else {
+                System.out.println("Already in cache");
+            }
+            
+        }
+
+        public boolean inCache(Request req) {
+            return this.cache.containsKey(req);
+        }
+
+        @Override
+        public String toString() {
+            String res = String.format("---- CACHE ----\nSize: %d;\nCache: %s;\n ---- ENDCACHE ----",this.currentSize,this.cache);
+            return res;
+        }
+
+    }    
 }
