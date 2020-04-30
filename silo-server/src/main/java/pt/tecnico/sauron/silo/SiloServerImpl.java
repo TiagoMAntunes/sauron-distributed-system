@@ -535,6 +535,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     @Override
     public void gossip(GossipRequest req, StreamObserver<GossipResponse> responseObserver) {
+        System.out.printf("Received gossip message. Updating...%n");
         List<LogElement> logs = req.getUpdatesList();
         for (LogElement o : logs) { //For each modification
             //Check if exists and if not, adds to log
@@ -627,14 +628,12 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 else throw e;
             }
 
-            System.out.println("Selecting non existing logs to send");
             
             // Get
             ArrayList<ArrayList<Integer>> toSend = this.replicaTS.moreRecentIndexes(incomingReplicaTS);
             ArrayList<Integer> indexesToSend = toSend.get(0);
             ArrayList<Integer> replicaValues = toSend.get(1);
 
-            System.out.println("All logs have been selected");
             
             //Build request
             VectorClock ts = VectorClock.newBuilder().addAllUpdates(getClock()).build(); 
