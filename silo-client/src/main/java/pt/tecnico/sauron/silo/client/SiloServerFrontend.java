@@ -1,6 +1,7 @@
 package pt.tecnico.sauron.silo.client;
 
 import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
+import pt.tecnico.sauron.silo.client.messages.Cache;
 import pt.tecnico.sauron.silo.client.messages.CamInfoMessage;
 import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlClearMessage;
@@ -33,13 +34,7 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
 
-//For cache
-import com.google.protobuf.Message;
-import pt.tecnico.sauron.silo.client.messages.Request;
-
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SiloServerFrontend implements AutoCloseable {
     private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
@@ -155,43 +150,4 @@ public class SiloServerFrontend implements AutoCloseable {
         // Nothing needs to be closed anymore
         requestManager.close();
     }
-
-    private class Cache {
-        //TODO do I need to use two
-        private Map<Request, Message> cache = new HashMap<>();
-        private Map<Integer, Request> orderCache = new HashMap<>();
-        private int currentSize;
-        private int maxSize;
-
-        private Message testMessage;
-        private boolean test;
-        public Cache(int max) {
-            this.maxSize = max;
-            this.currentSize = 0;
-        }
-
-        public void insertReqRes(Request req, Message res) {
-           
-            if (!inCache(req)) {
-                System.out.println("Not cache");
-                cache.put(req, res);
-                this.currentSize++;
-                System.out.print(this);
-            } else {
-                System.out.println("Already in cache");
-            }
-            
-        }
-
-        public boolean inCache(Request req) {
-            return this.cache.containsKey(req);
-        }
-
-        @Override
-        public String toString() {
-            String res = String.format("---- CACHE ----\nSize: %d;\nCache: %s;\n ---- ENDCACHE ----",this.currentSize,this.cache);
-            return res;
-        }
-
-    }    
 }
