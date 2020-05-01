@@ -13,7 +13,7 @@ public class ControlInitMessage implements Request {
         this.req = req;
     }
 
-    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { Request request = Request.newBuilder().setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build()
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException {
         return stub.controlInit(req);
     }
 }
