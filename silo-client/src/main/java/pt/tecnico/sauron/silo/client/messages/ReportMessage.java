@@ -11,7 +11,7 @@ import com.google.protobuf.Message;
 public class ReportMessage implements Request {
 
     private ReportRequest req;
-    private CamJoinRequest camReq;
+    private CamJoinRequest camReq; // TODO: recover from camera not propagated fault
     public ReportMessage(ReportRequest req, CamJoinRequest camReq) {
         this.req = req;
         this.camReq = camReq;
