@@ -65,14 +65,11 @@ public class TrackIT extends BaseIT {
     }
 
     @Test
-    public void emptyResponse() {
+    public void emptyResponse() throws ZKNamingException, UnavailableException {
         //server has no data
         TrackRequest request = TrackRequest.newBuilder().setIdentity(OBSERVABLE).build();
         
-        assertEquals(
-            FAILED_PRECONDITION,
-            assertThrows(StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
-            );
+        assertEquals(false, frontend.track(request).getValid(), "The response should not be valid");
     }
 
     @Test
