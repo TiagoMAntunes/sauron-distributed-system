@@ -15,7 +15,8 @@ public class SiloServer {
             Which would cause collisions 
         */
 
-        private String type, id;
+        private String type;
+        private String id;
         
         private RegistryKey(String type, String id) {
             this.type = type.toUpperCase();
@@ -49,7 +50,7 @@ public class SiloServer {
          */
         @Override
         public boolean equals(Object o) {
-            if (o == null ||  ! (o instanceof RegistryKey))
+            if (! (o instanceof RegistryKey))
                 return false;
             RegistryKey k = (RegistryKey) o;
             return type.equals(k.type) && id.equals(k.id);
@@ -159,7 +160,6 @@ public class SiloServer {
         for (Registry r : registries) {
             addRegistry(r); // only add
         }
-        System.out.println("Incrementing multiple registries");
         clock.incUpdate(origin);
     }
 
@@ -170,7 +170,6 @@ public class SiloServer {
      * @param origin the value where it originated to update the clock
      */
     public synchronized void addRegistry(Registry r, int origin) {
-        System.out.println("Incrementing single registry");
         clock.incUpdate(origin);
         addRegistry(r);
     }
@@ -193,13 +192,13 @@ public class SiloServer {
      * @param partialIdentifier the partial identifier
      * @return the all recent registries
      */
-    public synchronized ArrayList<Registry> getAllRecentRegistries(String type, String partialIdentifier) {
+    public synchronized List<Registry> getAllRecentRegistries(String type, String partialIdentifier) {
         Pattern p = Pattern.compile(partialIdentifier.toUpperCase().replace("*",".*"));
         Matcher m;
         ArrayList<Registry> registries = new ArrayList<>();
 
         for (RegistryKey key : registriesMap.keySet()) {
-            if (!key.type.equals(type.toUpperCase())) continue; //different types
+            if (!key.type.equalsIgnoreCase(type)) continue; //different types
             String identifier = key.id;
             m = p.matcher(identifier);
             if (m.matches()) {

@@ -48,7 +48,7 @@ public class SiloServerApp {
 		SiloServerImpl silo = new SiloServerImpl(nReplicas,whichReplica); //Passes number of replicas and which replica it is
 		final BindableService impl = silo;
 
-		System.out.printf("[DEBUG] PID = %d%n", ProcessHandle.current().pid());
+		System.out.printf("[DEBUG] Replica %d with PID = %d started%n", whichReplica, ProcessHandle.current().pid());
 		
 		//Create a new server
 		Server server = ServerBuilder.forPort(port).addService(impl).build();
@@ -65,7 +65,7 @@ public class SiloServerApp {
 
 		//Start gossip at every interval ms
 		Timer timer = new Timer();
-		timer.schedule(new GossipRun(silo, zooHost, zooPort, whichReplica), interval, interval); //Delay exists for it not to do immediately
+		timer.schedule(new GossipRun(silo, zooHost, zooPort), interval, interval); //Delay exists for it not to do immediately
 		
 		//Handle end of the server
 		Runtime.getRuntime().addShutdownHook(new HandleEnd(zkNaming, path, host, String.valueOf(port)));
@@ -79,21 +79,27 @@ public class SiloServerApp {
 	static class GossipRun extends TimerTask {
 		private final SiloServerImpl silo;
 		private ZKNaming zkNaming;
-		private final String path = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
+		private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
 
-		public GossipRun(SiloServerImpl s, String host, String port, int rep) {
+		public GossipRun(SiloServerImpl s, String host, String port) {
 			silo = s;
-			zkNaming = new ZKNaming(host, port);;
+			zkNaming = new ZKNaming(host, port);
 		}
 
 		public void run(){
-			silo.doGossip(zkNaming, path);
+			try {
+				silo.doGossip(zkNaming, PATH);
+			} catch (ZKNamingException e) {
+				System.out.println("Problem with ZKNaming: " + e.getMessage());
+			}
 		}	
 	}
 
 	static class HandleEnd extends Thread {
 		private final ZKNaming zk;
-		private final String path, host, port;
+		private final String path;
+		private final String host; 
+		private final String port;
 
 		public HandleEnd(ZKNaming zk, String path, String host, String port) {
 			this.zk = zk;
@@ -101,6 +107,8 @@ public class SiloServerApp {
 			this.host = host;
 			this.port = port;
 		}
+
+		@Override
 		public void run() {
 			System.out.println("Server closing...");
 			try {
