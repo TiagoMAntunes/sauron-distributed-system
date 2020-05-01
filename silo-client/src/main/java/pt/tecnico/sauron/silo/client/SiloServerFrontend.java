@@ -37,14 +37,14 @@ public class SiloServerFrontend implements AutoCloseable {
     private final ZKNaming zkNaming;
     private MessageStrategy requestManager;
 
-    public SiloServerFrontend(String host, String port) throws UnavailableException {
-        this(host, port, "0");
+    public SiloServerFrontend(String host, String port, int cacheSize) throws UnavailableException {
+        this(host, port, "0", cacheSize);
     }
 
-    public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
+    public SiloServerFrontend(String host, String port, String instanceNumber, int cacheSize) throws UnavailableException {
         zkNaming = new ZKNaming(host, port);
         try {
-            requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber);
+            requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber, cacheSize);
         } catch (ZKNamingException e) {
             throw new UnavailableException();
         }

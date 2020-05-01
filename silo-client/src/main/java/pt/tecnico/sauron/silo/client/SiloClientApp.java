@@ -22,7 +22,7 @@ public class SiloClientApp {
 		final String port = args[1];
 
 		
-		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port)) {
+		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port, 100)) {
 			ControlPingRequest req = ControlPingRequest.newBuilder().setInputText("friend").build();
 			ControlPingResponse res = frontend.controlPing(req);
 			System.out.println(res.getStatus());
