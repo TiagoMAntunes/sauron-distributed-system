@@ -16,7 +16,7 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 | 89545  | Tiago Antunes     | <https://github.com/TiagoMAntunes>   | <tiago.melo.antunes@tecnico.ulisboa.pt> |
 
 
-![Lourenço Teodoro](lourenco.png=150x150) ![Gonçalo Almeida](goncalo.jpeg=150x150) ![Tiago Antunes](tiago.jpeg=150x150)
+![Lourenço Teodoro](lourenco.png =150x150) ![Gonçalo Almeida](goncalo.jpeg =150x150) ![Tiago Antunes](tiago.jpeg =150x150)
 
 
 ## Melhorias da primeira parte
