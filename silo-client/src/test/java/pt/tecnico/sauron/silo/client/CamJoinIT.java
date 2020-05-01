@@ -41,6 +41,7 @@ public class CamJoinIT extends BaseIT {
     @AfterEach
     public void tearDown() throws ZKNamingException, UnavailableException {
         frontend.controlClear(ControlClearRequest.newBuilder().build());
+        frontend.reset();
     }
 
     // tests

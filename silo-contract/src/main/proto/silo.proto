@@ -37,9 +37,11 @@ message CamJoinResponse {
 
 message CamInfoRequest {
     string name = 1;
+    VectorClock prev = 2;
 }
 
 message CamInfoResponse {
+    VectorClock new = 1;
     Camera camera = 2;
 }
 
@@ -55,26 +57,33 @@ message ReportResponse {
 
 message TrackRequest {
     Observable identity = 1;
+    VectorClock prev = 2;
 }
 
 message TrackResponse {
     Observation observation = 1;
+    VectorClock new = 2;
+    bool valid = 3;
 }
 
 message TrackMatchRequest {
     Observable identity = 1;
+    VectorClock prev = 2;
 }
 
 message TrackMatchResponse {
     repeated Observation observations = 1;
+    VectorClock new = 2;
 }
 
 message TraceRequest {
     Observable identity = 1;
+    VectorClock prev = 2;
 }
 
 message TraceResponse {
     repeated Observation observations = 1;
+    VectorClock new = 2;
 }
 
 message ControlPingRequest {

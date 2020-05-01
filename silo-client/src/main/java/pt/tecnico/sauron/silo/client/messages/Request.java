@@ -7,6 +7,6 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public interface Request {
 
-    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException;
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException;
 
 }
