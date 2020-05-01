@@ -33,7 +33,7 @@ São toleradas faltas silenciosas e transientes. Uma vez que os gestores de rép
 
 
 ## Solução
-![solution](solution.JPG)
+![solution](solution.jpg)
 **TODO Fazer pic mais completa?**
 _(Figura da solução de tolerância a faltas)_
 
