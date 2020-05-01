@@ -21,9 +21,8 @@ public class TraceMessage implements Request {
     }
 
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
-        TraceRequest request = TraceRequest.newBuilder().setIdentity(req.getIdentity()).setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
+        TraceRequest request = TraceRequest.newBuilder().setIdentity(req.getIdentity()).setPrev(VectorClock.newBuilder().addAllUpdates(timestamp.getList()).build()).build();
         TraceResponse response = stub.trace(request);
-        System.out.println("Received new timestamp: " + response.getNew().getUpdatesList());
         timestamp.update(response.getNew().getUpdatesList());
         return response;
     }

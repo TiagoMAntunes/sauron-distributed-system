@@ -18,9 +18,8 @@ public class ReportMessage implements Request {
     }
 
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
-        ReportRequest request = ReportRequest.newBuilder().setCameraName(req.getCameraName()).addAllObservations(req.getObservationsList()).setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
+        ReportRequest request = ReportRequest.newBuilder().setCameraName(req.getCameraName()).addAllObservations(req.getObservationsList()).setPrev(VectorClock.newBuilder().addAllUpdates(timestamp.getList()).build()).build();
         ReportResponse response = stub.report(request);
-        System.out.println("Received new timestamp: " + response.getNew().getUpdatesList());
         timestamp.update(response.getNew().getUpdatesList());
         return response;
     }

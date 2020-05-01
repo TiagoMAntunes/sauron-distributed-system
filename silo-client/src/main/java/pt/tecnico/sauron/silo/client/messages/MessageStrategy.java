@@ -63,9 +63,11 @@ public class MessageStrategy {
      * @throws StatusRuntimeException
      */
     public Message execute(Request req) throws ZKNamingException, StatusRuntimeException, UnavailableException {
-
+        System.out.println("Prev timestamp: " + timestamp.getList());
         try {
-            return req.call(stub, timestamp);
+            Message res =  req.call(stub, timestamp);
+            System.out.println(" New timestamp: " + timestamp.getList());
+            return res;
         } catch (final StatusRuntimeException e) {
             // If host unreachable just advance. If any other error, throw
             if (e.getStatus().getCode() == Code.UNAVAILABLE) 
@@ -87,7 +89,9 @@ public class MessageStrategy {
             stub = SauronGrpc.newBlockingStub(channel);
 
             try {
-                return req.call(stub, timestamp);
+                Message res =  req.call(stub, timestamp);
+                System.out.println("Received response with timestamp: " + timestamp);
+                return res;
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
                 if (e.getStatus().getCode() == Code.UNAVAILABLE)

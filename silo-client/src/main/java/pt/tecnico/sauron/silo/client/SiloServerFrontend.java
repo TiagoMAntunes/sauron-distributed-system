@@ -39,7 +39,6 @@ import java.util.ArrayList;
 public class SiloServerFrontend implements AutoCloseable {
     private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
     private final ZKNaming zkNaming;
-    ArrayList<Integer> timestamp;
     private MessageStrategy requestManager;
     private Cache cache;
 
@@ -55,8 +54,6 @@ public class SiloServerFrontend implements AutoCloseable {
         } catch (ZKNamingException e) {
             throw new UnavailableException();
         }
-        timestamp = new ArrayList<>(9);
-        for (int i = 0; i < 9; i++) timestamp.add(0);
     }
 
     public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException, UnavailableException {
@@ -68,15 +65,7 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public CamJoinResponse camJoin(CamJoinRequest r) throws ZKNamingException, UnavailableException {
-        VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
-        CamJoinRequest req = CamJoinRequest.newBuilder().setCamera(r.getCamera())
-                        .setPrev(vector).build();
-
-        CamJoinResponse response = (CamJoinResponse) requestManager.execute((new CamJoinMessage(req)));
-
-        this.timestamp = new ArrayList<>(response.getNew().getUpdatesList());
-        
-        return response;
+        return (CamJoinResponse) requestManager.execute((new CamJoinMessage(r)));
     }
 
     public CamInfoResponse camInfo(CamInfoRequest r) throws ZKNamingException, UnavailableException {
@@ -84,25 +73,11 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public ControlInitResponse controlInit(ControlInitRequest r) throws ZKNamingException, UnavailableException {
-
-        // Creates VectorClock from the timestamp
-        // Create new request and sent it with the VectorClock
-        VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
-        ControlInitRequest req = ControlInitRequest.newBuilder().addAllObservation(r.getObservationList())
-                .setPrev(vector).build();
-
-        ControlInitResponse res = (ControlInitResponse) requestManager.execute((new ControlInitMessage(req)));
-
-        // Update timestamp
-        this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
-
-        return res;
+        return (ControlInitResponse) requestManager.execute((new ControlInitMessage(r)));
     }
 
     public TrackResponse track(TrackRequest r) throws ZKNamingException, UnavailableException {
-        //TODO test if I need to go to cache
         TrackMessage reqMessage = new TrackMessage(r);
-        
         TrackResponse res = (TrackResponse) requestManager.execute(reqMessage);
 
         this.cache.insertReqRes(reqMessage, res);
@@ -122,32 +97,19 @@ public class SiloServerFrontend implements AutoCloseable {
 
     public TraceResponse trace(TraceRequest r) throws ZKNamingException, UnavailableException {
         TraceMessage reqMessage = new TraceMessage(r);
-
         TraceResponse res = (TraceResponse) requestManager.execute(reqMessage);
+        
         this.cache.insertReqRes(reqMessage, res);
 
         return res;
     }
 
     public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException, UnavailableException {
-        // Creates VectorClock from the timestamp
-        // Create new request and sent it with the VectorClock
-
-        VectorClock vector = VectorClock.newBuilder().addAllUpdates(this.timestamp).build();
-        ReportRequest req = ReportRequest.newBuilder().setPrev(vector).setCameraName(r.getCameraName())
-                .addAllObservations(r.getObservationsList()).build();
-
-                
-        ReportResponse res = (ReportResponse) requestManager.execute(new ReportMessage(req, jr));
-        
-        // Update timestamp
-        this.timestamp = new ArrayList<>(res.getNew().getUpdatesList());
-        return res;
+        return (ReportResponse) requestManager.execute(new ReportMessage(r, jr));
     }
 
     @Override
     public final void close() {
-        // Nothing needs to be closed anymore
         requestManager.close();
     }
 }
