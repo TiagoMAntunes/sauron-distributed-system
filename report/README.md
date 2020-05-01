@@ -34,24 +34,34 @@ São toleradas faltas silenciosas e transientes. Uma vez que os gestores de rép
 
 ## Solução
 ![solution](solution.JPG)
-**TODO make pic better?**
+**TODO Fazer pic mais completa?**
 _(Figura da solução de tolerância a faltas)_
 
-_(Breve explicação da solução, suportada pela figura anterior)_
+_(Breve explicação da solução, suportada pela figura anterior)
+
+A ideia base da solução é termos réplicas que comunicam entre si para garantir a disponibilidade do sistema. Cada réplica comunica as alterações que recebeu dos clientes às outras réplicas.Não havendo necessidade de coerência forte.
+Os clientes comunicam através de um frontend que acaba por tornar transparente o funcionamento da comunicação para quem desenvolve a lógica da aplicação.
+
 Explicamos a baixo com mais detalhe o protocolo utilizado.
 
 ## Protocolo de replicação
 
 _(Explicação do protocolo)_
-O protocolo utilizado é um protocolo de coêrencia fraca com um suplemento de coerência no frontend do client.
+O protocolo utilizado é um protocolo de coêrencia fraca com um suplemento de coerência no *frontend* do client.
 
 A ideia do protocolo é simples e baseia-se no conceito de TimeStamps (referenciados no código como VectorClocks) estes objectos permitem uma noção de temporal entre acontecimentos sem recorrer a relógios (que não são fiáveis para sistemas distribuidos).
 
 Recorrendo a estes timestamps podemos ter uma noção da ordem entre actualizações no servidor.
 
-Cada servidor passa agora a manter dois timestamps, um referente às actualizações aplicadas ao estado, *ValueTS* e outro referente às actualizações que estão presentes no seu log *replicaTS*. Há ainda um log, que é uma estrutura utilizada para manter actualizações recebidas quer dos clientes quer de outras réplicas e é este que é consultado aquando das mensagens de Gossipe a partir deste que se actualiza o estado do servidor.
+Cada servidor passa agora a manter dois timestamps, um referente às actualizações aplicadas ao estado, *ValueTS* e outro referente às actualizações que estão presentes no seu log *replicaTS*. 
 
-Uma actualização poderá ser aplicada ao estado do servidor quando todas as actualizações que a precedem já foram aplicadas, ou seja, quando o timestamp referente ao estado do servidor indica que não existem *gaps* lógicos entre a actualização e o estado actual do servidor.
+Há ainda um *log*, que é uma estrutura utilizada para manter actualizações recebidas quer dos clientes quer de outras réplicas e é este que é consultado aquando das mensagens de *Gossip* a partir deste que se actualiza o estado do servidor.
+
+Estas mensagens de *Gossip* começam por pedir a cada réplica destino o seu *timestamp* de modo a comparar ao *ReplicaTS* e ver que actualizaçṍes necessita o destino. Com base nisso ocorre um filtro do *log* e enviam-se apenas as actualizações necessárias.
+
+Ao receber actualizações pelo *Gossip* estas são adicionadas ao *log* caso não sejam duplicas de actualizações já existentes no *log*, o *ReplicaTS* é actualizado e, por fim, actualiza-se o estado se tal for possível.
+
+Uma actualização poderá ser aplicada ao estado do servidor quando todas as actualizações que a precedem já foram aplicadas, ou seja, quando o timestamp referente ao estado do servidor indica que não existem *gaps* lógicos entre a actualização e o estado actual do servidor (*ValueTS* >= *timestamp do pedido*).
 
 Para este efeito procedemos a alterações nas mensagens já existentes (maioritariamente a passagem de timestamps nas mensagens de ControlInit e Report) e à criação de duas novas:
 
@@ -62,9 +72,7 @@ Para este efeito procedemos a alterações nas mensagens já existentes (maiorit
 Criamos ainda estruturas auxiliares, em particular para o envio de elementos do Log de cada réplica.
 
 O suplemento para aumento da coerência mencionado resume-se à introdução de uma cache no frontend dos clientes. 
-Esta cache garante que caso um cliente tenha feito uma leitura a um servidor e que depois, por alguma razão, faça a mesma leitura a um outro servidor não actualizado não receberá a leitura desatualizada mas aquela que recebeu inicialmente. 
-
-**TODO preciso justificar o facto de nao estarmos a guardar os objectos em si mas so os pedidos? Aquela coisa de replicar o servidor inteiro ser mau e coisa e tal**
+No caso em que um cliente faz uma leitura a um servidor e que depois, por alguma razão, faça a mesma leitura a um outro servidor não actualizado não receberá a leitura desatualizada mas aquela que recebeu inicialmente, para isto é necessário que o *Frontend* compare o seu *timestamp* ao da réplica e caso seja inferior vá buscar o valor que tinha guardado na cache. 
 
 ## Opções de implementação
 
@@ -76,11 +84,13 @@ Para garantir que o sistema estaria capaz de aguentar falhas de réplicas decidi
 
 Quando possível optamos pela simplicidade/facilidade de entendimento, por exemplo durante o gossip decidimos enviar mensagens auxiliares com o único propósito de obter o timestamp da réplica destino para depois se proceder à escolha das actualizações a enviar, ao invés de **TODO tentar lembrar alternativa**.
 
-**TODO explicar escolher estruturas com base nos tempos**
+**TODO explicar escolh**
 
-**TODO descrever sitema que consideramos implementar?**
+Consideramos necessário proteger todos os timestamps nas réplicas de acesso concorrentes de modo a evitar problemas em que múltiplas réplicas e clientes tentam comunciar com a réplica em questão. **TODO melhorar o issue que o Tiago encontrou**.
 
 
 ## Notas finais
 
 _(Algo mais a dizer?)_
+
+Tivemos outras ideias, em particular na questão da coerência de frontend consideramos uma cache que utilizava logs **TODO descrever ideia  de ontem**.
