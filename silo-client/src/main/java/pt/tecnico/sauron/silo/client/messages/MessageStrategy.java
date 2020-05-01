@@ -3,6 +3,7 @@ package pt.tecnico.sauron.silo.client.messages;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import com.google.protobuf.Message;
 
@@ -65,17 +66,29 @@ public class MessageStrategy {
      */
     public Message execute(Request req) throws ZKNamingException, StatusRuntimeException, UnavailableException {
         System.out.println("Prev timestamp: " + timestamp.getList());
-        try {
-            Message res =  req.call(stub, timestamp);
-            System.out.println(" New timestamp: " + timestamp.getList());
-            return handleCache(req, res);
-        } catch (final StatusRuntimeException e) {
-            // If host unreachable just advance. If any other error, throw
-            if (e.getStatus().getCode() == Code.UNAVAILABLE) 
-                System.out.println("Target is unreachable. Retrying...");
-            else
-                throw e;
-        }
+
+        int tries = 5; // 5 times looks like a good number
+
+        do {
+            try {
+                Message res =  req.call(stub, timestamp);
+                System.out.println(" New timestamp: " + timestamp.getList());
+                return handleCache(req, res);
+            } catch (final StatusRuntimeException e) {
+                // If host unreachable just advance. If any other error, throw
+                if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+                    System.out.println("Target is unreachable. Retrying...");
+                    tries--;
+                    try {
+                        Thread.sleep( (long) (new Random().nextInt(200)) * (6-tries)); //backoff
+                    } catch (InterruptedException ex) {
+                        // Why is this happening?
+                        System.out.println(ex.getMessage());
+                    }
+                } else
+                    throw e;
+            }
+        } while (tries > 0);
 
         //Couldn't connect
         //Needs to retry new host
