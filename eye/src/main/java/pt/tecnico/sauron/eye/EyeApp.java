@@ -19,7 +19,6 @@ import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import io.grpc.StatusRuntimeException;
-import io.grpc.Status.Code;
 
 public class EyeApp {
 
@@ -96,10 +95,9 @@ public class EyeApp {
 						sendObservations(observations, frontend, camName, camera);
 					} catch (StatusRuntimeException e) {
 						System.out.println(e.getStatus().getDescription());
-						if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-								System.out.println("The hostname is unavailable. Exiting...");
-								System.exit(0);
-						}
+					} catch (UnavailableException e) {
+						System.out.println("The hostname is unavailable. Exiting...");
+						System.exit(0);
 					}
 					observations = new ArrayList<>();
 				}
@@ -148,10 +146,9 @@ public class EyeApp {
 				sendObservations(observations, frontend, camName, camera);
 			} catch (StatusRuntimeException e) {
 				System.out.println(e.getStatus().getDescription());
-				if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-						System.out.println("The hostname is unavailable. Exiting...");
-						System.exit(0);
-				}
+			} catch (UnavailableException e) {
+				System.out.println("The hostname is unavailable. Exiting...");
+				System.exit(0);
 			}
 		}
 		
@@ -159,22 +156,10 @@ public class EyeApp {
 		System.exit(0);
 	}
 
-	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException  {
-		boolean done;
-		int counter = 0;
-		do {
-			try {
-				frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
-							CamJoinRequest.newBuilder().setCamera(cam).build());
-							done = true;
-			} catch (UnavailableException e) {
-				counter++;
-				done = false;
-			}
-		} while(!done && counter < 5);
-
-		if (counter == 5) System.out.println("Couldn't submit reports after several times. Please try again later.");
-		
+	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException, UnavailableException  {
+	
+		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
+						CamJoinRequest.newBuilder().setCamera(cam).build());
 	}
 
 	//TODO Do this without using exceptions

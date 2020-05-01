@@ -103,8 +103,9 @@ public class SpotterApp {
 					}
 				}
 			}
-		} 
-		catch (NoSuchElementException e) {
+		} catch (UnavailableException e) {
+			System.out.println("The hostname is unavailable.");
+		} catch (NoSuchElementException e) {
 			System.out.println("Input has been closed.");
 		}
 		catch (Exception e) {

@@ -26,13 +26,18 @@ public class MessageStrategy {
     private Clock timestamp;
     private Cache cache;
 
-    public MessageStrategy(ZKNaming zkNaming, String path, String instanceNumber) throws ZKNamingException {
+    public MessageStrategy(ZKNaming zkNaming, String path, String instanceNumber) throws ZKNamingException, UnavailableException {
         this.zkNaming = zkNaming;
         this.path = path;
         this.instanceNumber = instanceNumber;
         this.timestamp = new Clock(9); // TODO should this be hard-coded?
         this.cache = new Cache(3); // TODO Change this value
-        channel = ManagedChannelBuilder.forTarget(getPossibleAddresses().get(0).getURI()).usePlaintext().build();
+        try {
+            channel = ManagedChannelBuilder.forTarget(getPossibleAddresses().get(0).getURI()).usePlaintext().build();
+        } catch (IndexOutOfBoundsException e) {
+            System.out.println("No servers available!");
+            throw new UnavailableException();
+        }
         stub = SauronGrpc.newBlockingStub(channel);
     }
 

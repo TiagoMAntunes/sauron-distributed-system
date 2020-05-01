@@ -1,7 +1,6 @@
 package pt.tecnico.sauron.silo.client;
 
 import pt.tecnico.sauron.silo.client.exceptions.UnavailableException;
-import pt.tecnico.sauron.silo.client.messages.Cache;
 import pt.tecnico.sauron.silo.client.messages.CamInfoMessage;
 import pt.tecnico.sauron.silo.client.messages.CamJoinMessage;
 import pt.tecnico.sauron.silo.client.messages.ControlClearMessage;
@@ -32,8 +31,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.CamJoinResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.ReportRequest;
-
-import java.util.ArrayList;
 
 public class SiloServerFrontend implements AutoCloseable {
     private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
