@@ -16,7 +16,7 @@ public class CamJoinMessage implements Request {
     }
 
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
-        CamJoinRequest request = CamJoinRequest.newBuilder().setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
+        CamJoinRequest request = CamJoinRequest.newBuilder().setCamera(req.getCamera()).setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
         CamJoinResponse response = stub.camJoin(request);
         System.out.println("Received new timestamp: " + response.getNew().getUpdatesList());
         timestamp.update(response.getNew().getUpdatesList());

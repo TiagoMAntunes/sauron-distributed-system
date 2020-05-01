@@ -16,7 +16,7 @@ public class CamInfoMessage implements Request {
     }
 
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
-        CamInfoRequest request = CamInfoRequest.newBuilder().setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
+        CamInfoRequest request = CamInfoRequest.newBuilder().setName(req.getName()).setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
         CamInfoResponse response = stub.camInfo(request);
         System.out.println("Received new timestamp: " + response.getNew().getUpdatesList());
         timestamp.update(response.getNew().getUpdatesList());

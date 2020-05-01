@@ -20,7 +20,7 @@ public class TrackMatchMessage implements Request {
     }
 
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
-        TrackMatchRequest request = TrackMatchRequest.newBuilder().setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
+        TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(req.getIdentity()).setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
         TrackMatchResponse response = stub.trackMatch(request);
         System.out.println("Received new timestamp: " + response.getNew().getUpdatesList());
         timestamp.update(response.getNew().getUpdatesList());
