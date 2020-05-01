@@ -61,7 +61,7 @@ public class TrackMatchIT extends BaseIT {
 	public void tearDown() throws ZKNamingException, UnavailableException {
         //Clean the server state after each test
         frontend.controlClear(ControlClearRequest.newBuilder().build());
-
+		frontend.reset();
 	}
 
     @Test

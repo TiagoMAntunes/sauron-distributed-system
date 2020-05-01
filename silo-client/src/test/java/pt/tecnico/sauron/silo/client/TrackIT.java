@@ -53,7 +53,7 @@ public class TrackIT extends BaseIT {
 	public void tearDown() throws ZKNamingException, UnavailableException {
         //Clean the server state after each test
         frontend.controlClear(ControlClearRequest.newBuilder().build());
-
+        frontend.reset();
 	}
 
     @Test
@@ -92,11 +92,7 @@ public class TrackIT extends BaseIT {
         Observable inv_obs = Observable.newBuilder().setType(TYPE).setIdentifier(INV_ID).build();
         TrackRequest request = TrackRequest.newBuilder().setIdentity(inv_obs).build();
 
-        assertEquals(
-            FAILED_PRECONDITION,
-            assertThrows(
-                StatusRuntimeException.class, () -> frontend.track(request)).getStatus().getCode()
-            );
+        assertEquals(false, frontend.track(request).getValid(), "The response should not be valid");
     }
     
     @Test

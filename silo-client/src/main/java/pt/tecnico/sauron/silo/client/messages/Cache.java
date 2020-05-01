@@ -65,4 +65,9 @@ public class Cache {
         return res;
 	}
 
+	public void reset() {
+        this.cache = new HashMap<>();
+        this.orderCache = new HashMap<>();
+	}
+
 }    

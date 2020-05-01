@@ -24,7 +24,6 @@ import pt.tecnico.sauron.silo.grpc.Silo.ControlInitRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.ControlInitResponse;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackRequest;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackResponse;
-import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
@@ -47,13 +46,16 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
-        this.cache = new Cache(3); //TODO change the max
         zkNaming = new ZKNaming(host, port);
         try {
             requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber);
         } catch (ZKNamingException e) {
             throw new UnavailableException();
         }
+    }
+
+    public void reset() {
+        this.requestManager.reset(); // The connection is still there
     }
 
     public ControlPingResponse controlPing(ControlPingRequest r) throws ZKNamingException, UnavailableException {
@@ -77,31 +79,15 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public TrackResponse track(TrackRequest r) throws ZKNamingException, UnavailableException {
-        TrackMessage reqMessage = new TrackMessage(r);
-        TrackResponse res = (TrackResponse) requestManager.execute(reqMessage);
-
-        this.cache.insertReqRes(reqMessage, res);
-
-        return res ;
-        
+        return (TrackResponse) requestManager.execute(new TrackMessage(r));
     }
 
     public TrackMatchResponse trackMatch(TrackMatchRequest r) throws ZKNamingException, UnavailableException {
-        TrackMatchMessage reqMessage = new TrackMatchMessage(r);
-        TrackMatchResponse res =  (TrackMatchResponse) requestManager.execute(reqMessage);
-
-        this.cache.insertReqRes(reqMessage, res);
-
-        return res;
+        return (TrackMatchResponse) requestManager.execute(new TrackMatchMessage(r));
     }
 
     public TraceResponse trace(TraceRequest r) throws ZKNamingException, UnavailableException {
-        TraceMessage reqMessage = new TraceMessage(r);
-        TraceResponse res = (TraceResponse) requestManager.execute(reqMessage);
-        
-        this.cache.insertReqRes(reqMessage, res);
-
-        return res;
+        return (TraceResponse) requestManager.execute(new TraceMessage(r));
     }
 
     public ReportResponse reports(ReportRequest r, CamJoinRequest jr) throws ZKNamingException, UnavailableException {

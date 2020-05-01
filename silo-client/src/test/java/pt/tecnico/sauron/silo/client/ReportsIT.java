@@ -78,16 +78,6 @@ public class ReportsIT extends BaseIT {
                 .build();
     // one-time initialization and clean-up
 
-    @BeforeAll
-    public static void oneTimeSetUp(){
-        //No need for general setup
-    }
-
-    @AfterAll
-    public static void oneTimeTearDown() {
-        //No need for general tear down
-    }
-
     // initialization and clean-up for each test
 
     @BeforeEach
@@ -104,6 +94,7 @@ public class ReportsIT extends BaseIT {
     public void tearDown() throws ZKNamingException, UnavailableException {
         //Clean server state after each test
         frontend.controlClear(Silo.ControlClearRequest.newBuilder().build());
+        frontend.reset();
     }
 
     // tests

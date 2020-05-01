@@ -63,6 +63,7 @@ message TrackRequest {
 message TrackResponse {
     Observation observation = 1;
     VectorClock new = 2;
+    bool valid = 3;
 }
 
 message TrackMatchRequest {

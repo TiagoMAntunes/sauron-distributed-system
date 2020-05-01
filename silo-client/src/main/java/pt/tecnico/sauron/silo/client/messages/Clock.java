@@ -53,4 +53,13 @@ class Clock {
     public boolean shouldCache() {
         return this.cache;
     }
+
+    /**
+     * Resets clock
+     */
+    public void reset() {
+        int n = this.updates.size();
+        this.updates.clear();
+        for (int i = 0; i < n; i++) this.updates.add(0);
+    }
 }

@@ -128,4 +128,9 @@ public class MessageStrategy {
         channel.shutdown();
     }
 
+    public void reset() {
+        this.timestamp.reset();
+        this.cache.reset();
+    }
+
 }
