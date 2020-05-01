@@ -23,7 +23,7 @@ public class Cache {
         //Checks if already in cache if so updates
         if (!inCache(req)) {
             //If there's still space adds a new entry to the cache
-            if(this.currentSize < this.maxSize) {
+            if(this.currentSize < this.maxSize - 1) {
                 cache.put(req, res);
                 this.currentSize++;
                 orderCache.put(this.currentSize,req); //Saves the order when it entered the ache
