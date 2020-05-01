@@ -37,6 +37,7 @@ class Clock {
      * @param updates
      */
     public void update(List<Integer> updates) {
-        this.updates = new ArrayList<>(updates);
+        for (int i = 0; i < updates.size(); i++)
+            this.updates.set(i, Math.max(this.updates.get(i), updates.get(i))); // new timestamp is the maximum values for each position of the two
     }
 }

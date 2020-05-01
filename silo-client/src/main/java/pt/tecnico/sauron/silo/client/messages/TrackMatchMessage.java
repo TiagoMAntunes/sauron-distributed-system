@@ -3,6 +3,8 @@ package pt.tecnico.sauron.silo.client.messages;
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
 import pt.tecnico.sauron.silo.grpc.Silo.Observable;
 import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.TrackMatchResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
@@ -17,8 +19,12 @@ public class TrackMatchMessage implements Request {
         this.identity = req.getIdentity();
     }
 
-    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException {
-        return stub.trackMatch(req);
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
+        TrackMatchRequest request = TrackMatchRequest.newBuilder().setPrev(VectorClock.newBuilder().addAllUpdates(req.getPrev().getUpdatesList()).build()).build();
+        TrackMatchResponse response = stub.trackMatch(request);
+        System.out.println("Received new timestamp: " + response.getNew().getUpdatesList());
+        timestamp.update(response.getNew().getUpdatesList());
+        return response;
     }
 
     //Used in cache to compare keys
