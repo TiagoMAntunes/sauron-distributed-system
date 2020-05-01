@@ -48,7 +48,7 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
-        this.cache = new Cache(50); //TODO change the max
+        this.cache = new Cache(3); //TODO change the max
         zkNaming = new ZKNaming(host, port);
         try {
             requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber);
