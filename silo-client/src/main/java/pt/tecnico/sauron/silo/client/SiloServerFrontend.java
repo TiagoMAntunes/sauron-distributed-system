@@ -39,7 +39,6 @@ public class SiloServerFrontend implements AutoCloseable {
     private static final String PATH = "/grpc/sauron/silo"; // TODO This is hard-coded, should it be?
     private final ZKNaming zkNaming;
     private MessageStrategy requestManager;
-    private Cache cache;
 
     public SiloServerFrontend(String host, String port) throws UnavailableException {
         this(host, port, "0");

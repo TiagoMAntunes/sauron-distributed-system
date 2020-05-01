@@ -35,9 +35,6 @@ public class TraceMessage implements Request {
     public boolean equals(Object o) {
         if (! (o instanceof TraceMessage)) return false;
         TraceMessage d = (TraceMessage) o;
-        System.out.println("Comparing");
-        System.out.println("Type: " +  this.identity.getType().equals(d.identity.getType()));
-        System.out.println("Identifier: " +this.identity.getIdentifier().equals(d.identity.getIdentifier()) );
         return this.identity.getType().equals(d.identity.getType()) && this.identity.getIdentifier().equals(d.identity.getIdentifier());
     }
 

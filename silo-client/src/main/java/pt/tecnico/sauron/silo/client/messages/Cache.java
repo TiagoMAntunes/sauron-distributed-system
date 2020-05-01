@@ -58,8 +58,11 @@ public class Cache {
     }
 
 	public Message getValue(Request req, Message res) {
-        if (inCache(req)) return cache.get(req);
-        System.out.println("Not in cache");
+        if (inCache(req)) {
+            System.out.println("Selecting previously requested element");
+            return cache.get(req);
+        }
+
         // If element not present, just consider it as the new valid element
         insertReqRes(req, res);
         return res;

@@ -140,7 +140,11 @@ public class SpotterApp {
 		} else {
 			TrackRequest request = TrackRequest.newBuilder().setIdentity(identity).build();
 			TrackResponse response = frontend.track(request);
-			observations = new ArrayList<Observation>();
+			if (!response.getValid()) {
+				System.out.println("The desired ID has no observations");
+				return;
+			}
+			observations = new ArrayList<>();
 			observations.add((response.getObservation()));
 		}
 
