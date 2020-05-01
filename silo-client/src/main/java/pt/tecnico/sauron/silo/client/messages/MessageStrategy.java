@@ -22,11 +22,13 @@ public class MessageStrategy {
     private final String instanceNumber;
     private SauronGrpc.SauronBlockingStub stub;
     private ManagedChannel channel;
+    private Clock timestamp;
 
     public MessageStrategy(ZKNaming zkNaming, String path, String instanceNumber) throws ZKNamingException {
         this.zkNaming = zkNaming;
         this.path = path;
         this.instanceNumber = instanceNumber;
+        this.timestamp = new Clock(9); // TODO should this be hard-coded?
 
         channel = ManagedChannelBuilder.forTarget(getPossibleAddresses().get(0).getURI()).usePlaintext().build();
         stub = SauronGrpc.newBlockingStub(channel);
@@ -63,7 +65,7 @@ public class MessageStrategy {
     public Message execute(Request req) throws ZKNamingException, StatusRuntimeException, UnavailableException {
 
         try {
-            return req.call(stub);
+            return req.call(stub, timestamp);
         } catch (final StatusRuntimeException e) {
             // If host unreachable just advance. If any other error, throw
             if (e.getStatus().getCode() == Code.UNAVAILABLE) 
@@ -85,7 +87,7 @@ public class MessageStrategy {
             stub = SauronGrpc.newBlockingStub(channel);
 
             try {
-                return req.call(stub);
+                return req.call(stub, timestamp);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
                 if (e.getStatus().getCode() == Code.UNAVAILABLE)

@@ -13,7 +13,7 @@ public class CamInfoMessage implements Request {
         this.req = req;
     }
 
-    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException {
         return stub.camInfo(req);
     }
 }

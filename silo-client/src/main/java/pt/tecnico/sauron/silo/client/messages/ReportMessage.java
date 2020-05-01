@@ -15,7 +15,7 @@ public class ReportMessage implements Request {
         this.camReq = camReq;
     }
 
-    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException {
         return stub.report(req);
     }
 }

@@ -17,7 +17,7 @@ public class TrackMatchMessage implements Request {
         this.identity = req.getIdentity();
     }
 
-    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException {
         return stub.trackMatch(req);
     }
 
