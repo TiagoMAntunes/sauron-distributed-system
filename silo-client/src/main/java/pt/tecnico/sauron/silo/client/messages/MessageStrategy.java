@@ -23,13 +23,14 @@ public class MessageStrategy {
     private SauronGrpc.SauronBlockingStub stub;
     private ManagedChannel channel;
     private Clock timestamp;
+    private Cache cache;
 
     public MessageStrategy(ZKNaming zkNaming, String path, String instanceNumber) throws ZKNamingException {
         this.zkNaming = zkNaming;
         this.path = path;
         this.instanceNumber = instanceNumber;
         this.timestamp = new Clock(9); // TODO should this be hard-coded?
-
+        this.cache = new Cache(3); // TODO Change this value
         channel = ManagedChannelBuilder.forTarget(getPossibleAddresses().get(0).getURI()).usePlaintext().build();
         stub = SauronGrpc.newBlockingStub(channel);
     }
@@ -67,7 +68,7 @@ public class MessageStrategy {
         try {
             Message res =  req.call(stub, timestamp);
             System.out.println(" New timestamp: " + timestamp.getList());
-            return res;
+            return handleCache(req, res);
         } catch (final StatusRuntimeException e) {
             // If host unreachable just advance. If any other error, throw
             if (e.getStatus().getCode() == Code.UNAVAILABLE) 
@@ -90,8 +91,8 @@ public class MessageStrategy {
 
             try {
                 Message res =  req.call(stub, timestamp);
-                System.out.println("Received response with timestamp: " + timestamp);
-                return res;
+                System.out.println("Received response with timestamp: " + timestamp.getList());
+                return handleCache(req, res);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
                 if (e.getStatus().getCode() == Code.UNAVAILABLE)
@@ -106,6 +107,21 @@ public class MessageStrategy {
 
         // What? No return yet? Alright then, catch this...
         throw new UnavailableException();
+    }
+
+    /**
+     * This function handles cache management.
+     * It decides wheter to get an element from cache or just return it normally
+     * @param req
+     * @param res
+     */
+    public Message handleCache(Request req, Message res) {
+        if (this.timestamp.shouldCache()) {
+            return this.cache.getValue(req, res);
+        } else {
+            this.cache.insertReqRes(req, res); // insert the element in case it is new
+            return res;
+        }
     }
 
     public void close() {

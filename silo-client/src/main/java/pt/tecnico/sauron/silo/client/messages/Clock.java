@@ -5,6 +5,7 @@ import java.util.List;
 
 class Clock {
     private ArrayList<Integer> updates;
+    private boolean cache = false; // This variable holds whether or not should get a cached element
 
     public Clock(List<Integer> updates) {
         this.updates = new ArrayList<>(updates);
@@ -19,6 +20,10 @@ class Clock {
 
     public List<Integer> getList() {
         return this.updates;
+    }
+
+    public boolean isMoreRecent(Clock c) {
+        return isMoreRecent(c.getList());
     }
 
     public boolean isMoreRecent(List<Integer> arr) {
@@ -39,5 +44,13 @@ class Clock {
     public void update(List<Integer> updates) {
         for (int i = 0; i < updates.size(); i++)
             this.updates.set(i, Math.max(this.updates.get(i), updates.get(i))); // new timestamp is the maximum values for each position of the two
+    }
+
+	public void cache() {
+        this.cache = true;
+    }
+    
+    public boolean shouldCache() {
+        return this.cache;
     }
 }

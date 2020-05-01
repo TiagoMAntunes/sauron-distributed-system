@@ -23,6 +23,9 @@ public class TraceMessage implements Request {
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
         TraceRequest request = TraceRequest.newBuilder().setIdentity(req.getIdentity()).setPrev(VectorClock.newBuilder().addAllUpdates(timestamp.getList()).build()).build();
         TraceResponse response = stub.trace(request);
+        if (!(new Clock(response.getNew().getUpdatesList()).isMoreRecent(timestamp))) {
+            timestamp.cache(); // This checks if the view is or not old
+        }
         timestamp.update(response.getNew().getUpdatesList());
         return response;
     }

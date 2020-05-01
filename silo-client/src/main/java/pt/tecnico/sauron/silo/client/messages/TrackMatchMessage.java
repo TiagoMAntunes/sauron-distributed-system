@@ -22,7 +22,10 @@ public class TrackMatchMessage implements Request {
     public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
         TrackMatchRequest request = TrackMatchRequest.newBuilder().setIdentity(req.getIdentity()).setPrev(VectorClock.newBuilder().addAllUpdates(timestamp.getList()).build()).build();
         TrackMatchResponse response = stub.trackMatch(request);
-        timestamp.update(response.getNew().getUpdatesList());
+        if (!(new Clock(response.getNew().getUpdatesList()).isMoreRecent(timestamp))) {
+            timestamp.cache(); // This checks if the view is or not old
+        }
+        timestamp.update(response.getNew().getUpdatesList()); //Always update
         return response;
     }
 
@@ -31,9 +34,6 @@ public class TrackMatchMessage implements Request {
     public boolean equals(Object o) {
         if (! (o instanceof TrackMatchMessage)) return false;
         TrackMatchMessage d = (TrackMatchMessage) o;
-        System.out.println("Comparing");
-        System.out.println("Type: " +  this.identity.getType().equals(d.identity.getType()));
-        System.out.println("Identifier: " +this.identity.getIdentifier().equals(d.identity.getIdentifier()) );
         return this.identity.getType().equals(d.identity.getType()) && this.identity.getIdentifier().equals(d.identity.getIdentifier());
     }
 
