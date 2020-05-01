@@ -53,7 +53,7 @@ public class SiloServerFrontend implements AutoCloseable {
     }
 
     public SiloServerFrontend(String host, String port, String instanceNumber) throws UnavailableException {
-        this.cache = new Cache(50); //TODO change the max
+        this.cache = new Cache(3); //TODO change the max
         zkNaming = new ZKNaming(host, port);
         try {
             requestManager = new MessageStrategy(zkNaming, PATH, instanceNumber);
@@ -161,26 +161,41 @@ public class SiloServerFrontend implements AutoCloseable {
         private Map<Request, Message> cache = new HashMap<>();
         private Map<Integer, Request> orderCache = new HashMap<>();
         private int currentSize;
+        private int nextToReplace;
         private int maxSize;
 
-        private Message testMessage;
-        private boolean test;
         public Cache(int max) {
             this.maxSize = max;
             this.currentSize = 0;
+            this.nextToReplace = 1;
         }
 
         public void insertReqRes(Request req, Message res) {
-           
+            //Checks if already in cache if so updates
             if (!inCache(req)) {
-                System.out.println("Not cache");
-                cache.put(req, res);
-                this.currentSize++;
-                System.out.print(this);
+                //If there's still space adds a new entry to the cache
+                if(this.currentSize < this.maxSize) {
+                    cache.put(req, res);
+                    this.currentSize++;
+                    orderCache.put(this.currentSize,req); //Saves the order when it entered the ache
+                } else {
+                    //If no space in cache deletes the oldest entry
+                    Request reqDel = this.orderCache.get(this.nextToReplace);
+                    this.cache.remove(reqDel);
+                    //Saves order of new entry in cache
+                    orderCache.put(this.nextToReplace,req);
+                    if(this.nextToReplace == this.maxSize) {
+                        this.nextToReplace = 0;
+                    }
+                    this.nextToReplace++;
+                    //Saves new value
+                    cache.put(req, res);
+                }
+                
             } else {
-                System.out.println("Already in cache");
+                //Update value
+                cache.replace(req, res);
             }
-            
         }
 
         public boolean inCache(Request req) {
@@ -189,7 +204,7 @@ public class SiloServerFrontend implements AutoCloseable {
 
         @Override
         public String toString() {
-            String res = String.format("---- CACHE ----\nSize: %d;\nCache: %s;\n ---- ENDCACHE ----",this.currentSize,this.cache);
+            String res = String.format("---- CACHE ----\nSize: %d;\nCache: %s;\nOrder:%s\n ---- ENDCACHE ----",this.currentSize,this.cache,this.orderCache);
             return res;
         }
 
