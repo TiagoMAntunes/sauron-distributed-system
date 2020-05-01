@@ -177,3 +177,135 @@ A ideia  é que as câmaras sendo de baixa potência enviam 5 reconhecimentos de
 Existem então 2 ficheiros: `generate.py` e `run.sh`. O `generate.py` gera as 100 câmaras e o ficheiro `run.sh` executa-as. **Atenção: são lançados 100 processos em paralelo o que poderá ser demasiado para alguns computadores com pouca memória RAM**.
 
 
+
+-----
+
+----
+
+### Demonstração funcionamento da Cache
+
+Vamos demonstrar uma simples utilização da cache do *frontend*. 
+
+**Preparação**
+
+Para tal começamos por correr 2 silo-servers, fazendo em 2 terminais:
+
+```
+cd silo-server
+```
+
+Começamos pelo terminal a que vamos ligar o nosso Eye:
+
+```
+mvn compile exec:java -Dinstance=1
+```
+
+Noutro terminal fazemos:
+
+```
+./eye/target/appassembler/bin/eye localhost 8080 Tagus 38.737613 -9.303164
+```
+
+E por fim corremos o segundo servidor num terceiro terminal:
+
+```
+mvn compile exec:java -Dinstance=2
+```
+
+Finalmente inicializamos um spotter associado ao primeiro servidor:
+
+```
+./target/appassembler/bin/spotter localhost 2181 1
+```
+
+**Funcionamento**
+
+No eye enviamos uma observacao:
+
+```
+CAR,20SD20
+```
+
+No spotter pedimos informação relativamente a esta entidade:
+
+```
+spot CAR 20SD20
+```
+
+Obtendo uma resposta.
+
+Agora façamos a réplica 1 crashar através de `Ctrl-C`no terminal correspondente e voltemos a pedir a informação dentro do spotter. De notar que a réplica for abaixo antes de efectuar o Gossip com outras réplicas.
+
+```
+spot CAR 20SD20
+```
+
+E vamos obter na mesma a resposta.
+
+### Funcionamento do Gossip
+
+**Preparação**
+
+Para tal começamos por correr 2 silo-servers, fazendo em 2 terminais:
+
+```
+cd silo-server
+```
+
+Começamos pelo terminal a que vamos ligar o nosso Eye:
+
+```
+mvn compile exec:java -Dinstance=1
+```
+
+Noutro terminal fazemos:
+
+```
+./eye/target/appassembler/bin/eye localhost 8080 Tagus 38.737613 -9.303164
+```
+
+E por fim corremos o segundo servidor num terceiro terminal:
+
+```
+mvn compile exec:java -Dinstance=2
+```
+
+Inicializamos um spotter associado a cada servidor:
+
+```
+./target/appassembler/bin/spotter localhost 2181 1
+```
+
+```
+./target/appassembler/bin/spotter localhost 2181 2
+```
+
+**Funcionamento**
+
+No eye enviamos uma observacao:
+
+```
+CAR,20SD20
+```
+
+No spotter associado à primeira réplica pedimos informação relativamente a esta entidade:
+
+```
+spot CAR 20SD20
+```
+
+Obtendo uma resposta como esperado. Verificamos agora a segunda réplica através do outro spotter:
+
+```
+spot CAR 20SD20
+```
+
+Não obtivemos o registo desejado como esperado.
+
+Aguardemos agora 30 segundos e repetimos o pedido na segunda réplica:
+
+```
+spot CAR 20SD20
+```
+
+Obtivemos agora resposta, provando que a comunicação de actualizações entre réplicas funciona.
