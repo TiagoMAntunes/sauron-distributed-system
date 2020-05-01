@@ -6,7 +6,6 @@ import java.util.Map;
 import com.google.protobuf.Message;
 
 public class Cache {
-    //TODO do I need to use two
     private Map<Request, Message> cache = new HashMap<>();
     private Map<Integer, Request> orderCache = new HashMap<>();
     private int currentSize;

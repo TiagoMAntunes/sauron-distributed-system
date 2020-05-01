@@ -33,7 +33,7 @@ public class BaseIT {
 		final String host = testProps.getProperty("server.host");
 		final String port = testProps.getProperty("server.port");
 		final String instance = testProps.getProperty("instance");
-		frontend = new SiloServerFrontend(host, port, instance);
+		frontend = new SiloServerFrontend(host, port, instance, 0); // No cache
 	}
 	
 	@AfterAll

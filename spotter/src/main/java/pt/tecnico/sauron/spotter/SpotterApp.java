@@ -45,17 +45,24 @@ public class SpotterApp {
 			System.out.printf("arg[%d] = %s%n", i, args[i]);
 		}
 
-		if (args.length < 2 || args.length > 3) {
-			System.out.printf("Usage: java %s <address> <port> [instance]%n", SpotterApp.class.getName());
+		if (args.length < 2 || args.length > 4) {
+			System.out.printf("Usage: java %s <address> <port> cacheSize [instance]%n", SpotterApp.class.getName());
 			System.exit(0);
 		}
 
 		final String host = args[0];
 		final String port = args[1];
+		final int cacheSize;
+		
+		if (args.length > 2)
+			cacheSize = Integer.parseInt(args[2]);
+		else 
+			cacheSize = 128; // 128 is a good standard value
 
-		String instance = args.length ==3 ? args[2] : "0";
-
-		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port, instance); Scanner sc = new Scanner(System.in)) {
+		try (SiloServerFrontend frontend = args.length == 4 ?
+									 new SiloServerFrontend(host, port, args[3], cacheSize) 
+									 : new SiloServerFrontend(host, port, cacheSize); 
+			Scanner sc = new Scanner(System.in)) {
 			boolean end = false;
 			while(!end) {
 
