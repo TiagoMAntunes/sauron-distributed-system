@@ -86,6 +86,8 @@ Como referido acima no modelo de faltas demos preferência à simplicidade da *c
 
 Para garantir que o sistema estaria capaz de aguentar falhas de réplicas decidimos manter o log sem o limpar, de modo que em caso de necessidade este possa ser totalmente reposto em réplicas que tenham perdido todas as informações. Isto deve-se ao facto de a solução pedida não ter memória persistente. Esta decisão tornou imprescindível o envio de logs de forma selectiva, reduzindo os envios ao estritamente necessário. Caso contrário, o tamanho das mensagens enviadas seria excessivamente grande.
 
+Caso alguma réplica não responda à tentativa de *Gossip* optamos por passar à frente, tendo em conta que num *Gossip* posterior iremos enviar todas as actualizações em falta.
+
 Quando possível optamos pela facilidade de entendimento. Por exemplo, durante o gossip  consideramos percorrer os logs existentes, para cada cada réplica destino (identificada pelo *origin*) ver o *timestamp* mais recente e com base nesse *timestamp* decidir que logs podem estar em falta na réplica.
 Consideramos muito mais directa a ideia de enviar mensagens auxiliares com o único propósito de obter o timestamp da réplica destino para depois se proceder à escolha das atualizações a enviar. 
 
