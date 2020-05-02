@@ -22,7 +22,7 @@ O cliente Eye liga-se ao servidor e vai automaticamente registar a existência d
 
 Para iniciar o Eye é necessário fazer:
 ```
-./eye/target/appassembler/bin/eye localhost 8080 Tagus 38.737613 -9.303164
+./eye/target/appassembler/bin/eye localhost 2181 Tagus 38.737613 -9.303164
 ```
 
 Neste caso foi criada uma câmara com o nome *Tagus* que está nas coordenas *(38.737613,-9.303164)*.
@@ -88,14 +88,14 @@ Se o servidor estiver inalcançável, o Spotter irá mostrar uma mensagem de inf
 
 **Caso não tenha realizado a demonstração do eye como mencionado antes, faça o seguinte comando antes de começar:**
 ```
-./eye/target/appassembler/bin/eye localhost 8080 Tagus 38.737613 -9.303164 < demo/eye_test.txt
+./eye/target/appassembler/bin/eye localhost 2181 Tagus 38.737613 -9.303164 < demo/eye_test.txt
 ```
 
 
 
 Para se iniciar o cliente é necessário fazer:
 ```
-./spotter/target/appassembler/bin/spotter localhost 8080
+./spotter/target/appassembler/bin/spotter localhost 2181
 ```
 
 
@@ -178,15 +178,11 @@ Existem então 2 ficheiros: `generate.py` e `run.sh`. O `generate.py` gera as 10
 
 
 
------
-
-----
-
-### Demonstração funcionamento da Cache
+# Demonstração funcionamento da Cache
 
 Vamos demonstrar uma simples utilização da cache do *frontend*. 
 
-**Preparação**
+## Preparação
 
 Para tal começamos por correr 2 silo-servers, fazendo em 2 terminais:
 
@@ -194,31 +190,32 @@ Para tal começamos por correr 2 silo-servers, fazendo em 2 terminais:
 cd silo-server
 ```
 
-Começamos pelo terminal a que vamos ligar o nosso Eye:
+Começamos pelo terminal a que vamos ligar o nosso Eye. De notar que este possui um intervalo de 300 segundos (5 minutos) absurdo propositado para dar tempo para se simular. Pode-se alterar o intervalo para ter mais tempo se for preferível.
 
 ```
-mvn compile exec:java -Dinstance=1
+mvn compile exec:java -Dinstance=1 -Dinterval=300
 ```
 
 Noutro terminal fazemos:
 
 ```
-./eye/target/appassembler/bin/eye localhost 8080 Tagus 38.737613 -9.303164
+./eye/target/appassembler/bin/eye localhost 2181 Tagus 38.737613 -9.303164
+```
+O eye está agora ligado ao único servidor disponível.
+
+Inicializemos um spotter associado ao primeiro servidor:
+
+```
+./target/appassembler/bin/spotter localhost 2181
 ```
 
-E por fim corremos o segundo servidor num terceiro terminal:
+ Inicializemos agora o segundo servidor num terceiro terminal:
 
 ```
 mvn compile exec:java -Dinstance=2
 ```
 
-Finalmente inicializamos um spotter associado ao primeiro servidor:
-
-```
-./target/appassembler/bin/spotter localhost 2181 1
-```
-
-**Funcionamento**
+## Funcionamento
 
 No eye enviamos uma observacao:
 
@@ -234,17 +231,17 @@ spot CAR 20SD20
 
 Obtendo uma resposta.
 
-Agora façamos a réplica 1 crashar através de `Ctrl-C`no terminal correspondente e voltemos a pedir a informação dentro do spotter. De notar que a réplica for abaixo antes de efectuar o Gossip com outras réplicas.
+Agora façamos a réplica 1 crashar através de `Ctrl-C` no terminal correspondente e voltemos a pedir a informação dentro do spotter. De notar que a réplica tem de ir abaixo antes de efectuar o Gossip com outras réplicas.
 
 ```
 spot CAR 20SD20
 ```
 
-E vamos obter na mesma a resposta.
+E vamos obter na mesma a resposta, apesar de esta não existir. Este comportamento pode ser replicado para os restantes comandos.
 
-### Funcionamento do Gossip
+# Funcionamento do Gossip
 
-**Preparação**
+## Preparação
 
 Para tal começamos por correr 2 silo-servers, fazendo em 2 terminais:
 
@@ -261,7 +258,7 @@ mvn compile exec:java -Dinstance=1
 Noutro terminal fazemos:
 
 ```
-./eye/target/appassembler/bin/eye localhost 8080 Tagus 38.737613 -9.303164
+./eye/target/appassembler/bin/eye localhost 2181 Tagus 38.737613 -9.303164
 ```
 
 E por fim corremos o segundo servidor num terceiro terminal:
@@ -280,7 +277,7 @@ Inicializamos um spotter associado a cada servidor:
 ./target/appassembler/bin/spotter localhost 2181 2
 ```
 
-**Funcionamento**
+## Funcionamento
 
 No eye enviamos uma observacao:
 
@@ -309,3 +306,67 @@ spot CAR 20SD20
 ```
 
 Obtivemos agora resposta, provando que a comunicação de actualizações entre réplicas funciona.
+
+
+# Tolerância a faltas
+
+Vamos agora analisar a tolerância a faltas por parte do servidor.
+
+Inicie-se um servidor:
+
+```
+mvn exec:java -Dinterval=10
+```
+
+Inicie-se uma instância do eye noutro terminal:
+
+```
+./eye/target/appassembler/bin/eye localhost 2181 Tagus 38.737613 -9.303164
+```
+
+Envie-se agora uma observação:
+
+```
+$ car,SD20SD
+```
+
+O servidor recebe a informação. Adormeça-se agora o servidor fazendo `ctrl-z` no terminal deste.
+
+Inicie-se agora outro servidor:
+```
+mvn exec:java -Dinstance=2 -Dinterval=10
+```
+
+No eye, tente-se enviar outra observação:
+```
+$ person,1
+```
+
+Ligue-se agora um spotter à replica 2 e peça-se informação sobre a observação enviada:
+
+```
+./target/appassembler/bin/spotter localhost 2181 2
+$ spot person 1
+```
+
+Repare-se na informação da câmara como desejada.
+
+No terminal da primeira instância, escreva-se agora `fg` para recuperar a informação.
+
+Ligue-se um spotter à replica 1:
+
+```
+./target/appassembler/bin/spotter localhost 2181 1
+```
+
+Aguarde-se então que ocorra gossip por parte dos servidores.
+
+Depois, em cada spotter, realize-se o seguinte pedido:
+
+```
+$ spot person 1
+$ spot car SD20SD
+```
+
+Os resultados são agora iguais, e o sistema recuperou da falta.
+
