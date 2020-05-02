@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.Message;
 
@@ -25,6 +26,8 @@ public class MessageStrategy {
     private ManagedChannel channel;
     private Clock timestamp;
     private Cache cache;
+
+    private static final int TIME_LIMIT = 2; //seconds
 
     public MessageStrategy(ZKNaming zkNaming, String path, String instanceNumber, int cacheSize) throws ZKNamingException, UnavailableException {
         this.zkNaming = zkNaming;
@@ -76,13 +79,13 @@ public class MessageStrategy {
 
         do {
             try {
-                Message res =  req.call(stub, timestamp);
+                Message res =  req.call(stub.withDeadlineAfter(TIME_LIMIT, TimeUnit.SECONDS), timestamp);
                 System.out.println(" New timestamp: " + timestamp.getList());
                 return handleCache(req, res);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
-                if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-                    System.out.println("Target is unreachable. Retrying...");
+                if (e.getStatus().getCode() == Code.UNAVAILABLE || e.getStatus().getCode() == Code.DEADLINE_EXCEEDED) {
+                    System.out.println("Didn't get an answer. Retrying...");
                     tries--;
                     try {
                         Thread.sleep( (long) (new Random().nextInt(200)) * (6-tries)); //backoff
@@ -108,13 +111,15 @@ public class MessageStrategy {
             stub = SauronGrpc.newBlockingStub(channel);
 
             try {
-                Message res =  req.call(stub, timestamp);
+                Message res =  req.call(stub.withDeadlineAfter(TIME_LIMIT, TimeUnit.SECONDS), timestamp);
                 System.out.println("Received response with timestamp: " + timestamp.getList());
                 return handleCache(req, res);
             } catch (final StatusRuntimeException e) {
                 // If host unreachable just advance. If any other error, throw
                 if (e.getStatus().getCode() == Code.UNAVAILABLE)
                     System.out.println("Target " + r.getURI() + " is unreachable. Retrying...");
+                else if (e.getStatus().getCode() == Code.DEADLINE_EXCEEDED)
+                    System.out.println("Target took too long to answer. Trying another replica...");
                 else
                     throw e;
             }
