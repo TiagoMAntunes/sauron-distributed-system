@@ -22,7 +22,7 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 ## Melhorias da primeira parte
 
 - [Melhoria dos testes de integração do TrackMatch](https://github.com/tecnico-distsys/A18-Sauron/commit/fb83182441b60b4742b162c0b7b2be4061310feb)
-- [Melhoria dos testes de integração do CamJoin](https://github.com/tecnico-distsys/A18-Sauron/commit/b2c4cac1a4750ce12ec4d028b83497ee4c916a1d)
+- [Melhoria dos testes de integração do CamJoin](https://github.com/tecnico-distsys/A18-Sauron/commit/a42d8495c6b73cbdbd72b115c5493ef352faa96c)
 - [Adição de comentários](https://github.com/tecnico-distsys/A18-Sauron/commit/19dc37d5227098c1bdfa5755e23c09fd86e008d8)
 
 
