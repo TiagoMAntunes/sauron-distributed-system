@@ -29,7 +29,17 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 ## Modelo de faltas
 
 _(que faltas são toleradas, que faltas não são toleradas)_
-São toleradas faltas silenciosas e transientes. Uma vez que os gestores de réplica não podem falhar arbitrariamente, não existem falhas bizantinas, pelo que não são consideradas na nossa implementação.
+
+Seguindo o modelo de faltas descrito no enunciado, o nosso sistema tolera então faltas silenciosas e transientes. Uma vez que os gestores de réplica não podem falhar arbitrariamente, não existem falhas bizantinas, pelo que não são consideradas na nossa implementação. Ainda dentro de faltas transientes, o sistema é então tolerante a comportamento assíncrono, além da implementação com HTTP/2, através da interrupção da tentativa de envio de mensagem após X segundos para voltar a reenviar. Desta forma, volta a enviar o pedido e consegue garantir que se reconecta a outra réplica caso uma delas esteja a demorar muito a responder ou tenha perdido a sua ligação (Sistema de faltas dado afirma ter uma réplica ativa a atender os cliente). A tentativa de reenvio de informação é realizada pelo HTTP/2, mas caso este diga que não está disponível, o cliente tenta ainda enviar de novo um número arbitrário de vezes (assumiu-se 5 como um valor razoável).
+
+
+No caso de ocorrer omissão de mensagens por parte do canal de comunicação, este problema é resolvido através do uso do _Vector Clock_ por parte do sistema, o que evita este caso de omissão de mensagens. As faltas são tratadas no momento, não havendo faltas densas. Como o modelo de faltas não aceita faltas bizantinas, assume que não há corrupção dos dados por parte do canal de transmissão (o uso de HTTP/2 também evita grande parte dos erros deste caso).
+
+Uma falta não tratada neste caso é: em caso de todas as tentativas do cliente não ocorrer uma resposta mas, numa delas, o servidor ter enviado resposta que se tenha perdido pelo caminho, ocorrerá uma falha de coêrencia. Neste caso, visto que o Vector Clock dos pedidos vai ser diferente, a falta não é tolerada, pois não há forma de distinguir as observações das câmaras por poderem ter sido feitas sequencialmente. O modelo não é portanto tolerante a este caso.
+
+O cliente SiloFrontend é ainda inteligente e tem um sistema de cache para evitar leituras incoerentes por parte do cliente, até ao tamanho da cache. Esta funciona através da relação <Pedido, Resposta>, sendo que alguma lógica poderá não estar totalmente correta, apenas se tem a garantia de que pedidos iguais irão dar a mesma resposta caso os dados estejam desatualizados, dentro de tempo útil. Esta ideia veio motivada do facto de os clientes de leituras são humanos, logo a quantidade de pedidos que vão efetuar irá ser reduzida relativamente à velocidade de propagação dos dados. O modelo de faltas inclui ainda que estas são não definitivas, logo eventualmente o servidor irá reconectar-se, o que passará a ter leituras coerentes eventualmente. O tamanho da cache do cliente spotter pode ainda ser especificada à mão, podendo-se adaptar ao dispositivo onde for utilizado. 
+
+O SiloFrontend é ainda inteligente relativamente ao comando spotter. Caso tenha ocorrido uma falha de ligação à réplica e houver reconexão mas a informação da câmara não tenha sido registada, este regista a câmara e volta a enviar o pedido, tornando o comportamento transparente para o cliente.
 
 
 ## Solução
