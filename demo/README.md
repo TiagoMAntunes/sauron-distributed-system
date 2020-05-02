@@ -206,13 +206,7 @@ O eye está agora ligado ao único servidor disponível.
 Inicializemos um spotter associado ao primeiro servidor:
 
 ```
-./target/appassembler/bin/spotter localhost 2181
-```
-
- Inicializemos agora o segundo servidor num terceiro terminal:
-
-```
-mvn compile exec:java -Dinstance=2
+./spotter/target/appassembler/bin/spotter localhost 2181
 ```
 
 ## Funcionamento
@@ -231,7 +225,15 @@ spot CAR 20SD20
 
 Obtendo uma resposta.
 
-Agora façamos a réplica 1 crashar através de `Ctrl-C` no terminal correspondente e voltemos a pedir a informação dentro do spotter. De notar que a réplica tem de ir abaixo antes de efectuar o Gossip com outras réplicas.
+Inicializemos agora o segundo servidor num terceiro terminal:
+
+```
+mvn compile exec:java -Dinstance=2
+```
+
+E façamos a réplica 1 crashar através de `Ctrl-C` no terminal correspondente e voltemos a pedir a informação dentro do spotter. De notar que a réplica tem de ir abaixo antes de efectuar o Gossip com outras réplicas.
+
+No spotter voltemos a efectuar o comando:
 
 ```
 spot CAR 20SD20
@@ -270,11 +272,11 @@ mvn compile exec:java -Dinstance=2
 Inicializamos um spotter associado a cada servidor:
 
 ```
-./target/appassembler/bin/spotter localhost 2181 1
+./spotter/target/appassembler/bin/spotter localhost 2181 1
 ```
 
 ```
-./target/appassembler/bin/spotter localhost 2181 2
+./spotter/target/appassembler/bin/spotter localhost 2181 2
 ```
 
 ## Funcionamento
@@ -327,7 +329,7 @@ Inicie-se uma instância do eye noutro terminal:
 Envie-se agora uma observação:
 
 ```
-$ car,SD20SD
+$ CAR,SD20SD
 ```
 
 O servidor recebe a informação. Adormeça-se agora o servidor fazendo `ctrl-z` no terminal deste.
@@ -339,14 +341,14 @@ mvn exec:java -Dinstance=2 -Dinterval=10
 
 No eye, tente-se enviar outra observação:
 ```
-$ person,1
+$ PERSON,1
 ```
 
 Ligue-se agora um spotter à replica 2 e peça-se informação sobre a observação enviada:
 
 ```
-./target/appassembler/bin/spotter localhost 2181 2
-$ spot person 1
+./spotter/target/appassembler/bin/spotter localhost 2181 2
+$ spot PERSON 1
 ```
 
 Repare-se na informação da câmara como desejada.
@@ -356,7 +358,7 @@ No terminal da primeira instância, escreva-se agora `fg` para recuperar a infor
 Ligue-se um spotter à replica 1:
 
 ```
-./target/appassembler/bin/spotter localhost 2181 1
+./spotter/target/appassembler/bin/spotter localhost 2181 1
 ```
 
 Aguarde-se então que ocorra gossip por parte dos servidores.
@@ -364,8 +366,8 @@ Aguarde-se então que ocorra gossip por parte dos servidores.
 Depois, em cada spotter, realize-se o seguinte pedido:
 
 ```
-$ spot person 1
-$ spot car SD20SD
+$ spot PERSON 1
+$ spot CAR 20SD20
 ```
 
 Os resultados são agora iguais, e o sistema recuperou da falta.
