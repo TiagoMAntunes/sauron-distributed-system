@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.type.LatLng;
@@ -69,6 +70,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
     private VectorClockDomain replicaTS;  // VectorClockDomain is synchronized
     private final int replicaIndex;
     private TreeSet<LogLocalElement> log; // Requires external synchronization
+
+    private static final int TIME_LIMIT = 1; //seconds
 
     public SiloServerImpl (int nReplicas, int whichReplica) {
         this.silo =  new SiloServer(new VectorClockDomain(nReplicas));
@@ -641,6 +644,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) {
                     System.out.println("Target " + target + " is unreachable. Reconnecting to another replica.");
                     continue;
+                } else if (e.getStatus().getCode().equals(Status.DEADLINE_EXCEEDED.getCode())) {
+                    System.out.println("Target " + target + " took to long to answer. Reconnecting to another replica.");
+                    continue;
                 }
                 else throw e;
             }
@@ -669,7 +675,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             try {
                 //Response is empty == ok
                 System.out.printf("Sending logs to %s%n", target);
-                stub.gossip(req);
+                stub.withDeadlineAfter(TIME_LIMIT, TimeUnit.SECONDS).gossip(req);
                 System.out.printf("Logs have been sent successfully%n");
                 
             } catch (StatusRuntimeException e) {
@@ -677,6 +683,8 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 //If host unreachable just advance. If any other error, throw as it is unexpected
                 if (e.getStatus().getCode().equals(Status.UNAVAILABLE.getCode())) 
                     System.out.println("Target " + target + " is unreachable. Reconnecting to another replica.");
+                else if (e.getStatus().getCode().equals(Status.DEADLINE_EXCEEDED.getCode()))
+                    System.out.println("Took too long to answer. Reconnecting to antoher replica.");
                 else throw e;
             
             } finally {
@@ -690,7 +698,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
 
     public VectorClockDomain getReplicaTS(SauronGrpc.SauronBlockingStub stub) {
         GetReplicaTimestampRequest req = GetReplicaTimestampRequest.newBuilder().build();
-        GetReplicaTimestampResponse res = stub.getReplicaTimestamp(req);
+        GetReplicaTimestampResponse res = stub.withDeadlineAfter(TIME_LIMIT, TimeUnit.SECONDS).getReplicaTimestamp(req);
         VectorClock timestamp = res.getCurrentTS();
         return new VectorClockDomain(timestamp.getUpdatesList());
     }
