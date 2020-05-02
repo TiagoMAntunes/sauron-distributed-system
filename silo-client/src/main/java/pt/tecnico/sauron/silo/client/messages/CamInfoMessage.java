@@ -2,6 +2,8 @@ package pt.tecnico.sauron.silo.client.messages;
 
 import pt.tecnico.sauron.silo.grpc.SauronGrpc;
 import pt.tecnico.sauron.silo.grpc.Silo.CamInfoRequest;
+import pt.tecnico.sauron.silo.grpc.Silo.CamInfoResponse;
+import pt.tecnico.sauron.silo.grpc.Silo.VectorClock;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import com.google.protobuf.Message;
 
@@ -13,7 +15,13 @@ public class CamInfoMessage implements Request {
         this.req = req;
     }
 
-    public Message call(SauronGrpc.SauronBlockingStub stub) throws ZKNamingException {
-        return stub.camInfo(req);
+    public Message call(SauronGrpc.SauronBlockingStub stub, Clock timestamp) throws ZKNamingException { 
+        CamInfoRequest request = CamInfoRequest.newBuilder().setName(req.getName()).setPrev(VectorClock.newBuilder().addAllUpdates(timestamp.getList()).build()).build();
+        CamInfoResponse response = stub.camInfo(request);
+        if (!(new Clock(response.getNew().getUpdatesList()).isMoreRecent(timestamp))) {
+            timestamp.cache(); // This checks if the view is or not old
+        }
+        timestamp.update(response.getNew().getUpdatesList());
+        return response;
     }
 }

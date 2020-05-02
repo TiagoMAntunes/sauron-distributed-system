@@ -19,7 +19,6 @@ import com.google.type.LatLng;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import io.grpc.StatusRuntimeException;
-import io.grpc.Status.Code;
 
 public class EyeApp {
 
@@ -27,7 +26,7 @@ public class EyeApp {
 		System.out.println(EyeApp.class.getSimpleName());
 		if(args.length > 6) {
 			System.out.println("Invalid usage.");
-			System.out.println("Please run as: 'eye host port cameraName latitude longitude [replica]'");
+			System.out.println("Please run as: 'eye host port cameraName latitude longitude cacheSize [replica]'");
 			System.exit(0);
 		}
 		// receive and print arguments
@@ -41,12 +40,12 @@ public class EyeApp {
 		final String camName = args[2];
 		final double lat = Double.parseDouble(args[3]);
 		final double lon = Double.parseDouble(args[4]);
-		SiloServerFrontend frontend;
+		SiloServerFrontend frontend; // Frontend here has no cache
 		try {
 			if (args.length == 6) //Connect to a specific port
-				frontend = new SiloServerFrontend(host, port, args[5]);
+				frontend = new SiloServerFrontend(host, port, args[5], 0);
 			else
-				frontend = new SiloServerFrontend(host, port);
+				frontend = new SiloServerFrontend(host, port, 0);
 		} catch (UnavailableException e) {
 			System.out.println("Couldn't connect. Please try again later.");
 			return;
@@ -96,10 +95,9 @@ public class EyeApp {
 						sendObservations(observations, frontend, camName, camera);
 					} catch (StatusRuntimeException e) {
 						System.out.println(e.getStatus().getDescription());
-						if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-								System.out.println("The hostname is unavailable. Exiting...");
-								System.exit(0);
-						}
+					} catch (UnavailableException e) {
+						System.out.println("The hostname is unavailable. Exiting...");
+						System.exit(0);
 					}
 					observations = new ArrayList<>();
 				}
@@ -148,10 +146,9 @@ public class EyeApp {
 				sendObservations(observations, frontend, camName, camera);
 			} catch (StatusRuntimeException e) {
 				System.out.println(e.getStatus().getDescription());
-				if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-						System.out.println("The hostname is unavailable. Exiting...");
-						System.exit(0);
-				}
+			} catch (UnavailableException e) {
+				System.out.println("The hostname is unavailable. Exiting...");
+				System.exit(0);
 			}
 		}
 		
@@ -159,22 +156,10 @@ public class EyeApp {
 		System.exit(0);
 	}
 
-	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException  {
-		boolean done;
-		int counter = 0;
-		do {
-			try {
-				frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
-							CamJoinRequest.newBuilder().setCamera(cam).build());
-							done = true;
-			} catch (UnavailableException e) {
-				counter++;
-				done = false;
-			}
-		} while(!done && counter < 5);
-
-		if (counter == 5) System.out.println("Couldn't submit reports after several times. Please try again later.");
-		
+	static void sendObservations(List<Observation> observations, SiloServerFrontend frontend, String camName, Camera cam) throws ZKNamingException, UnavailableException  {
+	
+		frontend.reports(ReportRequest.newBuilder().setCameraName(camName).addAllObservations(observations).build(),
+						CamJoinRequest.newBuilder().setCamera(cam).build());
 	}
 
 	//TODO Do this without using exceptions

@@ -21,8 +21,8 @@ public class SiloClientApp {
 		final String host = args[0];
 		final String port = args[1];
 
-		SiloServerFrontend frontend = new SiloServerFrontend(host, port);
-		try {
+		
+		try (SiloServerFrontend frontend = new SiloServerFrontend(host, port, 100)) {
 			ControlPingRequest req = ControlPingRequest.newBuilder().setInputText("friend").build();
 			ControlPingResponse res = frontend.controlPing(req);
 			System.out.println(res.getStatus());
@@ -31,11 +31,6 @@ public class SiloClientApp {
 		} catch (UnavailableException e) {
 			System.out.println("No server available.");
 		}
-
-		ControlClearRequest r = ControlClearRequest.newBuilder().build();
-		frontend.controlClear(r);
-
-		frontend.close();
 	}
 	
 }

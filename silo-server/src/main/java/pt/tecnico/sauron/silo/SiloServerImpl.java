@@ -99,7 +99,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.CAMERA_NULL.toString()).asRuntimeException());
         } else if (  silo.cameraExists(camName)) {
             //Everything is ok, just accept and go on
-            responseObserver.onNext(CamJoinResponse.getDefaultInstance());
+            responseObserver.onNext(CamJoinResponse.newBuilder().setNew(VectorClock.newBuilder().addAllUpdates(this.replicaTS.getList()).build()).build());
             responseObserver.onCompleted();
         } else if (camName.length() < 3 || camName.length() > 15 ) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.CAMERA_SIZE.toString()).asRuntimeException());
@@ -157,11 +157,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (!silo.cameraExists(camName)) {
             responseObserver.onError(FAILED_PRECONDITION.withDescription(Message.CAMERA_NOT_EXISTS.toString()).asRuntimeException());
         }  else {
+            //Get clock to avoid coherence problems
+            List<Integer> clock = this.replicaTS.getList();
+
             //Build coordinates from the camera server side representation
             CameraDomain camDom = silo.getCamera(camName);
             LatLng coords = LatLng.newBuilder().setLatitude(camDom.getLatitude()).setLongitude(camDom.getLongitude()).build();
+            
             Camera cam = Camera.newBuilder().setCoords(coords).setName(camDom.getName()).build();
-            response = CamInfoResponse.newBuilder().setCamera(cam).build();
+            response = CamInfoResponse.newBuilder().setNew(VectorClock.newBuilder().addAllUpdates(clock).build()).setCamera(cam).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
@@ -397,13 +401,15 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.EMPTY_INPUT.toString()).asRuntimeException());
         } else if (request.getIdentity() == null) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.OBSERVATION_NOT_NULL.toString()).asRuntimeException());
-        } else if(silo.noRegistries()){
-            responseObserver.onError(FAILED_PRECONDITION.withDescription(Message.EMPTY_SERVER.toString()).asRuntimeException());
         } else {
+            //Before getting data, get timestamp to avoid coherence problems
+            List<Integer> clock = this.replicaTS.getList();
+
             //Gets most recent entrance in registry
             mostRecentRegistry = silo.getMostRecentRegistry(type, identifier);
             if (mostRecentRegistry == null) {
-                responseObserver.onError(FAILED_PRECONDITION.withDescription(Message.ID_NO_OBSERVATIONS.toString()).asRuntimeException());
+                responseObserver.onNext(TrackResponse.getDefaultInstance()); // Returns false
+                responseObserver.onCompleted();
                 return;
             }
 
@@ -422,7 +428,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                     .setCamera(Camera.newBuilder().setCoords(coords).setName(mostRecentRegistry.getCamera().getName()).build())
                     .build();
             response = TrackResponse.newBuilder()
+                    .setNew(VectorClock.newBuilder().addAllUpdates(clock).build())
                     .setObservation(observation)
+                    .setValid(true)
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -448,6 +456,9 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
         } else if (request.getIdentity() == null) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.OBSERVATION_NOT_NULL.toString()).asRuntimeException());
         } else {
+            //Get clock to avoid coherence problems
+            List<Integer> clock = this.replicaTS.getList();
+
             registries = silo.getAllRecentRegistries(type, partialIdentifier);
 
             //Builds observations from the registries
@@ -468,6 +479,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
                 observations.add(observation);
             }
             response = TrackMatchResponse.newBuilder()
+                    .setNew(VectorClock.newBuilder().addAllUpdates(clock).build())
                     .addAllObservations(observations)
                     .build();
             responseObserver.onNext(response);
@@ -497,12 +509,16 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             responseObserver.onError(INVALID_ARGUMENT.withDescription(Message.OBSERVABLE_NOT_NULL.toString()).asRuntimeException());
         } else if(silo.noRegistries() || !silo.registryExists(type, identifier)){
             response = TraceResponse.newBuilder()
+                    .setNew(VectorClock.newBuilder().addAllUpdates(this.replicaTS.getList()).build())
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
         
         else {
+            //Get clock to avoid coherence problems
+            List<Integer> clock = this.replicaTS.getList();
+
             registries = new ArrayList<>(silo.getRegistries(type, identifier));
             
             // Builds observations to return from the registries
@@ -525,6 +541,7 @@ public class SiloServerImpl extends SauronGrpc.SauronImplBase {
             }
 
             response = TraceResponse.newBuilder()
+                    .setNew(VectorClock.newBuilder().addAllUpdates(clock).build())
                     .addAllObservations(observations)
                     .build();
 
