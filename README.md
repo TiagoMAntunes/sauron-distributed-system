@@ -1,6 +1,7 @@
 # Sauron
 
 Distributed Systems 2019-2020, 2nd semester project
+This has been developed during the [Distributed Systems subject](https://fenix.tecnico.ulisboa.pt/disciplinas/SDis126451113264/2019-2020/2-semestre) at [Instituto Superior Técnico](https://tecnico.ulisboa.pt/en/) during the academic year of 2019-2020.
 
 
 ## Authors
